@@ -1,0 +1,106 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<strings>
+  <Step0>Step 0</Step0>
+  <Step14>Step 1 - 4</Step14>
+  <SQLMonitor>SQL monitor</SQLMonitor>
+  <RootGroupBox> Connection settings </RootGroupBox>
+  <LDBType>DB type:</LDBType>
+  <LDBAddress>DB address:</LDBAddress>
+  <LDBSchema>Schema:</LDBSchema>
+  <LDBPort>DB port:</LDBPort>
+  <LDBName>DB name:</LDBName>
+  <LDBNameOracle>TNS Name:</LDBNameOracle>
+  <LDBLogin>Login super-user:</LDBLogin>
+  <LDBPasswd>Password super-user:</LDBPasswd>
+  <ConnectButton>Connect to the DB</ConnectButton>
+  <DisconnectButton>Disconnect from the DB</DisconnectButton>
+  <DBGroupBox> Step 1: Create a database for IM-History </DBGroupBox>
+  <LIMDBName>Database name to store the history:</LIMDBName>
+  <CreateDBButton>Create a database</CreateDBButton>
+  <UserGroupBox> Step 2: Create a user in the database for IM-History </UserGroupBox>
+  <LUserName>Login:</LUserName>
+  <LUserPaswd>Password:</LUserPaswd>
+  <CreateUserButton>Create user</CreateUserButton>
+  <DeleteUserButton>Delete user</DeleteUserButton>
+  <TableGroupBox> Step 3: Create the database structure for IM-History </TableGroupBox>
+  <CreateTableDBButton>Create table in DB</CreateTableDBButton>
+  <DeleteTableDBButton>Remove table from the DB</DeleteTableDBButton>
+  <TableGrantGroupBox> Step 4: Assign user rights for IM-History </TableGrantGroupBox>
+  <GrantUserButton>Grant</GrantUserButton>
+  <RevokeUserButton>Revoke</RevokeUserButton>
+  <DeleteAllTable1>All tables are prefix _%s and config table will be deleted. Are you sure?</DeleteAllTable1>
+  <DeleteAllTable2>All tables are prefix _%s will be deleted. Are you sure?</DeleteAllTable2>
+  <DeleteAllTableCaption>Deleting tables</DeleteAllTableCaption>
+  <ClearLogButton>Clear</ClearLogButton>
+  <HelpGroupBox> Help </HelpGroupBox>
+  <LHelpOracle>Attention! Base for storing the history to be created by you in the appropriate circuit Oracle.</LHelpOracle>
+  <LHelpSQLite>Attention! Base for storing the history will be created automatically when you click on "Connect to DB"</LHelpSQLite>
+  <LHelpFirebird>Attention! First you need to create a database on the tab "Step 1 - 4" and then run to her connection to create tables and users.</LHelpFirebird>
+  <LHelpEmpty>Empty</LHelpEmpty>
+
+  <ErrCaption>Error</ErrCaption>
+  <ErrDBConnect>Error: Unable to connect to the database.</ErrDBConnect>
+  <ErrSQLQuery>Error SQL query.</ErrSQLQuery>
+  <ErrSQLExecQuery>Error SQLExec query.</ErrSQLExecQuery>
+  <ErrDBParamCheck1>Please enter "DB address"</ErrDBParamCheck1>
+  <ErrDBParamCheck2>Please enter "DB port"</ErrDBParamCheck2>
+  <ErrDBParamCheck3>Please enter "Password"</ErrDBParamCheck3>
+  <ErrDBParamCheck4>Please enter "Login"</ErrDBParamCheck4>
+  <ErrDBParamCheck5>Please enter "DB name"</ErrDBParamCheck5>
+  <ErrDBParamCheck6>Please enter "Schema"</ErrDBParamCheck6>
+  <ErrDBParamCheck7>Please enter "TNS Name"</ErrDBParamCheck7>
+  <ErrDBParamCheck8>Please select DB type</ErrDBParamCheck8>
+  <CreateINIButton>Save the settings for the plugin</CreateINIButton>
+  <SettingsErrSave>Unable to save the settings.</SettingsErrSave>
+  <CreateINIDone>Settings saved in a file DefaultUser.ini</CreateINIDone>
+  <LYesConnect>Connected</LYesConnect>
+  <LNoConnect>Not connected</LNoConnect>
+
+  <ErrRegexprDBName>In the name of the database found invalid characters.</ErrRegexprDBName>
+  <ErrRegexprUserName>In the user name found invalid characters.</ErrRegexprUserName>
+  <DBCreated>Database is successfully created.</DBCreated>
+  <ErrFile>See an error in the file %s</ErrFile>
+  <ErrCreateDB>Failed to create the database.</ErrCreateDB>
+  <NoEmptyLogin>User login can not be empty.</NoEmptyLogin>
+  <NoEmptyPassword>The user password can not be empty.</NoEmptyPassword>
+  <ErrCreateTable>Error creating tables.</ErrCreateTable>
+  <ErrDeleteTable>Error remove tables.</ErrDeleteTable>
+  <ErrDeleteSequence>Error remove sequences.</ErrDeleteSequence>
+  <ErrSQLQueryInFile>Error executing query from a file %s</ErrSQLQueryInFile>
+  <ErrCreateTableConfig>Failed to create the table config.</ErrCreateTableConfig>
+  <ErrInsertTableConfig>Error insert data to the table CONFIG. Error executing query from a file sql\config_insert.sql</ErrInsertTableConfig>
+  <ErrCreateTableUnknownDBType>For this database type can not create table.</ErrCreateTableUnknownDBType>
+  <ErrDeleteTableUnknownDBType>For this database type can not delete table.</ErrDeleteTableUnknownDBType>
+  <ErrCreateUserUnknownDBType>For this database type can not create user.</ErrCreateUserUnknownDBType>
+  <ErrDeleteUserUnknownDBType>For this database type can not delete user.</ErrDeleteUserUnknownDBType>
+  <ErrGrantUnknownDBType>For this database type you can not assign the grants.</ErrGrantUnknownDBType>
+  <ErrRevokeUnknownDBType>For this database type you can not revoke the grants.</ErrRevokeUnknownDBType>
+  <CreateTableDone>All tables successfully created.</CreateTableDone>
+  <DeleteTableDone>The tables were successfully removed.</DeleteTableDone>
+  <ErrCreateUser>Failed to create the user.</ErrCreateUser>
+  <CreateUserDone>User was successfully created.</CreateUserDone>
+  <ErrDeleteUser>Failure to remove the user.</ErrDeleteUser>
+  <DeleteUserDone>User was successfully removed.</DeleteUserDone>
+  <ErrGrant>Error assigning permissions.</ErrGrant>
+  <GrantDone>Rights successfully assigned.</GrantDone>
+  <ErrRevoke>Error revocation rights.</ErrRevoke>
+  <RevokeDone>Successfully recall rights.</RevokeDone>
+  <AllowGlobalGrant>WARNING! The user '%s' will be given to global privileges on all databases on this server.</AllowGlobalGrant>
+  <GlobalGrantOption>Global privileges (ALTER TABLE, CREATE TABLE)</GlobalGrantOption>
+  <CBDropConfigTable>Drop 'config' table</CBDropConfigTable>
+  <CopyDefaultINIFile>Copy the file DefaultUser.ini to the directory *historytodb.dll plugin and restart the IM-client.</CopyDefaultINIFile>
+
+  <LangButton>Language</LangButton>
+  <LangRussian>Russian</LangRussian>
+  <LangEnglish>English</LangEnglish>
+  <AboutButton>About</AboutButton>
+
+  <AboutFormCaption>About</AboutFormCaption>
+  <Version>Version: </Version>
+  <License>License: </License>
+  <CloseButton>Close</CloseButton>
+
+  <ERR_DB_CONNECT>[%s] Error: Unable to connect to database. Error: %s</ERR_DB_CONNECT>
+  <ERR_NO_DB_CONNECTED>[%s] Database connection is not established.</ERR_NO_DB_CONNECTED>
+  <ERR_SQL_QUERY>[%s] Error SQL query: %s</ERR_SQL_QUERY>
+</strings>

@@ -1,0 +1,105 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<strings>
+  <Step0>Шаг 0</Step0>
+  <Step14>Шаг 1 - 4</Step14>
+  <SQLMonitor>Монитор SQL операций</SQLMonitor>
+  <RootGroupBox> Настройки соединения </RootGroupBox>
+  <LDBType>Тип БД:</LDBType>
+  <LDBAddress>Адрес сервера БД:</LDBAddress>
+  <LDBSchema>Схема:</LDBSchema>
+  <LDBPort>Порт сервера БД:</LDBPort>
+  <LDBName>Имя БД:</LDBName>
+  <LDBNameOracle>TNS:</LDBNameOracle>
+  <LDBLogin>Логин супер-пользов.:</LDBLogin>
+  <LDBPasswd>Пароль супер-пользов.:</LDBPasswd>
+  <ConnectButton>Подключиться к БД</ConnectButton>
+  <DisconnectButton>Отключиться от БД</DisconnectButton>
+  <DBGroupBox> Шаг 1: Создание БД для IM-History </DBGroupBox>
+  <LIMDBName>Имя БД для хранения истории:</LIMDBName>
+  <CreateDBButton>Создать БД</CreateDBButton>
+  <UserGroupBox> Шаг 2: Создание пользователей в БД для IM-History </UserGroupBox>
+  <LUserName>Логин:</LUserName>
+  <LUserPaswd>Пароль:</LUserPaswd>
+  <CreateUserButton>Создать пользователя</CreateUserButton>
+  <DeleteUserButton>Удалить пользователя</DeleteUserButton>
+  <TableGroupBox> Шаг 3: Создание структуры БД для IM-History </TableGroupBox>
+  <CreateTableDBButton>Создать таблицы в БД</CreateTableDBButton>
+  <DeleteTableDBButton>Удалить таблицы из БД</DeleteTableDBButton>
+  <TableGrantGroupBox> Шаг 4: Назначение прав пользователю для IM-History </TableGrantGroupBox>
+  <GrantUserButton>Назначить права</GrantUserButton>
+  <RevokeUserButton>Отозвать права</RevokeUserButton>
+  <DeleteAllTable1>Все таблицы с префиксом _%s и таблица config будут удалены. Вы уверены?</DeleteAllTable1>
+  <DeleteAllTable2>Все таблицы с префиксом _%s будут удалены. Вы уверены?</DeleteAllTable2>
+  <DeleteAllTableCaption>Удаление таблиц</DeleteAllTableCaption>
+  <ClearLogButton>Очистить</ClearLogButton>
+  <HelpGroupBox> Подсказка </HelpGroupBox>
+  <LHelpOracle>Внимание! База для хранения истории должна быть создана Вами в соответствующей схеме Oracle.</LHelpOracle>
+  <LHelpSQLite>Внимание! База для хранения истории будет создана автоматически при нажатии на кнопку "Подключиться к БД"</LHelpSQLite>
+  <LHelpFirebird>Внимание! Вначале Вам нужно создать БД на вкладке "Шаг 1 - 4" и только потом выполнить к ней подключение для создания таблиц и пользователей.</LHelpFirebird>
+  <LHelpEmpty>Empty</LHelpEmpty>
+
+  <ErrCaption>Ошибка</ErrCaption>
+  <ErrDBConnect>Ошибка: Не удается установить подключение к БД.</ErrDBConnect>
+  <ErrSQLQuery>Ошибка выполнения SQL запроса.</ErrSQLQuery>
+  <ErrSQLExecQuery>Ошибка выполнения SQLExec запроса.</ErrSQLExecQuery>
+  <ErrDBParamCheck1>Не заполнено поле "Адрес сервера БД"</ErrDBParamCheck1>
+  <ErrDBParamCheck2>Не заполнено поле "Порт сервера БД"</ErrDBParamCheck2>
+  <ErrDBParamCheck3>Не заполнено поле "Пароль супер-пользов."</ErrDBParamCheck3>
+  <ErrDBParamCheck4>Не заполнено поле "Логин супер-пользов."</ErrDBParamCheck4>
+  <ErrDBParamCheck5>Не заполнено поле "Имя БД"</ErrDBParamCheck5>
+  <ErrDBParamCheck6>Не заполнено поле "Схема"</ErrDBParamCheck6>
+  <ErrDBParamCheck7>Не заполнено поле "TNS"</ErrDBParamCheck7>
+  <ErrDBParamCheck8>Не выбран Тип БД</ErrDBParamCheck8>
+  <CreateINIButton>Сохранить настройки для плагина</CreateINIButton>
+  <SettingsErrSave>Невозможно сохранить введенные настройки.</SettingsErrSave>
+  <CreateINIDone>Настройки сохранены в файл DefaultUser.ini</CreateINIDone>
+  <LYesConnect>Подключены к БД</LYesConnect>
+  <LNoConnect>Не подключены к БД</LNoConnect>
+  <ErrRegexprDBName>В имени БД найдены запрещенные символы.</ErrRegexprDBName>
+  <ErrRegexprUserName>В имени пользователя найдены запрещенные символы.</ErrRegexprUserName>
+  <DBCreated>БД успешно создана.</DBCreated>
+  <ErrFile>Смотрите ошибки в файле %s</ErrFile>
+  <ErrCreateDB>Ошибка создания БД.</ErrCreateDB>
+  <NoEmptyLogin>Логин пользователя не может быть пустым.</NoEmptyLogin>
+  <NoEmptyPassword>Пароль пользователя не может быть пустым.</NoEmptyPassword>
+  <ErrCreateTable>Ошибка создания таблиц.</ErrCreateTable>
+  <ErrDeleteTable>Ошибка удаления таблиц.</ErrDeleteTable>
+  <ErrDeleteSequence>Ошибка удаления последовательностей.</ErrDeleteSequence>
+  <ErrSQLQueryInFile>Ошибка выполнения запросов из файла %s</ErrSQLQueryInFile>
+  <ErrCreateTableConfig>Ошибка создания таблицы config.</ErrCreateTableConfig>
+  <ErrInsertTableConfig>Ошибка заполнения таблицы config. Ошибка выполнения запросов из файла sql\config_insert.sql</ErrInsertTableConfig>
+  <ErrCreateTableUnknownDBType>Для данного типа БД программа не может создать таблицы.</ErrCreateTableUnknownDBType>
+  <ErrDeleteTableUnknownDBType>Для данного типа БД программа не может удалить таблицы.</ErrDeleteTableUnknownDBType>
+  <ErrCreateUserUnknownDBType>Для данного типа БД программа не может создать пользователя.</ErrCreateUserUnknownDBType>
+  <ErrDeleteUserUnknownDBType>Для данного типа БД программа не может удалить пользователя.</ErrDeleteUserUnknownDBType>
+  <ErrGrantUnknownDBType>Для данного типа БД программа не может назначить права.</ErrGrantUnknownDBType>
+  <ErrRevokeUnknownDBType>Для данного типа БД программа не может отзывать права.</ErrRevokeUnknownDBType>
+  <CreateTableDone>Все таблицы успешно созданы.</CreateTableDone>
+  <DeleteTableDone>Таблицы успешно удалены.</DeleteTableDone>
+  <ErrCreateUser>Ошибка создания пользователя.</ErrCreateUser>
+  <CreateUserDone>Пользователь успешно создан.</CreateUserDone>
+  <ErrDeleteUser>Ошибка удаления пользователя.</ErrDeleteUser>
+  <DeleteUserDone>Пользователь успешно удален.</DeleteUserDone>
+  <ErrGrant>Ошибка назначения прав.</ErrGrant>
+  <GrantDone>Права успешно назначены.</GrantDone>
+  <ErrRevoke>Ошибка отзыва прав.</ErrRevoke>
+  <RevokeDone>Права успешно отзываны.</RevokeDone>
+  <AllowGlobalGrant>ВНИМАНИЕ! Пользователю '%s' будут выданы глобальные привилегии на все БД на данном сервере.</AllowGlobalGrant>
+  <GlobalGrantOption>Глобальные привилегии (ALTER TABLE, CREATE TABLE)</GlobalGrantOption>
+  <CBDropConfigTable>Удалить таблицу config</CBDropConfigTable>
+  <CopyDefaultINIFile>Скопируйте файл DefaultUser.ini в каталог с плагином *historytodb.dll и перезапустите IM-клиент.</CopyDefaultINIFile>
+
+  <LangButton>Язык программы</LangButton>
+  <LangRussian>Русский</LangRussian>
+  <LangEnglish>Английский</LangEnglish>
+  <AboutButton>О программе</AboutButton>
+
+  <AboutFormCaption>О программе</AboutFormCaption>
+  <Version>Версия: </Version>
+  <License>Лицензия: </License>
+  <CloseButton>Закрыть</CloseButton>
+
+  <ERR_DB_CONNECT>[%s] Ошибка: Не удаётся подключиться к БД. Ошибка: %s</ERR_DB_CONNECT>
+  <ERR_NO_DB_CONNECTED>[%s] Соединение с БД не установлено.</ERR_NO_DB_CONNECTED>
+  <ERR_SQL_QUERY>[%s] Ошибка SQL запроса: %s</ERR_SQL_QUERY>
+</strings>
