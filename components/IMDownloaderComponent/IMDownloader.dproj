@@ -1,11 +1,11 @@
 ﻿	<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 		<PropertyGroup>
-			<ProjectGuid>{D894A190-1999-4E07-BA04-AACAF6E7AE8F}</ProjectGuid>
-			<MainSource>HistoryToDBSync.dpr</MainSource>
+			<ProjectGuid>{BF7E5A55-CA0C-4DDD-B399-17FA1A2FF83F}</ProjectGuid>
+			<MainSource>IMDownloader.dpk</MainSource>
 			<Base>True</Base>
 			<Config Condition="'$(Config)'==''">Release</Config>
 			<Platform>Win32</Platform>
-			<AppType>Application</AppType>
+			<AppType>Package</AppType>
 			<FrameworkType>VCL</FrameworkType>
 			<DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
 			<ProjectVersion>12.3</ProjectVersion>
@@ -24,47 +24,32 @@
 			<Base>true</Base>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Base)'!=''">
-			<DCC_E>false</DCC_E>
-			<DCC_ImageBase>00400000</DCC_ImageBase>
-			<DCC_UnitAlias>WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;WinTypes=Windows;WinProcs=Windows;$(DCC_UnitAlias)</DCC_UnitAlias>
-			<DCC_F>false</DCC_F>
-			<DCC_S>false</DCC_S>
-			<DCC_N>false</DCC_N>
-			<DCC_K>false</DCC_K>
-		</PropertyGroup>
-		<PropertyGroup Condition="'$(Cfg_1)'!=''">
-			<DCC_DebugInformation>false</DCC_DebugInformation>
-			<DCC_IOChecking>false</DCC_IOChecking>
-			<DCC_AssertionsAtRuntime>false</DCC_AssertionsAtRuntime>
 			<DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>
+			<DCC_DebugInformation>false</DCC_DebugInformation>
 			<DCC_Define>RELEASE;$(DCC_Define)</DCC_Define>
+			<DCC_ImageBase>00400000</DCC_ImageBase>
+			<GenDll>true</GenDll>
+			<DCC_E>false</DCC_E>
+			<DCC_S>false</DCC_S>
 			<DCC_SymbolReferenceInfo>0</DCC_SymbolReferenceInfo>
+			<DCC_N>false</DCC_N>
+			<GenPackage>true</GenPackage>
+			<DCC_K>false</DCC_K>
+			<DCC_F>false</DCC_F>
+			<DCC_UnitAlias>WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;WinTypes=Windows;WinProcs=Windows;$(DCC_UnitAlias)</DCC_UnitAlias>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Cfg_2)'!=''">
-			<DCC_DebugDCUs>true</DCC_DebugDCUs>
-			<DCC_RangeChecking>true</DCC_RangeChecking>
-			<DCC_IntegerOverflowCheck>true</DCC_IntegerOverflowCheck>
-			<DCC_DebugInfoInExe>true</DCC_DebugInfoInExe>
 			<DCC_Define>DEBUG;$(DCC_Define)</DCC_Define>
+			<DCC_GenerateStackFrames>true</DCC_GenerateStackFrames>
 			<DCC_Optimize>false</DCC_Optimize>
 		</PropertyGroup>
 		<ItemGroup>
-			<DelphiCompile Include="HistoryToDBSync.dpr">
+			<DelphiCompile Include="IMDownloader.dpk">
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
-			<DCCReference Include="Main.pas">
-				<Form>MainSyncForm</Form>
-			</DCCReference>
-			<DCCReference Include="Global.pas"/>
-			<DCCReference Include="About.pas">
-				<Form>AboutForm</Form>
-			</DCCReference>
-			<DCCReference Include="Log.pas">
-				<Form>LogForm</Form>
-			</DCCReference>
-			<DCCReference Include="KeyPasswd.pas">
-				<Form>KeyPasswdForm</Form>
-			</DCCReference>
+			<DCCReference Include="rtl.dcp"/>
+			<DCCReference Include="vcl.dcp"/>
+			<DCCReference Include="uIMDownloader.pas"/>
 			<BuildConfiguration Include="Debug">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>
@@ -81,19 +66,19 @@
 		<Import Condition="Exists('$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj')" Project="$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj"/>
 		<ProjectExtensions>
 			<Borland.Personality>Delphi.Personality.12</Borland.Personality>
-			<Borland.ProjectType>VCLApplication</Borland.ProjectType>
+			<Borland.ProjectType>Package</Borland.ProjectType>
 			<BorlandProject>
 				<Delphi.Personality>
 					<Source>
-						<Source Name="MainSource">HistoryToDBSync.dpr</Source>
+						<Source Name="MainSource">IMDownloader.dpk</Source>
 					</Source>
 					<VersionInfo>
 						<VersionInfo Name="IncludeVerInfo">True</VersionInfo>
-						<VersionInfo Name="AutoIncBuild">True</VersionInfo>
-						<VersionInfo Name="MajorVer">2</VersionInfo>
-						<VersionInfo Name="MinorVer">4</VersionInfo>
+						<VersionInfo Name="AutoIncBuild">False</VersionInfo>
+						<VersionInfo Name="MajorVer">1</VersionInfo>
+						<VersionInfo Name="MinorVer">0</VersionInfo>
 						<VersionInfo Name="Release">0</VersionInfo>
-						<VersionInfo Name="Build">13</VersionInfo>
+						<VersionInfo Name="Build">4</VersionInfo>
 						<VersionInfo Name="Debug">False</VersionInfo>
 						<VersionInfo Name="PreRelease">False</VersionInfo>
 						<VersionInfo Name="Special">False</VersionInfo>
@@ -103,20 +88,25 @@
 						<VersionInfo Name="CodePage">1251</VersionInfo>
 					</VersionInfo>
 					<VersionInfoKeys>
-						<VersionInfoKeys Name="CompanyName">http://www.im-history.ru</VersionInfoKeys>
-						<VersionInfoKeys Name="FileDescription">HistoryToDBSync</VersionInfoKeys>
-						<VersionInfoKeys Name="FileVersion">2.4.0.13</VersionInfoKeys>
-						<VersionInfoKeys Name="InternalName">HistoryToDBSync</VersionInfoKeys>
-						<VersionInfoKeys Name="LegalCopyright">Michael Grigorev</VersionInfoKeys>
-						<VersionInfoKeys Name="LegalTrademarks">http://www.im-history.ru</VersionInfoKeys>
-						<VersionInfoKeys Name="OriginalFilename">HistoryToDBSync.exe</VersionInfoKeys>
-						<VersionInfoKeys Name="ProductName">HistoryToDBSync</VersionInfoKeys>
-						<VersionInfoKeys Name="ProductVersion">2.4.0.0</VersionInfoKeys>
-						<VersionInfoKeys Name="Comments">http://www.im-history.ru</VersionInfoKeys>
+						<VersionInfoKeys Name="CompanyName"/>
+						<VersionInfoKeys Name="FileDescription"/>
+						<VersionInfoKeys Name="FileVersion">1.0.0.4</VersionInfoKeys>
+						<VersionInfoKeys Name="InternalName"/>
+						<VersionInfoKeys Name="LegalCopyright"/>
+						<VersionInfoKeys Name="LegalTrademarks"/>
+						<VersionInfoKeys Name="OriginalFilename"/>
+						<VersionInfoKeys Name="ProductName"/>
+						<VersionInfoKeys Name="ProductVersion">1.0.0.0</VersionInfoKeys>
+						<VersionInfoKeys Name="Comments"/>
 					</VersionInfoKeys>
-					<Parameters>
-						<Parameters Name="LoadAllSymbols">False</Parameters>
-					</Parameters>
+					<Excluded_Packages>
+						<Excluded_Packages Name="C:\Documents and Settings\All Users\Документы\RAD Studio\8.0\Bpl\JvBDEDesign150.bpl">JVCL BDE Components</Excluded_Packages>
+						<Excluded_Packages Name="C:\Documents and Settings\All Users\Документы\RAD Studio\8.0\Bpl\JvGlobusDesign150.bpl">JVCL Globus Components</Excluded_Packages>
+						<Excluded_Packages Name="$(BDSBIN)\bcboffice2k150.bpl">Embarcadero C++Builder Office 2000 Servers Package</Excluded_Packages>
+						<Excluded_Packages Name="$(BDSBIN)\bcbofficexp150.bpl">Embarcadero C++Builder Office XP Servers Package</Excluded_Packages>
+						<Excluded_Packages Name="$(BDSBIN)\dcloffice2k150.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
+						<Excluded_Packages Name="$(BDSBIN)\dclofficexp150.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
+					</Excluded_Packages>
 				</Delphi.Personality>
 				<Platforms>
 					<Platform value="Win32">True</Platform>
