@@ -1,0 +1,183 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="Author" content="Kambiz R. Khojasteh" />
+<style type="text/css">
+<!--
+body, td, th {
+	font-family: Verdana, Arial, sans-serif;
+	font-size: 10pt;
+}
+a {
+	text-decoration: none;
+	color: #800000;
+}
+a:hover {
+	border-bottom: 1px solid #ff0000;
+}
+.header {
+	color: #ffffff;
+	background-color: #660000;
+	font-size: 24pt;
+	font-weight: bold;
+	padding: 0.5em 0;
+	text-align: center;
+}
+.tags {
+	margin: 0;
+	padding: 0;
+	height: 2em;
+}
+.tags li {
+	color: #ffffff;
+	background-color: #330000;
+	margin: 2px 4px 2px 0;
+	float: left;
+	font-weight: bold;
+	display: block;
+	padding: 0.25em 1em;
+	white-space: nowrap;
+	text-align: center;
+}
+.note {
+	color: #ff0000;
+}
+h3 {
+	clear: both;
+	margin: 1.5em 0 0;
+	padding-bottom: 0.25em;
+	border-bottom: 1px solid #eeeeee;
+}
+li {
+	margin-bottom: 1em;
+}
+sup {
+	font-size: 0.8em;
+}
+-->
+</style>
+<title>ReadMe</title>
+</head>
+<body>
+<div class="header">TTextFader v1.24</div>
+<p>Copyright&copy; <a href="mailto:kambiz@delphiarea.com">Kambiz R. Khojasteh</a>. All rights reserved.<br />
+Get future component updates from <a href="http://www.delphiarea.com">http://www.delphiarea.com</a>.</p>
+<ul class="tags"> 
+  <li>Delphi 3</li>
+  <li>Delphi 4</li>
+  <li>Delphi 5</li>
+  <li>Delphi 6</li>
+  <li>Delphi 7</li>
+  <li>Delphi 2005</li>
+  <li>Delphi 2006</li>
+  <li>Delphi 2007</li>
+  <li>Delphi 2009</li>
+  <li>Delphi 2010</li>
+</ul>
+<h3 id="description">DESCRIPTION</h3>
+  <p>If you would like to display text containing multiple lines on the screen and there is not enough room, TTextFader is your solution. This component shows lines one by one each fading into the next.</p>
+<h3 id="properties">KEY PROPERTIES</h3>
+<ul>
+  <li><strong>Active: Boolean</strong><br />Toggles text fading on/off.</li>
+  <li><strong>Alignment: TAlignment<br />TAlignment = (taLeftJustify, taRightJustify, taCenter)</strong><br />Specifies how the text is aligned within the client area of the control.</li>
+  <li><strong>Background: TPicture</strong><br />Contains the background image of the control.</li>
+  <li><strong>BackgroundMode: TBackgroundMode<br />TBackgroundMode = (bmNone, bmTiled, bmStretched, bmCentered)</strong><br />Determines how the control displays the background image on its client area.
+  	<blockquote>
+    <table width="90%" border="0" cellspacing="5" cellpadding="0" align="center">
+      <tr> 
+        <td width="15%" valign="top"><strong>bmNone</strong></td>
+        <td width="20">&nbsp;</td>
+        <td>Ignores the background image.</td>
+      </tr>
+      <tr> 
+        <td width="15%" valign="top"><strong>bmTiled</strong></td>
+        <td width="20">&nbsp;</td>
+        <td>Fills the client area of the control by the background image as tiled.</td>
+      </tr>
+      <tr> 
+        <td width="15%" valign="top"><strong>bmStretched</strong></td>
+        <td width="20">&nbsp;</td>
+        <td>Fills the client area of the control by stretching (or shrinking) the background image.</td>
+      </tr>
+      <tr> 
+        <td width="15%" valign="top"><strong>bmCentered</strong></td>
+        <td width="20">&nbsp;</td>
+        <td>Draws the background image on the center of the control's client area.</td>
+      </tr>
+    </table>
+    </blockquote>
+  </li>
+  <li><strong>FadeDelay: Word</strong><br />Determines the amount of delay in milliseconds before showing the next frame.</li>
+  <li><strong>FadeStep: 1..100</strong><br />Determines the maximum amount of transparency difference (in percent) between to consequent frames.</li>
+  <li><strong>LineDelay: Word</strong><br />Determines the amount of delay in milliseconds before showing the next line of text.</li>
+  <li><strong>LineIndex: Integer</strong><br />Determines the index of the next line of text that will be displayed.</li>
+  <li><strong>Lines: TStrings</strong><br />Contains the lines of text. You can use the following escape characters inside the text:
+  	<blockquote>
+    <table width="90%" border="0" cellspacing="5" cellpadding="0" align="center">
+      <tr> 
+        <td nowrap="nowrap" width="15%" valign="top"><strong>\\</strong></td>
+        <td width="20">&nbsp;</td>
+        <td>A single backslash</td>
+      </tr>
+      <tr> 
+        <td nowrap="nowrap" width="15%" valign="top"><strong>\n</strong></td>
+        <td width="20">&nbsp;</td>
+        <td>Line break</td>
+      </tr>
+      <tr> 
+        <td nowrap="nowrap" width="15%" valign="top"><strong>\t</strong></td>
+        <td width="20">&nbsp;</td>
+        <td>Tab space</td>
+      </tr>
+    </table>
+    </blockquote>
+    The escape characters are case sensitive.</li>
+  <li><strong>RepeatCount: TBorderWidth</strong><br />Specifies the number of iterations. When the control shows all lines of text for the number of specified iteration, the <em>Active</em> property sets to False automatically.</li>
+  <li><strong>RepeatedCount: Integer</strong> <sup>(Read-only)</sup><br />Specified the number of times that all the lines has been shown.</li>
+  <li><strong>Transparent: Boolean</strong><br />Specifies whether controls that sit below the control can be seen through it.</li>
+  <li><strong>WordWrap: Boolean</strong><br />Specifies whether the line of text wraps when it is too long for the width of the control.</li>
+</ul>
+<h3 id="methods">KEY METHODS</h3>
+<ul>
+  <li><strong>procedure Reset</strong><br />Clears the control's client area and restart to show the lines from the first line of the text. This method does not change the value of <em>RepeatedCount</em> property.</li>
+</ul>
+<h3 id="events">KEY EVENTS</h3>
+<ul>
+  <li><strong>OnComplete: TNotifyEvent</strong><br />Occurs when the current line of the text has been displayed completely.</li>
+  <li><strong>OnMouseEnter: TNotifyEvent</strong><br />Occurs when the mouse pointer moves over the control.</li>
+  <li><strong>OnMouseLeave: TNotifyEvent</strong><br />Occurs when the mouse pointer moves off from over the control.</li>
+</ul>
+<h3 id="global_routines">GLOBAL ROUTINES</h3>
+<ul>
+  <li><strong>procedure DrawTiled(Canvas: TCanvas; Rect: TRect; Graphic: TGraphic)</strong><br />Convers the surface of a rectangle with tiled images of a specified graphic.</li>
+  <li><strong>procedure DrawTransparent(dstBitmap, srcBitmap: TBitmap; Transparency: TPercent)</strong><br />Draws the srcBitmap over the dstBitmap with the specified amount of transparency in percent. Two bitmaps must have same dimensions.</li>
+</ul>
+<h3 id="history">HISTORY</h3>
+<ul>
+  <li><strong>1.24 (November 18, 2008)</strong><br />- Supports for Delphi 2009 added.</li>
+  <li><strong>1.23 (April 7, 2006)</strong><br />- Added <em>OnMouseEnter</em> and <em>OnMouseLeave</em> events.</li>
+  <li><strong>1.22 (April 7, 2002)</strong><br />- Now, each line of the text can have line breaks and tab spaces.</li>
+  <li><strong>1.21 (March 8, 2002)</strong><br />- The transparency bug is fixed.</li>
+  <li><strong>1.20 (February 4, 2001)</strong><br />- The memory leak is fixed.</li>
+  <li><strong>1.10 (July 28, 2000)</strong><br />- I forgot to track changes in this release, sorry.</li>
+  <li><strong>1.00 (May 30, 2000)</strong><br />- Initial release.</li>
+</ul>
+<h3 id="acknowledgment">ACKNOWLEDGMENT</h3>
+  <p>Special thanks to:</p>
+  <ul>
+    <li>Chris Ihlenfeld &lt;<a href="mailto:info@digital-concepts.net">info@digital-concepts.net</a>&gt;</li>
+    <li>Thomas Reimann &lt;<a href="mailto:thomas.reimann@outertech.com">thomas.reimann@outertech.com</a>&gt;</li>
+    <li>Athmane Yous &lt;<a href="mailto:yousdekabylie@yahoo.fr">YousDeKabylie@yahoo.fr</a>&gt;</li>
+  </ul>
+<h3 id="license">LICENSE</h3>
+  <p>TTextFader component is freeware. You may copy component's files AS LONG AS YOU COPY ALL OF THEM. If you want to change the source code in order to improve the component's features, performance, etc. please send me the new source code so that I can have a look at it. The changed source code should contain descriptions what you have changed, and of course your name. The only thing you MAY NOT CHANGE is the ORIGINAL COPYRIGHT INFORMATION.</p>
+<h3 id="disclaimer">DISCLAIMER</h3>
+  <p>TTextFader is provided &quot;AS IS&quot; without any warranty of any kind, either express or implied. The entire risk as to the quality and performance of the software is with you. The author is NOT liable for any DAMAGES resulting from the use and misuse of the component, especially he is NOT liable for DAMAGES that were caused BY ANY VERSION WHICH HAS NOT BEEN PROGRAMMED BY THE AUTHOR HIMSELF.</p>
+<table width="100%" border="0" cellspacing="0" cellpadding="0">
+  <tr> 
+    <td width="100%"><hr noshade="noshade" /></td>
+    <td nowrap="nowrap">&nbsp;<sup style="font-size: 6pt;">END OF DOCUMENT</sup></td>
+  </tr>
+</table>
+</body>
+</html>
