@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, uIMDownLoader, uMD5, StdCtrls, ToolWin, ComCtrls, Menus;
+  Dialogs, uIMDownLoader, StdCtrls, ToolWin, ComCtrls, Menus;
 
 type
   TMainForm = class(TForm)
@@ -33,6 +33,8 @@ type
     procedure TBViewClick(Sender: TObject);
     procedure IMDownloader_DemoDownloading(Sender: TObject; AcceptedSize, MaxSize: Cardinal);
     procedure IMDownloader_DemoHeaders(Sender: TObject; Headers: string);
+    procedure IMDownloader_DemoMD5Checked(Sender: TObject; MD5Correct,
+      SizeCorrect: Boolean; MD5Str: string);
   private
     { Private declarations }
   public
@@ -43,8 +45,8 @@ var
   MainForm: TMainForm;
 
 const
-  //URL = 'http://im-history.ru/get.php?file=HistoryToDBCreateDB';
-  URL = 'http://im-history.ru/get.php?file=HistoryToDB-Update';
+  //uURL = 'http://im-history.ru/update/get.php?file=HistoryToDBImport';
+  uURL = 'http://im-history.ru/update/get.php?file=HistoryToDB-Update';
 
 implementation
 
@@ -52,7 +54,7 @@ implementation
 
 procedure TMainForm.FormShow(Sender: TObject);
 begin
-  Edit1.Text := URL;
+  Edit1.Text := uURL;
 end;
 
 procedure TMainForm.IMDownloader_DemoAccepted(Sender: TObject);
@@ -65,7 +67,7 @@ begin
   StatusBar1.SimpleText :=
     'Скачивание успешно завершено. Всего получено данных в байтах: ' + IntToStr
     (IMDownloader_Demo.AcceptedSize);
-  RichEdit1.Lines.Append('MD5 файла в памяти: '+MD5DigestToStr(MD5Stream(IMDownloader_Demo.OutStream)));
+  //RichEdit1.Lines.Append('MD5 файла в памяти: '+MD5DigestToStr(MD5Stream(IMDownloader_Demo.OutStream)));
 end;
 
 procedure TMainForm.IMDownloader_DemoBreak(Sender: TObject);
@@ -115,6 +117,19 @@ begin
   RichEdit1.Lines.Text := Headers;
 end;
 
+procedure TMainForm.IMDownloader_DemoMD5Checked(Sender: TObject; MD5Correct,
+  SizeCorrect: Boolean; MD5Str: string);
+begin
+  if MD5Correct then
+    RichEdit1.Lines.Append('Контрольная сумма MD5 = '+MD5Str+' - ВЕРНА!')
+  else
+    RichEdit1.Lines.Append('Контрольная сумма MD5 = '+MD5Str+' - НЕ ВЕРНА!');
+  if SizeCorrect then
+    RichEdit1.Lines.Append('Размер файла = '+IntToStr(IMDownloader_Demo.AcceptedSize)+' - ВЕРНЫЙ!')
+  else
+    RichEdit1.Lines.Append('Размер файла = '+IntToStr(IMDownloader_Demo.AcceptedSize)+' - НЕ ВЕРНЫЙ!');
+end;
+
 procedure TMainForm.IMDownloader_DemoStartDownload(Sender: TObject);
 begin
   TBDownload.Visible := false;
@@ -131,7 +146,7 @@ end;
 
 procedure TMainForm.SaveToFileClick(Sender: TObject);
 begin
-  if Edit1.Text = URL then
+  if Edit1.Text = uURL then
     SaveDialog1.FileName := 'HistoryToDBCreateDB.rar';
   if SaveDialog1.Execute then
     IMDownloader_Demo.OutStream.SaveToFile(SaveDialog1.FileName);
@@ -141,8 +156,8 @@ procedure TMainForm.TBDownloadClick(Sender: TObject);
 begin
   IMDownloader_Demo.URL := Edit1.Text;
   //IMDownloader_Demo.Proxy := '192.168.42.240:1522';
-  //IMDownloader_Demo.Proxy := '172.29.72.168:8080';
-  IMDownloader_Demo.DownLoad;
+  IMDownloader_Demo.Proxy := '172.29.72.168:8080';
+  IMDownloader_Demo.Download;
 end;
 
 procedure TMainForm.TBStopDownloadClick(Sender: TObject);

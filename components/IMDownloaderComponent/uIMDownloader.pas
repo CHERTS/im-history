@@ -2,7 +2,7 @@ unit uIMDownloader;
 
 interface
 
-uses Classes, WinInet, SysUtils, Dialogs, Windows, Forms;
+uses Classes, WinInet, SysUtils, Dialogs, Windows, Forms, uMD5;
 
 const
  Accept = 'Accept: */*' + sLineBreak;
@@ -18,6 +18,7 @@ type
   TErrorEvent = procedure(Sender: TObject; E: TIMDownloadError) of object;
   TDownloadingEvent = procedure(Sender: TObject; AcceptedSize, MaxSize: Cardinal) of object;
   THeadersEvent = procedure(Sender: TObject; Headers: String) of object;
+  TMD5Event = procedure(Sender: TObject; MD5Correct, SizeCorrect: Boolean; MD5Str: String) of object;
 
   TIMDownloadThread = class(TThread)
   private
@@ -36,11 +37,16 @@ type
     AcceptedSize: Cardinal;
     AllSize: Cardinal;
     Headers: String;
+    MD5Str: String;
+    MD5Correct: Boolean;
+    SizeCorrect: Boolean;
+    fMD5: TMD5Event;
     procedure toError;
     procedure toHeaders;
     procedure toDownloading;
     procedure toAccepted;
     procedure toBreak;
+    procedure toMD5;
     procedure Complete;
     function ErrorResult(E: Boolean; eType: TIMDownloadError): Boolean;
     function GetQueryInfo(hRequest: Pointer; Flag: Integer): String;
@@ -58,6 +64,7 @@ type
     property OnBreak: TNotifyEvent read fBreak write fBreak;
     property OnDownloading: TDownloadingEvent read fDownloading write fDownloading;
     property OnHeaders: THeadersEvent read fHeaders write fHeaders;
+    property OnMD5Checked: TMD5Event read fMD5 write fMD5;
   end;
 
   TIMDownloader = class(TComponent)
@@ -76,20 +83,28 @@ type
     fInDowloading: Boolean;
     fAcceptedSize: Cardinal;
     fMyHeaders: String;
+    fMyMD5Str: String;
+    fMyMD5Correct: Boolean;
+    fMySizeCorrect: Boolean;
     fHeaders: THeadersEvent;
     fDownloading: TDownloadingEvent;
+    fMD5: TMD5Event;
     procedure AcceptDownload(Sender: TObject);
     procedure Break_Download(Sender: TObject);
     procedure Downloading(Sender: TObject; AcceptedSize, MaxSize: Cardinal);
     procedure GetHeaders(Sender: TObject; Headers: String);
+    procedure GetMD5(Sender: TObject; MD5Correct, SizeCorrect: Boolean; MD5Str: String);
     procedure ErrorDownload(Sender: TObject; Error: TIMDownloadError);
   public
-    procedure DownLoad;
+    procedure Download;
     procedure BreakDownload;
     property OutStream: TMemoryStream read fOutStream;
     property InDowloading: Boolean read fInDowloading;
     property AcceptedSize: Cardinal read fAcceptedSize;
     property MyHeaders: String read fMyHeaders;
+    property MyMD5Str: String read fMyMD5Str;
+    property MyMD5Correct: Boolean read fMyMD5Correct;
+    property MySizeCorrect: Boolean read fMySizeCorrect;
   published
     property URL: string read fURL write fURL;
     property Proxy: string read fProxy write fProxy;			  // Список прокси
@@ -99,6 +114,7 @@ type
     property OnError: TErrorEvent read fOnError write fOnError;
     property OnAccepted: TNotifyEvent read fOnAccepted write fOnAccepted;
     property OnHeaders: THeadersEvent read fHeaders write fHeaders;
+    property OnMD5Checked: TMD5Event read fMD5 write fMD5;
     property OnDownloading: TDownloadingEvent read fDownloading write fDownloading;
     property OnStartDownload: TNotifyEvent read fOnStartDownload write fOnStartDownload;
     property OnBreak: TNotifyEvent read fOnBreak write fOnBreak;
@@ -119,6 +135,12 @@ procedure TIMDownloadThread.toHeaders;
 begin
   if Assigned(fHeaders) then
     fHeaders(Self, Headers);
+end;
+
+procedure TIMDownloadThread.toMD5;
+begin
+  if Assigned(fMD5) then
+    fMD5(Self, MD5Correct, SizeCorrect, MD5Str);
 end;
 
 procedure TIMDownloadThread.toDownloading;
@@ -197,6 +219,7 @@ var
   dwBufferLen, dwIndex: DWORD;
   FHost, FScript, SRequest, ARequest: String;
   ProxyReqRes, ProxyReqLen: Cardinal;
+  TempHeaders: String;
 
  function DelHttp(sURL: String): String;
  var
@@ -206,6 +229,94 @@ var
    if HttpPos > 0 then Delete(sURL, HttpPos, 7);
    Result := Copy(sURL, 1, Pos('/', sURL) - 1);
    if Result = '' then Result := sURL;
+ end;
+
+ function ParseHeadersMD5andSize(HeaderStr: String): String;
+ var
+   HeadersStrList: TStringList;
+   I: Integer;
+   Size: String;
+   Ch: Char;
+   ResultMD5Sum, ResultHeaders: String;
+   ResultFileSize: Integer;
+ begin
+   ResultMD5Sum := '00000000000000000000000000000000';
+   ResultFileSize := 0;
+   // Создаем TStringList
+   HeadersStrList := TStringList.Create;
+   HeadersStrList.Clear;
+   HeadersStrList.Text := HeaderStr;
+   HeadersStrList.Delete(HeadersStrList.Count-1); // Последний элемент содержит всегда CRLF
+   if HeadersStrList.Count > 0 then
+   begin
+     for I := 0 to HeadersStrList.Count - 1 do
+     begin
+       // Парсим строку вида
+       // Content-MD5Sum: MD5
+       if pos('content-md5sum', lowercase(HeadersStrList[I])) > 0 then
+       begin
+         ResultMD5Sum := HeadersStrList[I];
+         Delete(ResultMD5Sum, 1, Pos(':', HeadersStrList[I]));
+         Delete(ResultMD5Sum, 1,1);
+       end;
+       // Парсим строку вида
+       // Content-Length: РАЗМЕР
+       if pos('content-length', lowercase(HeadersStrList[i])) > 0 then
+       begin
+         Size := '';
+         for Ch in HeadersStrList[I]do
+           if Ch in ['0'..'9'] then
+             Size := Size + Ch;
+         ResultFileSize := StrToIntDef(Size,-1);
+       end;
+     end;
+     Result := ResultMD5Sum + '|' + IntToStr(ResultFileSize) + '|';
+   end;
+   HeadersStrList.Free;
+ end;
+
+ { Функция разбивает строку S на слова, разделенные символами-разделителями,
+ указанными в строке Sep. Функция возвращает первое найденное слово, при
+ этом из строки S удаляется начальная часть до следующего слова }
+ function Tok(Sep: String; var S: String): String;
+
+   function isoneof(c, s: string): Boolean;
+   var
+     iTmp: integer;
+   begin
+     Result := False;
+     for iTmp := 1 to Length(s) do
+     begin
+       if c = Copy(s, iTmp, 1) then
+       begin
+         Result := True;
+         Exit;
+       end;
+     end;
+   end;
+
+ var
+   c, t: String;
+ begin
+   if s = '' then
+   begin
+     Result := s;
+     Exit;
+   end;
+   c := Copy(s, 1, 1);
+   while isoneof(c, sep) do
+   begin
+     s := Copy(s, 2, Length(s) - 1);
+     c := Copy(s, 1, 1);
+   end;
+   t := '';
+   while (not isoneof(c, sep)) and (s <> '') do
+   begin
+     t := t + c;
+     s := Copy(s, 2, length(s) - 1);
+     c := Copy(s, 1, 1);
+   end;
+   Result := t;
  end;
 
 begin
@@ -298,6 +409,19 @@ begin
       Synchronize(toDownloading);
     until (BytesRead = 0);
     MemoryStream.Position := 0;
+    // Подсчет MD5 и размера файла
+    MD5Str := LowerCase(MD5DigestToStr(MD5Stream(MemoryStream)));
+    TempHeaders := ParseHeadersMD5andSize(Headers);
+    if Tok('|', TempHeaders) = MD5Str then
+      MD5Correct := True
+    else
+      MD5Correct := False;
+    if Tok('|', TempHeaders) = IntToStr(MemoryStream.Size) then
+      SizeCorrect := True
+    else
+      SizeCorrect := False;
+    Synchronize(toMD5);
+    // Очищаем ресурсы
     if Assigned(FRequest) then
       InternetCloseHandle(FRequest);
     if Assigned(FConnect) then
@@ -315,6 +439,9 @@ begin
   Pointer(MemoryStream) := Stream;
   AcceptedSize := 0;
   Headers := '';
+  MD5Str := '';
+  MD5Correct := False;
+  SizeCorrect := False;
   fURL := URL;
   fProxy := Proxy;
   fProxyBypass := ProxyBypass;
@@ -331,6 +458,9 @@ begin
     FreeAndNil(fOutStream);
   fAcceptedSize := 0;
   fMyHeaders := '';
+  fMyMD5Str := '';
+  fMyMD5Correct := False;
+  fMySizeCorrect := False;
   fOutStream := TMemoryStream.Create;
   Downloader := TIMDownloadThread.Create(True, fURL, fProxy, fProxyBypass, fAuthUserName, fAuthPassword, Pointer(fOutStream));
   Downloader.OnAccepted := AcceptDownload;
@@ -338,6 +468,7 @@ begin
   Downloader.OnHeaders := GetHeaders;
   Downloader.OnDownloading := Downloading;
   Downloader.OnBreak := Break_Download;
+  Downloader.OnMD5Checked := GetMD5;
   Downloader.Resume;
   if Assigned(fOnStartDownload) then
     fOnStartDownload(Self);
@@ -372,6 +503,15 @@ begin
   fMyHeaders := Headers;
   if Assigned(fHeaders) then
     fHeaders(Self, Headers);
+end;
+
+procedure TIMDownloader.GetMD5(Sender: TObject; MD5Correct, SizeCorrect: Boolean; MD5Str: String);
+begin
+  fMyMD5Str := MD5Str;
+  fMyMD5Correct := MD5Correct;
+  fMySizeCorrect := SizeCorrect;
+  if Assigned(fMD5) then
+    fMD5(Self, MD5Correct, SizeCorrect, MD5Str);
 end;
 
 procedure TIMDownloader.Downloading(Sender: TObject; AcceptedSize, MaxSize: Cardinal);
