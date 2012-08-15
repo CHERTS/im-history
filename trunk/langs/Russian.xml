@@ -195,6 +195,7 @@
   <SyncWhenExit>Дополнительная синхронизация истории при выходе из IM-клиента</SyncWhenExit>
   <EnableSkypeSupport>Включить поддержку Skype</EnableSkypeSupport>
   <LangButton>Язык программы</LangButton>
+  <Language>Язык программы:</Language>
   <CBWriteDebugLog>Вести расширенный лог работы программы (Debug-режим)</CBWriteDebugLog>
   <ExportAllHistoryButton>Экспортировать историю</ExportAllHistoryButton>
   <ExortFormCaption>Экспорт истории</ExortFormCaption>
@@ -421,5 +422,9 @@
   <ButtonNewKeyPassword>Сменить пароль</ButtonNewKeyPassword>
   <FontCustomColorCaption>Другой цвет...</FontCustomColorCaption>
   <FontDefaultColorCaption>Авто</FontDefaultColorCaption>
+  <GeneralSettings>Общие настройки</GeneralSettings>
+  <ConnectionSettings>Настройки соединения</ConnectionSettings>
+  <Logs>Лог работы</Logs>
+  <SelectDBTypeAndIMClient>Вначале выберите "Тип БД" и "IM-клиент".</SelectDBTypeAndIMClient>
 
 </strings>

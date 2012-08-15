@@ -194,6 +194,7 @@
   <SyncWhenExit>Synchronize history when you close the IM-client</SyncWhenExit>
   <EnableSkypeSupport>Enable support for Skype</EnableSkypeSupport>
   <LangButton>Language</LangButton>
+  <Language>Language:</Language>
   <CBWriteDebugLog>Enable debug logging</CBWriteDebugLog>
   <ExportAllHistoryButton>Export history</ExportAllHistoryButton>
   <ExortFormCaption>Export history</ExortFormCaption>
@@ -420,5 +421,9 @@
   <ButtonNewKeyPassword>Change password</ButtonNewKeyPassword>
   <FontCustomColorCaption>Other Colors...</FontCustomColorCaption>
   <FontDefaultColorCaption>Automatic</FontDefaultColorCaption>
+  <GeneralSettings>General settings</GeneralSettings>
+  <ConnectionSettings>Connection settings</ConnectionSettings>
+  <Logs>Logs</Logs>
+  <SelectDBTypeAndIMClient>Вначале выберите "Тип БД" и "IM-клиент".</SelectDBTypeAndIMClient>
 
 </strings>
