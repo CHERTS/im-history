@@ -752,6 +752,12 @@ begin
         if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура SyncButtonClick: Запуск HistoryToDBInsertThread', 2);
         SyncThread.Execute(Self);
       end;
+    end
+    else
+    begin
+      // Выход из программы по отложенному запросу
+      if CloseRequest then
+        HistoryExitClick(Self);
     end;
   end;
 end;
