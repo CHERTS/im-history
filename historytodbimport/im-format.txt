@@ -1,0 +1,112 @@
+Описание формат истории QIP 2010/Infium/2012 - Файлы *.qhf
+
+В файле вначале идет заголовок (QHFHead), потом идут блоки данных (QHFRecord) друг за другом.
+
+Заголовок - QHFHead (44 байта):
+Смещение         Тип                 Коментарий                   Моя структура
+--------    -------------   ----------------------------------   -------------
+$00         Char[3]         Сигнутура = 'QHF'                    QHFHead.QHFMagic
+$03         Byte            Версия файла истории
+                            0x01 - Неизвестно
+                            0x02 - QIP 2010
+                            0x03 - QIP Infium и выше             QHFHead.QHFMagic
+$04         DWORD           Размер истории = FullSize-8          QHFHead.QHFData
+$08         Byte[10]        Неизвестно                           QHFHead.QHFNull
+$12         Byte[16]        Неизвестно                           QHFHead.QHFNull
+$22         DWORD           Кол. сообщений                       QHFHead.QHFItems1
+$26         DWORD           Кол. сообщений (сверка)              QHFHead.QHFItems2
+$2a         Word            Зарезервировано                      QHFHead.History
+
+Блок данных UIN и Nickname:
+Смещение	    Тип               Коментарий
+--------      -------------     ----------------------------------
+$2c           Word              Размер UIN = UinLen
+$2e           Char[UinLen]      UIN в кодировке UTF-8
+$2e+UinLen    Word              Размер Nickname = NicknameLen
+$2e+UinLen+2  Char[NicknameLen]	Nickname в кодировке UTF-8
+
+Заголовок записи сообщения - QHFRecord (33 байта)
+для версии файла истории = 0x02 - QIP 2010
+Смещение	  Тип                     Коментарий              Моя структура
+--------    -------------     ----------------------------------  -------------
+$00         Word              Сигнутура = 0x01                    QHFRecord.Magic
+$02         DWORD             Размер блока сообщения =
+                              Размер самого сообщения +
+                              + размер QHFRecord - 6              QHFRecord.RecordSize
+$06         Word              Тип поля = 0x01                     QHFRecord.RecordType
+$08         Word              Размер поля = 0x04                  QHFRecord.Indexbc
+$0A         DWORD             Номер сообщения (1,2,3...N)         QHFRecord.RecordIndex
+$0E         Word              Тип поля = 0x02                     QHFRecord.UinBlock1
+$10         Word              Размер поля = 0x04                  QHFRecord.UinBlock2
+$12         DWORD             Дата/время сообщения в UnixTime     QHFRecord.RecordTime
+$16         Word              Тип поля = 0x03                     QHFRecord.FlagBlock1
+$18         Word              Неизвестно = 0x03                   QHFRecord.FlagBlock2
+$1A         Byte              Входящее/Исходящее (0 или 1)        QHFRecord.RecordInOut
+$1B         Word              Тип поля = 0x0f                     QHFRecord.Flag
+$1D         Word              Размер поля = 0x04                  QHFRecord.MsgBlock
+$1F         Word              Размер самого сообщения             QHFRecord.MessageSize
+$21         Byte[MessageSize] Сообщение в кодировке UTF-8
+
+Заголовок записи сообщения - QHFRecord (35 байта)
+для версии файла истории = 0x03 - QIP Infium и выше
+Смещение	  Тип                     Коментарий              Моя структура
+--------    -------------     ----------------------------------  -------------
+$00         Word              Сигнутура = 0x01                    QHFRecord.Magic
+$02         DWORD             Размер блока сообщения =
+                              Размер самого сообщения +
+                              + размер QHFRecord - 6              QHFRecord.RecordSize
+$06         Word              Тип поля = 0x01                     QHFRecord.RecordType
+$08         Word              Размер поля = 0x04                  QHFRecord.Indexbc
+$0A         DWORD             Номер сообщения (1,2,3...N)         QHFRecord.RecordIndex
+$0E         Word              Тип поля = 0x02                     QHFRecord.UinBlock1
+$10         Word              Размер поля = 0x04                  QHFRecord.UinBlock2
+$12         DWORD             Дата/время сообщения в UnixTime     QHFRecord.RecordTime
+$16         Word              Тип поля = 0x03                     QHFRecord.FlagBlock1
+$18         Word              Неизвестно = 0x03                   QHFRecord.FlagBlock2
+$1A         Byte              Входящее/Исходящее (0 или 1)        QHFRecord.RecordInOut
+$1B         Word              Тип поля = 0x01                     QHFRecord.Flag
+$1D         Word              Размер поля = 0x04                  QHFRecord.MsgBlock
+$1F         DWORD             Размер самого сообщения             QHFRecord.MessageSize
+$23         Byte[MessageSize] Сообщение в кодировке UTF-8
+}
+
+{ Описание формат истории RnQ
+
+Вся история идет блоками друг за другом, структура блока такая:
+
+What: Integer;       // Тип блока (4 байта) - HI_event, HI_hashed или HI_cryptMode
+Kind: Byte;          // Тип сообщения (1 байт)
+UIN: Integer;        // UIN (4 байта)
+Time: TDateTime;     // Дата и время (8 байта)
+ExInfoSize: Integer; // Размер поля расш. информации (4 байта), опытным путем выяснил что блок всегда одного размера - 21 байт
+ExInfo:              // Поле расш. информации (ExInfoSize байт)
+MsgSize: Integer;    // Размер тела сообщения (4 байта)
+Msg: RawByteString;  // Само сообщение (MsgSize байт) - сообщение всегда кодируется, в последних версиях RnQ текст сообщений хранится в UTF8
+
+Описание типа THCHUNK для RnQ:
+  поле What (Тип блока)
+    HI_event        = -1;  -
+    HI_hashed       = -2;   |- Взято из исходников R&Q 1105
+    HI_cryptMode    = -3;  -
+  поле Kind (Тип сообщения)
+    EK_null         = 00;
+    EK_msg          = 01;
+    EK_url          = 02;
+    EK_contacts     = 03;
+    EK_file         = 04;
+    EK_authReq      = 05;
+    EK_AddedYou     = 06;
+    EK_oncoming     = 07;
+    EK_offgoing     = 08;
+    EK_auth         = 09;
+    EK_authDenied   = 10;
+    EK_statuschange = 11;
+    EK_automsgreq   = 12;
+    EK_gcard        = 13;
+    EK_automsg      = 14;
+    EK_typingBeg    = 15;
+    EK_typingFin    = 16;
+    EK_XstatusMsg   = 17;
+    EK_Xstatusreq   = 18;
+    EK_last         = 18;
+
