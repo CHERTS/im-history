@@ -358,6 +358,7 @@ object MainForm: TMainForm
     OnError = IMDownloader1Error
     OnAccepted = IMDownloader1Accepted
     OnHeaders = IMDownloader1Headers
+    OnMD5Checked = IMDownloader1MD5Checked
     OnDownloading = IMDownloader1Downloading
     OnStartDownload = IMDownloader1StartDownload
     OnBreak = IMDownloader1Break

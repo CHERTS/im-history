@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls, ComCtrls, XMLIntf, XMLDoc, Global, IniFiles, uIMDownloader, uMD5;
+  Dialogs, StdCtrls, ComCtrls, XMLIntf, XMLDoc, Global, IniFiles, uIMDownloader;
 
 type
   TMainForm = class(TForm)
@@ -70,6 +70,8 @@ type
     procedure CBLangChange(Sender: TObject);
     procedure CBIMClientTypeChange(Sender: TObject);
     procedure CBDBTypeChange(Sender: TObject);
+    procedure IMDownloader1MD5Checked(Sender: TObject; MD5Correct,
+      SizeCorrect: Boolean; MD5Str: string);
   private
     { Private declarations }
     FLanguage : WideString;
@@ -86,6 +88,9 @@ type
     HeaderMD5: String;
     HeaderFileSize: Integer;
     HeaderFileName: String;
+    MD5InMemory: String;
+    IMMD5Correct: Boolean;
+    IMSizeCorrect: Boolean;
     INISavePath: String;
     procedure SetProxySettings;
     property CoreLanguage: WideString read FLanguage;
@@ -110,6 +115,8 @@ var
 begin
   RunAppDone := False;
   TrueHeader := False;
+  IMMD5Correct := False;
+  IMSizeCorrect := False;
   CurrentUpdateStep := 0;
   // Подсказка по параметрам запуска
   if GetSysLang = 'Русский' then
@@ -312,8 +319,8 @@ end;
 
 procedure TMainForm.IMDownloader1Accepted(Sender: TObject);
 var
-  MD5InMemory, SavePath: String;
-  SizeInMemory, MaxSteps: Integer;
+  SavePath: String;
+  MaxSteps: Integer;
 begin
   LStatus.Caption := 'Скачивание успешно завершено.';
   LStatus.Repaint;
@@ -330,15 +337,13 @@ begin
   begin
     LStatus.Caption := 'Подсчет контрольной суммы файла...';
     LStatus.Repaint;
-    MD5InMemory := LowerCase(MD5DigestToStr(MD5Stream(IMDownloader1.OutStream)));
-    SizeInMemory := IMDownloader1.OutStream.Size;
     LogMemo.Lines.Add('MD5 файла в памяти: ' + MD5InMemory);
-    LogMemo.Lines.Add('Размер файла в памяти: ' + IntToStr(SizeInMemory));
-    if (HeaderMD5 = MD5InMemory) and (HeaderFileSize = SizeInMemory) then
+    LogMemo.Lines.Add('Размер файла в памяти: ' + IntToStr(IMDownloader1.OutStream.Size));
+    if IMMD5Correct and IMSizeCorrect then
     begin
-      LStatus.Caption := 'Контрольная сумма подтверждена.';
+      LStatus.Caption := 'Контрольная сумма и размер файла подтверждены.';
       LStatus.Repaint;
-      LogMemo.Lines.Add('Контрольная сумма подтверждена.');
+      LogMemo.Lines.Add('Контрольная сумма и размер файла подтверждены.');
       // Если первый шаг - скачивание INI файла
       if CurrentUpdateStep = 0 then
       begin
@@ -556,6 +561,14 @@ begin
     end;
   end;
   HeadersStrList.Free;
+end;
+
+procedure TMainForm.IMDownloader1MD5Checked(Sender: TObject; MD5Correct,
+  SizeCorrect: Boolean; MD5Str: string);
+begin
+  MD5InMemory := MD5Str;
+  IMMD5Correct := MD5Correct;
+  IMSizeCorrect := SizeCorrect;
 end;
 
 procedure TMainForm.IMDownloader1StartDownload(Sender: TObject);

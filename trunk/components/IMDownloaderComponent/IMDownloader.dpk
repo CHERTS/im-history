@@ -30,6 +30,7 @@ requires
   vcl;
 
 contains
-  uIMDownloader in 'uIMDownloader.pas';
+  uIMDownloader in 'uIMDownloader.pas',
+  uMD5 in 'uMD5.pas';
 
 end.
