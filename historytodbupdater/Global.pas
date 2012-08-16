@@ -14,7 +14,7 @@ interface
 
 uses
   Windows, Forms, Classes, SysUtils, IniFiles, DCPcrypt2, DCPblockciphers, DCPsha1,
-  DCPdes, DCPmd5, TypInfo, Messages, XMLIntf, XMLDoc;
+  DCPdes, DCPmd5, TypInfo, Messages, XMLIntf, XMLDoc, TLHELP32;
 
 type
   TCopyDataType = (cdtString = 0, cdtImage = 1, cdtRecord = 2);
@@ -80,6 +80,11 @@ function Tok(Sep: String; var S: String): String;
 function GetMyFileSize(const Path: String): Integer;
 function SearchMainWindow(MainWindowName: pWideChar): Boolean;
 function StrContactProtoToInt(Proto: AnsiString): Integer;
+function IsProcessRun(ProcessName: String): Boolean;
+function GetProcessID(ExeFileName: String): Cardinal;
+function KillTask(ExeFileName: String): Integer;
+function ProcessTerminate(dwPID: Cardinal): Boolean;
+function ProcCloseEnum(hwnd: THandle; data: Pointer):BOOL;stdcall;
 procedure EncryptInit;
 procedure EncryptFree;
 procedure WriteInLog(LogPath: String; TextString: String; LogType: Integer);
@@ -88,6 +93,7 @@ procedure WriteCustomINI(INIPath, CustomSection, CustomParams, ParamsStr: String
 procedure MakeTransp(winHWND: HWND);
 procedure OnSendMessageToAllComponent(Msg: String);
 procedure IMDelay(Value: Cardinal);
+procedure OnSendMessageToOneComponent(WinName, Msg: String);
 // Для мультиязыковой поддержки
 procedure MsgDie(Caption, Msg: WideString);
 procedure MsgInf(Caption, Msg: WideString);
@@ -616,6 +622,7 @@ end;
              008|0|UserID|UserName|ProtocolType
            для истории чата:
              008|2|ChatName
+  009 - Экстренно закрыть все компоненты плагина.
 }
 procedure OnSendMessageToAllComponent(Msg: String);
 var
@@ -625,6 +632,44 @@ var
 begin
   EncryptMsg := EncryptStr(Msg);
   WinName := 'HistoryToDBViewer for ' + IMClientType;
+  // Ищем окно HistoryToDBViewer и посылаем ему команду
+  HToDB := FindWindow(nil, pChar(WinName));
+  if HToDB <> 0 then
+  begin
+    copyDataStruct.dwData := Integer(cdtString);
+    copyDataStruct.cbData := 2*Length(EncryptMsg);
+    copyDataStruct.lpData := PChar(EncryptMsg);
+    SendMessage(HToDB, WM_COPYDATA, 0, Integer(@copyDataStruct));
+  end;
+  WinName := 'HistoryToDBSync for ' + IMClientType;
+  // Ищем окно HistoryToDBSync и посылаем ему команду
+  HToDB := FindWindow(nil, pChar(WinName));
+  if HToDB <> 0 then
+  begin
+    copyDataStruct.dwData := Integer(cdtString);
+    copyDataStruct.cbData := 2*Length(EncryptMsg);
+    copyDataStruct.lpData := PChar(EncryptMsg);
+    SendMessage(HToDB, WM_COPYDATA, 0, Integer(@copyDataStruct));
+  end;
+  WinName := 'HistoryToDBImport for ' + IMClientType;
+  // Ищем окно HistoryToDBImport и посылаем ему команду
+  HToDB := FindWindow(nil, pChar(WinName));
+  if HToDB <> 0 then
+  begin
+    copyDataStruct.dwData := Integer(cdtString);
+    copyDataStruct.cbData := 2*Length(EncryptMsg);
+    copyDataStruct.lpData := PChar(EncryptMsg);
+    SendMessage(HToDB, WM_COPYDATA, 0, Integer(@copyDataStruct));
+  end;
+end;
+
+procedure OnSendMessageToOneComponent(WinName, Msg: String);
+var
+  HToDB: HWND;
+  copyDataStruct : TCopyDataStruct;
+  EncryptMsg: String;
+begin
+  EncryptMsg := EncryptStr(Msg);
   // Ищем окно HistoryToDBViewer и посылаем ему команду
   HToDB := FindWindow(nil, pChar(WinName));
   if HToDB <> 0 then
@@ -714,6 +759,141 @@ begin
     Application.ProcessMessages;
     N := GetTickCount;
   until (N - F >= (Value mod 10)) or (N < F);
+end;
+
+{ Закрытие программы через WM_QUIT по её PID }
+function ProcCloseEnum(hwnd: THandle; data: Pointer):BOOL;stdcall;
+var
+  Pid: DWORD;
+begin
+ Result := True;
+ GetWindowThreadProcessId(hwnd, pid);
+ if Pid = DWORD(data) then
+ begin
+    PostMessage(hwnd, WM_QUIT, 0, 0);
+ end;
+end;
+
+{ Проверка запуска процесса }
+function IsProcessRun(ProcessName: String): Boolean;
+var
+  Snapshot: THandle;
+  Proc: TProcessEntry32;
+begin
+  Result := False;
+  Snapshot := CreateToolHelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+  if Snapshot = INVALID_HANDLE_VALUE then
+    Exit;
+  Proc.dwSize := SizeOf(TProcessEntry32);
+  if Process32First(Snapshot, Proc) then
+  repeat
+    if Proc.szExeFile = ProcessName then
+    begin
+      Result := True;
+      Break;
+    end;
+  until not Process32Next(Snapshot, Proc);
+  CloseHandle(Snapshot);
+end;
+
+{ Завершение процесса }
+function KillTask(ExeFileName: String): Integer;
+const
+  PROCESS_TERMINATE=$0001;
+var
+  ContinueLoop: BOOL;
+  FSnapshotHandle: THandle;
+  FProcessEntry32: TProcessEntry32;
+begin
+  Result := 0;
+  FSnapshotHandle := CreateToolHelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+  FProcessEntry32.dwSize := Sizeof(FProcessEntry32);
+  ContinueLoop := Process32First(FSnapshotHandle, FProcessEntry32);
+  while Integer(ContinueLoop) <> 0 do
+  begin
+    if ((UpperCase(ExtractFileName(FProcessEntry32.szExeFile)) = UpperCase(ExeFileName))
+     or (UpperCase(FProcessEntry32.szExeFile) = UpperCase(ExeFileName))) then
+      Result := Integer(TerminateProcess(OpenProcess(PROCESS_TERMINATE, BOOL(0),
+                        FProcessEntry32.th32ProcessID), 0));
+    ContinueLoop := Process32Next(FSnapshotHandle, FProcessEntry32);
+  end;
+  CloseHandle(FSnapshotHandle);
+end;
+
+{ Получение ID процесса }
+function GetProcessID(ExeFileName: String): Cardinal;
+var
+  ContinueLoop: BOOL;
+  FSnapshotHandle: THandle;
+  FProcessEntry32: TProcessEntry32;
+begin
+  Result := 0;
+  FSnapshotHandle := CreateToolHelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+  FProcessEntry32.dwSize := Sizeof(FProcessEntry32);
+  ContinueLoop := Process32First(FSnapshotHandle, FProcessEntry32);
+  repeat
+    if ((UpperCase(ExtractFileName(FProcessEntry32.szExeFile)) = UpperCase(ExeFileName))
+       or (UpperCase(FProcessEntry32.szExeFile) = UpperCase(ExeFileName))) then
+    begin
+       Result := FProcessEntry32.th32ProcessID;
+       Break;
+    end;
+    ContinueLoop := Process32Next(FSnapshotHandle, FProcessEntry32);
+  until not ContinueLoop;
+  CloseHandle(FSnapshotHandle);
+end;
+
+// Завершение любых процессов в том числе системных.
+// Включение, приминение и отключения привилегии.
+// Для примера возьмем привилегию отладки приложений 'SeDebugPrivilege'
+// необходимую для завершения ЛЮБЫХ процессов в системе (завершение процесов
+// созданных текущим пользователем привилегия не нужна.
+// Название добавление/удаление привилгии немного неправильные.  Привилегия или
+// есть в токене процесса или ее нет. Если привилегия есть, то она может быть в
+// двух состояниях - или включеная или отключеная. И в этом примере мы только
+// включаем или выключаем необходимую привилегию, а не добавляем ее.
+function ProcessTerminate(dwPID: Cardinal): Boolean;
+var
+ hToken:THandle;
+ SeDebugNameValue:Int64;
+ tkp:TOKEN_PRIVILEGES;
+ ReturnLength:Cardinal;
+ hProcess:THandle;
+begin
+  Result := False;
+  // Включаем привилегию SeDebugPrivilege
+  // Для начала получаем токен нашего процесса
+  if not OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES or TOKEN_QUERY, hToken ) then
+    Exit;
+  // Получаем LUID привилегии
+  if not LookupPrivilegeValue(nil, 'SeDebugPrivilege', SeDebugNameValue) then
+  begin
+    CloseHandle(hToken);
+    Exit;
+  end;
+  tkp.PrivilegeCount := 1;
+  tkp.Privileges[0].Luid := SeDebugNameValue;
+  tkp.Privileges[0].Attributes := SE_PRIVILEGE_ENABLED;
+  // Добавляем привилегию к нашему процессу
+  AdjustTokenPrivileges(hToken, False, tkp, SizeOf(tkp), tkp, ReturnLength);
+  if GetLastError() <> ERROR_SUCCESS then
+    Exit;
+  // Завершаем процесс. Если у нас есть SeDebugPrivilege, то мы можем
+  // завершить и системный процесс
+  // Получаем дескриптор процесса для его завершения
+  hProcess := OpenProcess(PROCESS_TERMINATE, FALSE, dwPID);
+  if hProcess = 0 then
+    Exit;
+  // Завершаем процесс
+  if not TerminateProcess(hProcess, DWORD(-1)) then
+    Exit;
+  CloseHandle( hProcess );
+  // Отключаем привилегию
+  tkp.Privileges[0].Attributes := 0;
+  AdjustTokenPrivileges(hToken, FALSE, tkp, SizeOf(tkp), tkp, ReturnLength);
+  if GetLastError() <> ERROR_SUCCESS then
+    Exit;
+  Result := True;
 end;
 
 begin
