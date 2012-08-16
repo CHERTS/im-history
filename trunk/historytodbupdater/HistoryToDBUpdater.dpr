@@ -12,7 +12,8 @@ program HistoryToDBUpdater;
 
 uses
   Forms,
-  Main in 'Main.pas' {MainForm};
+  Main in 'Main.pas' {MainForm},
+  Global in 'Global.pas';
 
 {$R *.res}
 

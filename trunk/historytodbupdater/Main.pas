@@ -78,6 +78,7 @@ type
     // Для мультиязыковой поддержки
     procedure OnLanguageChanged(var Msg: TMessage); message WM_LANGUAGECHANGED;
     procedure LoadLanguageStrings;
+    function EndTask(TaskName, FormName: String): Boolean;
   public
     { Public declarations }
     RunAppDone: Boolean;
@@ -270,26 +271,44 @@ begin
 end;
 
 procedure TMainForm.ButtonUpdateStartClick(Sender: TObject);
+var
+  AllProcessEndErr: Integer;
 begin
+  AllProcessEndErr := 0;
   if (DBType = 'Unknown') or (IMClientType  = 'Unknown') then
     MsgInf(Caption, GetLangStr('SelectDBTypeAndIMClient'))
   else
   begin
     LogMemo.Clear;
-    TrueHeader := False;
-    CurrentUpdateStep := 0;
-    SetProxySettings;
-    IMDownloader1.URL := uURL;
-    IMDownloader1.DownLoad;
+    // Ищем запущенные компоненты плагина и закрываем их
+    if not EndTask('HistoryToDBSync.exe', 'HistoryToDBSync for ' + IMClientType) then
+      Inc(AllProcessEndErr);
+    if not EndTask('HistoryToDBViewer.exe', 'HistoryToDBViewer for ' + IMClientType) then
+      Inc(AllProcessEndErr);
+    if not EndTask('HistoryToDBImport.exe', 'HistoryToDBImport for ' + IMClientType) then
+      Inc(AllProcessEndErr);
+    // Если все процессы убиты, то обновляемся
+    if AllProcessEndErr = 0 then
+    begin
+      // Ищем IM-клиент и закрываем его
+      if IMClientType = 'QIP' then
+        EnumWindows(@ProcCloseEnum, GetProcessID('qip.exe'));
+      if IMClientType = 'Miranda' then
+        EnumWindows(@ProcCloseEnum, GetProcessID('miranda32.exe'));
+      if IMClientType = 'RnQ' then
+        EnumWindows(@ProcCloseEnum, GetProcessID('rnq.exe'));
+      if IMClientType = 'Skype' then
+        EnumWindows(@ProcCloseEnum, GetProcessID('skype.exe'));
+      // Начинаем обновление
+      TrueHeader := False;
+      CurrentUpdateStep := 0;
+      SetProxySettings;
+      IMDownloader1.URL := uURL;
+      IMDownloader1.DownLoad;
+    end
+    else
+      MsgInf(Caption, 'Заверщите работу всех компонентов плагина вручную и попробуйте повторить обновление.');
   end;
-  // Имя_файла|Описани_файла|MD5Sum_файла|Размер_файла
-  {FileInfo := GetFileInfo(URL);
-  FileName := Tok('|', FileInfo);
-  FileDesc := Tok('|', FileInfo);
-  FileMD5Sum := Tok('|', FileInfo);
-  LFileName.Caption := FileName;
-  LFileDescription.Caption := FileDesc;
-  LFileMD5.Caption := FileMD5Sum;}
 end;
 
 { Устанавливаем настройки прокси }
@@ -378,9 +397,18 @@ begin
     end
     else
     begin
-      LStatus.Caption := 'Не сходится контр. сумма или размер принятых данных.';
-      LStatus.Repaint;
-      LogMemo.Lines.Add('Не сходится контр. сумма или размер принятых данных.');
+      if not IMMD5Correct then
+      begin
+        LStatus.Caption := 'Не сходится контрольная сумма принятых данных.';
+        LStatus.Repaint;
+        LogMemo.Lines.Add('Не сходится контрольная сумма принятых данных.');
+      end;
+      if not IMSizeCorrect then
+      begin
+        LStatus.Caption := 'Не сходится размер принятых данных.';
+        LStatus.Repaint;
+        LogMemo.Lines.Add('Не сходится размер принятых данных.');
+      end;
       ButtonUpdateEnableStart;
     end;
   end;
@@ -563,8 +591,7 @@ begin
   HeadersStrList.Free;
 end;
 
-procedure TMainForm.IMDownloader1MD5Checked(Sender: TObject; MD5Correct,
-  SizeCorrect: Boolean; MD5Str: string);
+procedure TMainForm.IMDownloader1MD5Checked(Sender: TObject; MD5Correct, SizeCorrect: Boolean; MD5Str: string);
 begin
   MD5InMemory := MD5Str;
   IMMD5Correct := MD5Correct;
@@ -730,6 +757,55 @@ begin
   TabSheetConnectSettings.Caption := GetLangStr('ConnectionSettings');
   TabSheetLog.Caption := GetLangStr('Logs');
   GBSettings.Caption := GetLangStr('GeneralSettings');
+end;
+
+function TMainForm.EndTask(TaskName, FormName: String): Boolean;
+begin
+  Result := False;
+  if IsProcessRun(TaskName) then
+  begin
+    LogMemo.Lines.Add('В памяти найден процесс ' + TaskName + ' (PID: '+IntToStr(GetProcessID(TaskName))+')');
+    LogMemo.Lines.Add('Отправляем команду завершения...');
+    OnSendMessageToOneComponent(FormName, '003');
+    OnSendMessageToOneComponent(FormName, '009');
+    Sleep(1000);
+    LogMemo.Lines.Add('Повторно ищем процесс '+TaskName+' в памяти...');
+    if IsProcessRun(TaskName) then
+    begin
+      LogMemo.Lines.Add('В памяти найден процесс ' + TaskName + ' (PID: '+IntToStr(GetProcessID(TaskName))+')');
+      LogMemo.Lines.Add('Пытаемся принудительно завершить процесс '+TaskName);
+      if KillTask(TaskName) = 1 then
+      begin
+        LogMemo.Lines.Add('Процесс '+TaskName+' принудительно завершен.');
+        Result := True;
+      end
+      else
+      begin
+        LogMemo.Lines.Add('Процесс '+TaskName+' не может быть принудительно завершен.');
+        LogMemo.Lines.Add('Повышаем свои привилегии до SeDebugPrivilege и пробуем еще раз завершить процесс '+TaskName);
+        if ProcessTerminate(GetProcessID(TaskName)) then
+        begin
+          LogMemo.Lines.Add('Процесс '+TaskName+' принудительно завершен при SeDebugPrivilege.');
+          Result := True;
+        end
+        else
+        begin
+          LogMemo.Lines.Add('Процесс '+TaskName+' не может быть принудительно завершен даже при SeDebugPrivilege.');
+          Result := False;
+        end;
+      end;
+    end
+    else
+    begin
+      LogMemo.Lines.Add('Процесс '+TaskName+' не найден в памяти.');
+      Result := True;
+    end;
+  end
+  else
+  begin
+    LogMemo.Lines.Add('Процесс '+TaskName+' не найден в памяти.');
+    Result := True;
+  end;
 end;
 
 end.
