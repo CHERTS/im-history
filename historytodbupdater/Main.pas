@@ -62,16 +62,17 @@ type
     procedure IMDownloader1Error(Sender: TObject; E: TIMDownloadError);
     procedure IMDownloader1Accepted(Sender: TObject);
     procedure IMDownloader1Headers(Sender: TObject; Headers: String);
-    function  StartStepByStepUpdate(CurrStep: Integer; INIFileName: String): Integer;
+    procedure IMDownloader1MD5Checked(Sender: TObject; MD5Correct, SizeCorrect: Boolean; MD5Str: string);
+    procedure CBLangChange(Sender: TObject);
+    procedure CBIMClientTypeChange(Sender: TObject);
+    procedure CBDBTypeChange(Sender: TObject);
     procedure ButtonUpdateEnableStart;
     procedure ButtonUpdateEnableStop;
     procedure FindLangFile;
     procedure CoreLanguageChanged;
-    procedure CBLangChange(Sender: TObject);
-    procedure CBIMClientTypeChange(Sender: TObject);
-    procedure CBDBTypeChange(Sender: TObject);
-    procedure IMDownloader1MD5Checked(Sender: TObject; MD5Correct,
-      SizeCorrect: Boolean; MD5Str: string);
+    procedure InstallUpdate;
+    procedure SetProxySettings;
+    function  StartStepByStepUpdate(CurrStep: Integer; INIFileName: String): Integer;
   private
     { Private declarations }
     FLanguage : WideString;
@@ -93,7 +94,6 @@ type
     IMMD5Correct: Boolean;
     IMSizeCorrect: Boolean;
     INISavePath: String;
-    procedure SetProxySettings;
     property CoreLanguage: WideString read FLanguage;
   end;
 
@@ -152,12 +152,21 @@ begin
     end;
     PluginPath := ExtractFilePath(Application.ExeName);
     INISavePath := ExtractFilePath(Application.ExeName)+'HistoryToDBUpdate.ini';
+    IMDownloader1.DirPath := PluginPath;
     // Инициализация криптования
     EncryptInit;
     // Читаем настройки
     LoadINI(ProfilePath, false);
     // Загружаем настройки локализации
-    FLanguage := DefaultLanguage;
+    if ParamCount >= 1 then
+      FLanguage := DefaultLanguage
+    else
+    begin
+      if GetSysLang = 'Русский' then
+        FLanguage := 'Russian'
+      else
+        FLanguage := 'English';
+    end;
     LangDoc := NewXMLDocument();
     if not DirectoryExists(PluginPath + dirLangs) then
       CreateDir(PluginPath + dirLangs);
@@ -223,8 +232,8 @@ begin
     CBDBType.Items.Add('postgresql');
     CBDBType.Items.Add('oracle');
     CBDBType.Items.Add('sqlite-3');
-    CBDBType.Items.Add('firebird-2.5');
     CBDBType.Items.Add('firebird-2.0');
+    CBDBType.Items.Add('firebird-2.5');
     CBDBType.ItemIndex := 0;
     // Показываем настройки
     ButtonSettingsClick(Self);
@@ -356,13 +365,25 @@ begin
   begin
     LStatus.Caption := 'Подсчет контрольной суммы файла...';
     LStatus.Repaint;
-    LogMemo.Lines.Add('MD5 файла в памяти: ' + MD5InMemory);
-    LogMemo.Lines.Add('Размер файла в памяти: ' + IntToStr(IMDownloader1.OutStream.Size));
+    if MD5InMemory <> 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF' then
+    begin
+      LogMemo.Lines.Add('MD5 файла в памяти: ' + MD5InMemory);
+      LogMemo.Lines.Add('Размер файла в памяти: ' + IntToStr(IMDownloader1.OutStream.Size));
+    end;
     if IMMD5Correct and IMSizeCorrect then
     begin
-      LStatus.Caption := 'Контрольная сумма и размер файла подтверждены.';
-      LStatus.Repaint;
-      LogMemo.Lines.Add('Контрольная сумма и размер файла подтверждены.');
+      if MD5InMemory <> 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF' then
+      begin
+        LStatus.Caption := 'Контрольная сумма и размер файла подтверждены.';
+        LStatus.Repaint;
+        LogMemo.Lines.Add('Контрольная сумма и размер файла подтверждены.');
+      end
+      else
+      begin
+        LStatus.Caption := 'Контрольная сумма файла на диске и на сервере совпадают.';
+        LStatus.Repaint;
+        LogMemo.Lines.Add('Контрольная сумма файла на диске и на сервере совпадают.');
+      end;
       // Если первый шаг - скачивание INI файла
       if CurrentUpdateStep = 0 then
       begin
@@ -379,10 +400,13 @@ begin
         DeleteFile(SavePath + HeaderFileName);
       // Сохряняем новый
       try
-        IMDownloader1.OutStream.SaveToFile(SavePath + HeaderFileName);
-        LStatus.Caption := 'Файл сохранен под именем ' + HeaderFileName;
-        LStatus.Repaint;
-        LogMemo.Lines.Add('Файл сохранен под именем ' + HeaderFileName);
+        if MD5InMemory <> 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF' then
+        begin
+          IMDownloader1.OutStream.SaveToFile(SavePath + HeaderFileName);
+          LStatus.Caption := 'Файл сохранен под именем ' + HeaderFileName;
+          LStatus.Repaint;
+          LogMemo.Lines.Add('Файл сохранен под именем ' + HeaderFileName);
+        end;
         Inc(CurrentUpdateStep);
         if CurrentUpdateStep > 0 then
           MaxSteps := StartStepByStepUpdate(CurrentUpdateStep, INISavePath);
@@ -417,19 +441,94 @@ end;
 function TMainForm.StartStepByStepUpdate(CurrStep: Integer; INIFileName: String): Integer;
 var
   UpdateINI: TIniFile;
-  MaxStep: Integer;
-  UpdateURL: String;
+  MaxStep, IMClientCount, IMClientDownloadFileCount: Integer;
+  DatabaseCount, DatabaseDownloadFileCount, I: Integer;
+  IMClientName, IMClientNum, UpdateURL: String;
+  DatabaseName, DatabaseNum: String;
+  FileListArray: TArrayOfString;
+  DownloadListArray: TArrayOfString;
 begin
+  Result := 0;
   if FileExists(INIFileName) then
   begin
     UpdateINI := TIniFile.Create(INIFileName);
     MaxStep := UpdateINI.ReadInteger('HistoryToDBUpdate', 'FileCount', 0);
+    IMClientCount := UpdateINI.ReadInteger('HistoryToDBUpdate', 'IMClientCount', 0);
+    LogMemo.Lines.Add('Число IM-клиентов в INI-файле = ' + IntToStr(IMClientCount));
+    IMClientDownloadFileCount := 0;
+    SetLength(DownloadListArray, 0);
+    if IMClientCount > 0 then
+    begin
+      IMClientName := '';
+      while (IMClientCount > 0) and (IMClientName <> CBIMClientType.Items[CBIMClientType.ItemIndex]) do
+      begin
+        IMClientName := UpdateINI.ReadString('HistoryToDBUpdate', 'IMClient'+IntToStr(IMClientCount)+'Name', '');
+        IMClientNum := UpdateINI.ReadString('HistoryToDBUpdate', 'IMClient'+IntToStr(IMClientCount)+'File', '');
+        if EnableDebug then
+        begin
+          LogMemo.Lines.Add('IM-клиент = ' + IMClientName);
+          LogMemo.Lines.Add('Номера файлов = ' + IMClientNum);
+        end;
+        Dec(IMClientCount);
+      end;
+      FileListArray := StringToParts(IMClientNum, [',']);
+      SetLength(DownloadListArray, Length(FileListArray));
+      DownloadListArray := FileListArray;
+      IMClientDownloadFileCount := Length(FileListArray);
+      if EnableDebug then
+      begin
+        for I := 0 to High(FileListArray) do
+          LogMemo.Lines.Add('№ файла для '+IMClientName+' = ' + FileListArray[I]);
+      end;
+    end;
+    DatabaseCount := UpdateINI.ReadInteger('HistoryToDBUpdate', 'DatabaseCount', 0);
+    DatabaseDownloadFileCount := 0;
+    LogMemo.Lines.Add('Число типов Database в INI-файле = ' + IntToStr(DatabaseCount));
+    if DatabaseCount > 0 then
+    begin
+      DatabaseName := '';
+      while (DatabaseCount > 0) and (DatabaseName <> CBDBType.Items[CBDBType.ItemIndex]) do
+      begin
+        DatabaseName := UpdateINI.ReadString('HistoryToDBUpdate', 'Database'+IntToStr(DatabaseCount)+'Name', '');
+        DatabaseNum := UpdateINI.ReadString('HistoryToDBUpdate', 'Database'+IntToStr(DatabaseCount)+'File', '');
+        if EnableDebug then
+        begin
+          LogMemo.Lines.Add('Database = ' + DatabaseName);
+          LogMemo.Lines.Add('Номера файлов = ' + DatabaseNum);
+        end;
+        Dec(DatabaseCount);
+      end;
+      FileListArray := StringToParts(DatabaseNum, [',']);
+      SetLength(DownloadListArray, Length(DownloadListArray) + Length(FileListArray));
+      DatabaseDownloadFileCount := Length(FileListArray);
+      for I := 0 to High(FileListArray) do
+      begin
+        DownloadListArray[IMClientDownloadFileCount+I] := FileListArray[I];
+        if EnableDebug then
+          LogMemo.Lines.Add('№ файла для '+DatabaseName+' = ' + FileListArray[I]);
+      end;
+    end;
+    if EnableDebug then
+    begin
+      LogMemo.Lines.Add('Число шагов = ' + IntToStr(Length(DownloadListArray)));
+      for I := 0 to High(DownloadListArray) do
+        LogMemo.Lines.Add('DownloadListArray['+IntToStr(I)+'] = ' + DownloadListArray[I]);
+    end;
+    MaxStep := IMClientDownloadFileCount + DatabaseDownloadFileCount;
+    Result := MaxStep;
+    if EnableDebug then
+      LogMemo.Lines.Add('Число шагов = ' + IntToStr(MaxStep));
     if CurrentUpdateStep > MaxStep then
     begin
       LStatus.Caption := 'Все обновления успешно загружены.';
       LStatus.Repaint;
       LogMemo.Lines.Add('=========================================');
       LogMemo.Lines.Add('Все обновления успешно загружены.');
+      InstallUpdate;
+      LStatus.Caption := 'Все обновления успешно установлены.';
+      LStatus.Repaint;
+      LogMemo.Lines.Add('=========================================');
+      LogMemo.Lines.Add('Все обновления успешно установлены.');
       ButtonUpdateEnableStart;
       Exit;
     end;
@@ -437,7 +536,7 @@ begin
     LogMemo.Lines.Add('Число файлов для обновления = ' + IntToStr(MaxStep));
     if MaxStep > 0 then
     begin
-      UpdateURL := UpdateINI.ReadString('HistoryToDBUpdate', 'File'+IntToStr(CurrStep), '');
+      UpdateURL := UpdateINI.ReadString('HistoryToDBUpdate', 'File'+DownloadListArray[CurrStep-1], '');
       if (UpdateURL <> '') and (CurrStep <= MaxStep) then
       begin
         LogMemo.Lines.Add('Очередной файл для обновления = ' + UpdateURL);
@@ -450,6 +549,75 @@ begin
   end
   else
     LogMemo.Lines.Add('Не найден файл настроек обновления ' + INIFileName);
+end;
+
+procedure TMainForm.InstallUpdate;
+var
+  SR: TSearchRec;
+  I: Integer;
+begin
+  if FindFirst(PluginPath + 'temp' + '\*.*', faAnyFile or faDirectory, SR) = 0 then
+  begin
+    repeat
+      if (SR.Attr = faDirectory) and ((SR.Name = '.') or (SR.Name = '..')) then // Чтобы не было файлов . и ..
+      begin
+        Continue; // Продолжаем цикл
+      end;
+      if MatchStrings(SR.Name, '*.xml') then
+      begin
+        LStatus.Caption := 'Обновление файла локализации ' + SR.Name;
+        LStatus.Repaint;
+        LogMemo.Lines.Add('Обновление файла локализации ' + SR.Name);
+        if FileExists(PluginPath + dirLangs + SR.Name) then
+          DeleteFile(PluginPath + dirLangs + SR.Name);
+        if CopyFileEx(PChar(PluginPath + 'temp\' + SR.Name), PChar(PluginPath + dirLangs + SR.Name), nil, nil, nil, COPY_FILE_FAIL_IF_EXISTS) then
+        begin
+          DeleteFile(PluginPath + 'temp\' + SR.Name);
+          LogMemo.Lines.Add('Обновление файла локализации ' + SR.Name + ' выполнено.');
+        end;
+      end;
+      if MatchStrings(SR.Name, '*.exe') then
+      begin
+        LStatus.Caption := 'Обновление исполняемого файла ' + SR.Name;
+        LStatus.Repaint;
+        LogMemo.Lines.Add('Обновление исполняемого файла ' + SR.Name);
+        if FileExists(PluginPath + SR.Name) then
+          DeleteFile(PluginPath + SR.Name);
+        if CopyFileEx(PChar(PluginPath + 'temp\' + SR.Name), PChar(PluginPath + SR.Name), nil, nil, nil, COPY_FILE_FAIL_IF_EXISTS) then
+        begin
+          DeleteFile(PluginPath + 'temp\' + SR.Name);
+          LogMemo.Lines.Add('Обновление исполняемого файла ' + SR.Name + ' выполнено.');
+        end;
+      end;
+      if MatchStrings(SR.Name, '*.dll') then
+      begin
+        LStatus.Caption := 'Обновление файла библиотек ' + SR.Name;
+        LStatus.Repaint;
+        LogMemo.Lines.Add('Обновление файла библиотек ' + SR.Name);
+        if FileExists(PluginPath + SR.Name) then
+          DeleteFile(PluginPath + SR.Name);
+        if CopyFileEx(PChar(PluginPath + 'temp\' + SR.Name), PChar(PluginPath + SR.Name), nil, nil, nil, COPY_FILE_FAIL_IF_EXISTS) then
+        begin
+          DeleteFile(PluginPath + 'temp\' + SR.Name);
+          LogMemo.Lines.Add('Обновление файла библиотек ' + SR.Name + ' выполнено.');
+        end;
+      end;
+      if MatchStrings(SR.Name, '*.msg') then
+      begin
+        LStatus.Caption := 'Обновление вспомогательного файла  ' + SR.Name;
+        LStatus.Repaint;
+        LogMemo.Lines.Add('Обновление вспомогательного файла ' + SR.Name);
+        if FileExists(PluginPath + SR.Name) then
+          DeleteFile(PluginPath + SR.Name);
+        if CopyFileEx(PChar(PluginPath + 'temp\' + SR.Name), PChar(PluginPath + SR.Name), nil, nil, nil, COPY_FILE_FAIL_IF_EXISTS) then
+        begin
+          DeleteFile(PluginPath + 'temp\' + SR.Name);
+          LogMemo.Lines.Add('Обновление вспомогательного файла ' + SR.Name + ' выполнено.');
+        end;
+      end;
+    until FindNext(SR) <> 0;
+    FindClose(SR);
+  end;
 end;
 
 procedure TMainForm.IMDownloader1Break(Sender: TObject);
@@ -567,7 +735,7 @@ begin
     if(ResultHeaders <> 'Test|Test|00000000000000000000000000000000|' + IntToStr(ResultFileSize) + '|') then
     begin
       LogMemo.Lines.Add('Данные заголовка:');
-      LogMemo.Lines.Add('Скачиваем файл = ' + ResultFilename);
+      LogMemo.Lines.Add('Имя файла = ' + ResultFilename);
       LogMemo.Lines.Add('Описание файла = ' + ResultFileDesc);
       LogMemo.Lines.Add('MD5 файла = ' + ResultMD5Sum);
       LogMemo.Lines.Add('Размер файла = ' + IntToStr(ResultFileSize));
@@ -577,6 +745,8 @@ begin
       HeaderFileName := ResultFilename;
       HeaderMD5 := ResultMD5Sum;
       HeaderFileSize := ResultFileSize;
+      if (CurrentUpdateStep = 0) and FileExists(PluginPath+HeaderFileName) then
+        DeleteFile(PluginPath+HeaderFileName);
       TrueHeader := True;
     end
     else
@@ -649,6 +819,8 @@ begin
   ButtonUpdate.OnClick := ButtonUpdateStartClick;
   ButtonUpdate.Caption := 'Обновить';
   ButtonSettings.Enabled := True;
+  CBIMClientType.Enabled := True;
+  CBDBType.Enabled := True;
 end;
 
 procedure TMainForm.ButtonUpdateEnableStop;
@@ -656,6 +828,8 @@ begin
   ButtonUpdate.OnClick := ButtonUpdateStopClick;
   ButtonUpdate.Caption := 'Остановить';
   ButtonSettings.Enabled := False;
+  CBIMClientType.Enabled := False;
+  CBDBType.Enabled := False;
 end;
 
 procedure TMainForm.CBDBTypeChange(Sender: TObject);
@@ -698,10 +872,19 @@ begin
     until FindNext(SR) <> 0;
     FindClose(SR);
   end;
-  for I := 0 to CBLang.Items.Count-1 do
+  if CBLang.Items.Count > 0 then
   begin
-    if CBLang.Items[I] = CoreLanguage then
-      CBLang.ItemIndex := I;
+    for I := 0 to CBLang.Items.Count-1 do
+    begin
+      if CBLang.Items[I] = CoreLanguage then
+        CBLang.ItemIndex := I;
+    end;
+  end
+  else
+  begin
+    CBLang.Items.Add('Не найден файл локализации');
+    CBLang.ItemIndex := 0;
+    CBLang.Enabled := False;
   end;
 end;
 
