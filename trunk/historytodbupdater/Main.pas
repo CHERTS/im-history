@@ -105,9 +105,44 @@ implementation
 {$R *.dfm}
 
 procedure TMainForm.FormClose(Sender: TObject; var Action: TCloseAction);
+var
+  INI: TIniFile;
+  Path: WideString;
+  IsFileClosed: Boolean;
+  sFile: DWORD;
 begin
   // Переменная для режима анти-босс
   Global_MainForm_Showing := False;
+  // Сохранение настроек
+  if ParamCount = 0 then
+  begin
+    DBType := CBDBType.Items[CBDBType.ItemIndex];
+    IMClientType := CBIMClientType.Items[CBIMClientType.ItemIndex];
+    DefaultLanguage := CoreLanguage;
+    Path := ProfilePath + ININame;
+    if FileExists(Path) then
+    begin
+      try
+        // Ждем пока файл освободит антивирь или еще какая-нибудь гадость
+        IsFileClosed := False;
+        repeat
+          sFile := CreateFile(PChar(Path),GENERIC_READ or GENERIC_WRITE,0,nil,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,0);
+          if (sFile <> INVALID_HANDLE_VALUE) then
+          begin
+            CloseHandle(sFile);
+            IsFileClosed := True;
+          end;
+        until IsFileClosed;
+        // End
+        INI := TIniFile.Create(Path);
+        INI.WriteString('Main', 'DBType', DBType);
+        INI.WriteString('Main', 'IMClientType', IMClientType);
+        INI.WriteString('Main', 'DefaultLanguage', DefaultLanguage);
+      finally
+        INI.Free;
+      end;
+    end;
+  end;
 end;
 
 procedure TMainForm.FormCreate(Sender: TObject);
