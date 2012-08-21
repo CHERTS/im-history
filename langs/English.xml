@@ -426,6 +426,59 @@
   <GeneralSettings>General settings</GeneralSettings>
   <ConnectionSettings>Connection settings</ConnectionSettings>
   <Logs>Logs</Logs>
-  <SelectDBTypeAndIMClient>Вначале выберите "Тип БД" и "IM-клиент".</SelectDBTypeAndIMClient>
+  <SelectDBTypeAndIMClient>First, select the "DB type" and "IM-client."</SelectDBTypeAndIMClient>
+  <UpdateButton>Update</UpdateButton>
+  <StopButton>Stop</StopButton>
+  <SettingsButton>Settings</SettingsButton>
+  <IMClientType>IM-client:</IMClientType>
+  <UseProxy>Use a proxy server</UseProxy>
+  <ProxyAddress>Proxy server:</ProxyAddress>
+  <ProxyPort>Port:</ProxyPort>
+  <ProxyAuth>Proxy server requires authentication</ProxyAuth>
+  <ProxyUser>User:</ProxyUser>
+  <ProxyUserPasswd>Password:</ProxyUserPasswd>
+  <Update> Update </Update>
+  <UpdateStatus>Click the "Update" button to start the update process.</UpdateStatus>
+  <Amount>Amount:</Amount>
+  <Speed>Speed:</Speed>
+  <FileName>Filename:</FileName>
+  <FileDesc>Description:</FileDesc>
+  <FileSize>File size:</FileSize>
+  <Unknown>Unknown</Unknown>
+  <NotFoundLangFile>Language file is not found</NotFoundLangFile>
+  <InitDownload>Initializing download...</InitDownload>
+  <Kb>KB</Kb>
+  <KbSec>Kbytes/sec</KbSec>
+  <InitDownloadFromURL>Initializing download from the URL</InitDownloadFromURL>
+  <InvalidResponseHeader>Invalid response header from the server.</InvalidResponseHeader>
+  <HeaderData>Header data:</HeaderData>
+  <ParseHeader>Parse the header...</ParseHeader>
+  <ErrInternetOpen>Error opening session.</ErrInternetOpen>
+  <ErrInternetOpenURL>Error when requesting the file.</ErrInternetOpenURL>
+  <ErrDownloadingFile>An error occurred while reading the file.</ErrDownloadingFile>
+  <ErrRequest>Failed to query the data through a proxy server.</ErrRequest>
+  <Loading>Loading...</Loading>
+  <DownloadStopped>Download stopped.</DownloadStopped>
+  <ManualUpdate>Close all the components plugin, IM clients and try to repeat the update.</ManualUpdate>
+  <DownloadSuccessful>Download successful.</DownloadSuccessful>
+  <IsChecksum>Is the checksum file...</IsChecksum>
+  <MD5FileInMemory>MD5 file in memory:</MD5FileInMemory>
+  <FileSizeInMemory>Filesize in memory:</FileSizeInMemory>
+  <ChecksumConfirmed>Checksum and file size are confirmed.</ChecksumConfirmed>
+  <ChecksumFileEqServer>Checksum file to disk and server are the same.</ChecksumFileEqServer>
+  <ChecksumNotConfirmed>Not correct the checksum of the received data.</ChecksumNotConfirmed>
+  <FileSavedAs>File is saved as</FileSavedAs>
+  <ErrFileSavedAs>Can not save file</ErrFileSavedAs>
+  <SizeNotConfirmed>Not true size of the received data.</SizeNotConfirmed>
+  <AllUpdatesDownloaded>All updates are downloaded successfully.</AllUpdatesDownloaded>
+  <AllUpdatesInstalled>All updates have been installed.</AllUpdatesInstalled>
+  <Step>Step</Step>
+  <NumberFilesUpdate>The number of files to update</NumberFilesUpdate>
+  <FileToUpdate>File to update</FileToUpdate>
+  <UpdateSettingsFileNotFound>Update settings file not found</UpdateSettingsFileNotFound>
+  <UpdateLangFile>Update localization file</UpdateLangFile>
+  <UpdateLangFileDone>Update localization file %s completed.</UpdateLangFileDone>
+  <UpdateFile>Update file</UpdateFile>
+  <UpdateFileDone>Update file %s completed.</UpdateFileDone>
 
 </strings>

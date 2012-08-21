@@ -145,6 +145,7 @@ object MainForm: TMainForm
       Top = 21
       Width = 322
       Height = 13
+      Hint = 'UpdateStatus'
       Caption = #1053#1072#1078#1084#1080#1090#1077' '#1082#1085#1086#1087#1082#1091' "'#1054#1073#1085#1086#1074#1080#1090#1100'" '#1076#1083#1103' '#1085#1072#1095#1072#1083#1072' '#1087#1088#1086#1094#1077#1089#1089#1072' '#1086#1073#1085#1086#1074#1083#1077#1085#1080#1103'.'
     end
     object ProgressBarDownloads: TProgressBar
@@ -169,6 +170,7 @@ object MainForm: TMainForm
       Top = 109
       Width = 75
       Height = 25
+      Hint = 'UpdateButton'
       Caption = #1054#1073#1085#1086#1074#1080#1090#1100
       TabOrder = 1
       OnClick = ButtonUpdateStartClick
@@ -179,7 +181,7 @@ object MainForm: TMainForm
     Top = 159
     Width = 472
     Height = 193
-    ActivePage = TabSheetSettings
+    ActivePage = TabSheetConnectSettings
     Anchors = [akLeft, akTop, akRight]
     TabOrder = 1
     object TabSheetSettings: TTabSheet
