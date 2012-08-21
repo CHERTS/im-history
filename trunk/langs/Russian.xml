@@ -428,5 +428,58 @@
   <ConnectionSettings>Настройки соединения</ConnectionSettings>
   <Logs>Лог работы</Logs>
   <SelectDBTypeAndIMClient>Вначале выберите "Тип БД" и "IM-клиент".</SelectDBTypeAndIMClient>
+  <UpdateButton>Обновить</UpdateButton>
+  <StopButton>Остановить</StopButton>
+  <SettingsButton>Настройки</SettingsButton>
+  <IMClientType>IM-клиент:</IMClientType>
+  <UseProxy>Использовать прокси-сервер</UseProxy>
+  <ProxyAddress>Адрес прокси-сервера:</ProxyAddress>
+  <ProxyPort>Порт:</ProxyPort>
+  <ProxyAuth>Прокси-сервер требует авторизацию</ProxyAuth>
+  <ProxyUser>Пользователь:</ProxyUser>
+  <ProxyUserPasswd>Пароль:</ProxyUserPasswd>
+  <Update> Обновление </Update>
+  <UpdateStatus>Нажмите кнопку "Обновить" для начала процесса обновления.</UpdateStatus>
+  <Amount>Объем:</Amount>
+  <Speed>Скорость:</Speed>
+  <FileName>Имя файла:</FileName>
+  <FileDesc>Описание:</FileDesc>
+  <FileSize>Размер файла:</FileSize>
+  <Unknown>Не известно</Unknown>
+  <NotFoundLangFile>Не найден файл локализации</NotFoundLangFile>
+  <InitDownload>Инициализация скачивания...</InitDownload>
+  <Kb>Кбайт</Kb>
+  <KbSec>Кбайт/сек</KbSec>
+  <InitDownloadFromURL>Инициализация скачивания c URL</InitDownloadFromURL>
+  <InvalidResponseHeader>Неправильный заголовок ответа с сервера.</InvalidResponseHeader>
+  <HeaderData>Данные заголовка:</HeaderData>
+  <ParseHeader>Парсим заголовок...</ParseHeader>
+  <ErrInternetOpen>Ошибка при открытии сессии.</ErrInternetOpen>
+  <ErrInternetOpenURL>Ошибка при запрашивании файла.</ErrInternetOpenURL>
+  <ErrDownloadingFile>Ошибка при чтении файла.</ErrDownloadingFile>
+  <ErrRequest>Ошибка при запросе данных через прокси-сервер.</ErrRequest>
+  <Loading>Идет загрузка...</Loading>
+  <DownloadStopped>Скачивание остановлено.</DownloadStopped>
+  <ManualUpdate>Завершите работу всех компонентов плагина вручную и попробуйте повторить обновление.</ManualUpdate>
+  <DownloadSuccessful>Скачивание успешно завершено.</DownloadSuccessful>
+  <IsChecksum>Идет подсчёт контрольной суммы файла...</IsChecksum>
+  <MD5FileInMemory>MD5 файла в памяти:</MD5FileInMemory>
+  <FileSizeInMemory>Размер файла в памяти:</FileSizeInMemory>
+  <ChecksumConfirmed>Контрольная сумма и размер файла подтверждены.</ChecksumConfirmed>
+  <ChecksumFileEqServer>Контрольная сумма файла на диске и на сервере совпадают.</ChecksumFileEqServer>
+  <ChecksumNotConfirmed>Не сходится контрольная сумма принятых данных.</ChecksumNotConfirmed>
+  <FileSavedAs>Файл сохранен под именем</FileSavedAs>
+  <ErrFileSavedAs>Ошибка сохранения файла</ErrFileSavedAs>
+  <SizeNotConfirmed>Не сходится размер принятых данных.</SizeNotConfirmed>
+  <AllUpdatesDownloaded>Все обновления успешно загружены.</AllUpdatesDownloaded>
+  <AllUpdatesInstalled>Все обновления успешно установлены.</AllUpdatesInstalled>
+  <Step>Шаг</Step>
+  <NumberFilesUpdate>Число файлов для обновления</NumberFilesUpdate>
+  <FileToUpdate>Очередной файл для обновления</FileToUpdate>
+  <UpdateSettingsFileNotFound>Не найден файл настроек обновления</UpdateSettingsFileNotFound>
+  <UpdateLangFile>Обновление файла локализации</UpdateLangFile>
+  <UpdateLangFileDone>Обновление файла локализации %s выполнено.</UpdateLangFileDone>
+  <UpdateFile>Обновление файла</UpdateFile>
+  <UpdateFileDone>Обновление файла %s выполнено.</UpdateFileDone>
 
 </strings>

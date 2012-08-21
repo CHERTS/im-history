@@ -42,19 +42,15 @@ const
   uURL = 'http://im-history.ru/update/get.php?file=HistoryToDB-Update';
 
 var
-  WriteErrLog, AniEvents, EnableHistoryEncryption, HideSyncIcon: Boolean;
-  GlobalHotKeyEnable, EnableDebug, AlphaBlendEnable, SyncWhenExit, GlobalSkypeSupport: Boolean;
-  SyncMethod, SyncInterval, NumLastHistoryMsg, SyncTimeCount: Integer;
+  WriteErrLog: Boolean;
+  EnableDebug, AlphaBlendEnable: Boolean;
   MaxErrLogSize, AlphaBlendEnableValue: Integer;
-  ReconnectInterval, ReconnectCount: Integer;
-  DBType, DBAddress, DBSchema, DBPort, DBName, DBUserName, DBPasswd, DefaultLanguage, IMClientType: String;
-  Global_AccountUIN, Global_AccountName, Global_CurrentAccountUIN, Global_CurrentAccountName: WideString;
-  Glogal_History_Type, Glogal_Selected_History_Type: Integer;
-  Global_ChatName: WideString;
+  DBType, DefaultLanguage, IMClientType: String;
   PluginPath, ProfilePath: WideString;
   Global_MainForm_Showing, Global_AboutForm_Showing: Boolean;
-  EncryptionKey, EncryptionKeyID, SyncHotKey: String;
-  KeyPasswdSaveOnlySession, KeyPasswdSave: Boolean;
+  // Прокси
+  IMUseProxy, IMProxyAuth: Boolean;
+  IMProxyAddress, IMProxyPort, IMProxyUser, IMProxyUserPagsswd: String;
   // Шифрование
   Cipher: TDCP_3des;
   Digest: Array[0..19] of Byte;
@@ -295,8 +291,8 @@ begin
       IMClientType := INI.ReadString('Main', 'IMClientType', 'Unknown');
 
       Temp := INI.ReadString('Main', 'WriteErrLog', '0');
-      if Temp = '1' then WriteErrLog := true
-      else WriteErrLog := false;
+      if Temp = '1' then WriteErrLog := True
+      else WriteErrLog := False;
 
       MaxErrLogSize := INI.ReadInteger('Main', 'MaxErrLogSize', 20);
 
@@ -307,8 +303,23 @@ begin
       Temp := INI.ReadString('Main', 'AlphaBlend', '0');
       if Temp = '1' then AlphaBlendEnable := True
       else AlphaBlendEnable := False;
-      AlphaBlendEnableValue := INI.Readinteger('Main', 'AlphaBlendValue', 255);
+      AlphaBlendEnableValue := INI.ReadInteger('Main', 'AlphaBlendValue', 255);
 
+      Temp := INI.ReadString('Proxy', 'UseProxy', '0');
+      if Temp = '1' then IMUseProxy := True
+      else IMUseProxy := False;
+
+      IMProxyAddress := INI.ReadString('Proxy', 'ProxyAddress', '127.0.0.1');
+      IMProxyPort := INI.ReadString('Proxy', 'ProxyPort', '3128');
+
+      Temp := INI.ReadString('Proxy', 'ProxyAuth', '0');
+      if Temp = '1' then IMProxyAuth := True
+      else IMProxyAuth := False;
+
+      IMProxyUser := INI.ReadString('Proxy', 'ProxyUser', '');
+      IMProxyUserPagsswd := INI.ReadString('Proxy', 'ProxyUserPagsswd', '');
+      if IMProxyUserPagsswd <> '' then
+        IMProxyUserPagsswd := DecryptStr(IMProxyUserPagsswd);
     finally
       INI.Free;
     end;
@@ -326,6 +337,12 @@ begin
       EnableDebug := False;
       AlphaBlendEnable := False;
       AlphaBlendEnableValue := 255;
+      IMUseProxy := False;
+      IMProxyAddress := '127.0.0.1';
+      IMProxyPort := '3128';
+      IMProxyAuth := False;
+      IMProxyUser := '';
+      IMProxyUserPagsswd := '';
       // Сохраняем настройки
       INI.WriteString('Main', 'DBType', DBType);
       INI.WriteString('Main', 'DefaultLanguage', DefaultLanguage);
@@ -335,6 +352,12 @@ begin
       INI.WriteString('Main', 'EnableDebug', BoolToIntStr(EnableDebug));
       INI.WriteString('Main', 'AlphaBlend', BoolToIntStr(AlphaBlendEnable));
       INI.WriteInteger('Main', 'AlphaBlendValue', AlphaBlendEnableValue);
+      INI.WriteString('Proxy', 'UseProxy', BoolToIntStr(IMUseProxy));
+      INI.WriteString('Proxy', 'ProxyAddress', IMProxyAddress);
+      INI.WriteString('Proxy', 'ProxyPort', IMProxyPort);
+      INI.WriteString('Proxy', 'ProxyAuth', BoolToIntStr(IMProxyAuth));
+      INI.WriteString('Proxy', 'ProxyUser', IMProxyUser);
+      INI.WriteString('Proxy', 'ProxyUserPagsswd', IMProxyUserPagsswd);
     finally
       INI.Free;
     end;

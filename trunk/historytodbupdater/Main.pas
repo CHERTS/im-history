@@ -116,33 +116,39 @@ begin
   // Переменная для режима анти-босс
   Global_MainForm_Showing := False;
   // Сохранение настроек
-  if ParamCount = 0 then
+  DBType := CBDBType.Items[CBDBType.ItemIndex];
+  IMClientType := CBIMClientType.Items[CBIMClientType.ItemIndex];
+  DefaultLanguage := CoreLanguage;
+  Path := ProfilePath + ININame;
+  if FileExists(Path) then
   begin
-    DBType := CBDBType.Items[CBDBType.ItemIndex];
-    IMClientType := CBIMClientType.Items[CBIMClientType.ItemIndex];
-    DefaultLanguage := CoreLanguage;
-    Path := ProfilePath + ININame;
-    if FileExists(Path) then
-    begin
-      try
-        // Ждем пока файл освободит антивирь или еще какая-нибудь гадость
-        IsFileClosed := False;
-        repeat
-          sFile := CreateFile(PChar(Path),GENERIC_READ or GENERIC_WRITE,0,nil,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,0);
-          if (sFile <> INVALID_HANDLE_VALUE) then
-          begin
-            CloseHandle(sFile);
-            IsFileClosed := True;
-          end;
-        until IsFileClosed;
-        // End
-        INI := TIniFile.Create(Path);
+    try
+      // Ждем пока файл освободит антивирь или еще какая-нибудь гадость
+      IsFileClosed := False;
+      repeat
+        sFile := CreateFile(PChar(Path),GENERIC_READ or GENERIC_WRITE,0,nil,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,0);
+        if (sFile <> INVALID_HANDLE_VALUE) then
+        begin
+          CloseHandle(sFile);
+          IsFileClosed := True;
+        end;
+      until IsFileClosed;
+      // End
+      INI := TIniFile.Create(Path);
+      if ParamCount = 0 then
+      begin
         INI.WriteString('Main', 'DBType', DBType);
         INI.WriteString('Main', 'IMClientType', IMClientType);
         INI.WriteString('Main', 'DefaultLanguage', DefaultLanguage);
-      finally
-        INI.Free;
       end;
+      INI.WriteString('Proxy', 'UseProxy', BoolToIntStr(CBUseProxy.Checked));
+      INI.WriteString('Proxy', 'ProxyAddress', EProxyAddress.Text);
+      INI.WriteString('Proxy', 'ProxyPort', EProxyPort.Text);
+      INI.WriteString('Proxy', 'ProxyAuth', BoolToIntStr(CBProxyAuth.Checked));
+      INI.WriteString('Proxy', 'ProxyUser', EProxyUser.Text);
+      INI.WriteString('Proxy', 'ProxyUserPagsswd', EncryptStr(EProxyUserPasswd.Text));
+    finally
+      INI.Free;
     end;
   end;
 end;
@@ -249,11 +255,11 @@ begin
   AlphaBlend := AlphaBlendEnable;
   AlphaBlendValue := AlphaBlendEnableValue;
   // Др. настройки
-  LAmount.Caption := '0 Кбайт';
-  LFileName.Caption := 'Не известно';
-  LFileDescription.Caption := 'Не известно';
-  LFileMD5.Caption := 'Не известно';
-  LSpeed.Caption := '0 Кбайт/сек';
+  LAmount.Caption := '0 '+GetLangStr('Kb');
+  LFileName.Caption := GetLangStr('Unknown');
+  LFileDescription.Caption := GetLangStr('Unknown');
+  LFileMD5.Caption := GetLangStr('Unknown');
+  LSpeed.Caption := '0 '+GetLangStr('KbSec');
   CBUseProxy.Checked := False;
   EProxyAddress.Enabled := False;
   EProxyPort.Enabled := False;
@@ -300,6 +306,12 @@ begin
     CBIMClientType.Items.Add(IMClientType);
     CBIMClientType.ItemIndex := 0;
   end;
+  CBUseProxy.Checked := IMUseProxy;
+  EProxyAddress.Text := IMProxyAddress;
+  EProxyPort.Text := IMProxyPort;
+  CBProxyAuth.Checked := IMProxyAuth;
+  EProxyUser.Text := IMProxyUser;
+  EProxyUserPasswd.Text := IMProxyUserPagsswd;
 end;
 
 procedure TMainForm.ButtonSettingsClick(Sender: TObject);
@@ -353,7 +365,7 @@ begin
       IMDownloader1.DownLoad;
     end
     else
-      MsgInf(Caption, 'Заверщите работу всех компонентов плагина вручную и попробуйте повторить обновление.');
+      MsgInf(Caption, GetLangStr('ManualUpdate'));
   end;
 end;
 
@@ -387,39 +399,44 @@ var
   SavePath: String;
   MaxSteps: Integer;
 begin
-  LStatus.Caption := 'Скачивание успешно завершено.';
+  LStatus.Caption := GetLangStr('DownloadSuccessful');
+  LStatus.Hint := 'DownloadSuccessful';
   LStatus.Repaint;
-  LAmount.Caption := CurrToStr(IMDownloader1.AcceptedSize/1024)+' Кбайт';
+  LAmount.Caption := CurrToStr(IMDownloader1.AcceptedSize/1024)+' '+GetLangStr('Kb');
   LAmount.Repaint;
   if not TrueHeader then
   begin
-    LFileName.Caption := 'Не известно';
-    LFileDescription.Caption := 'Не известно';
-    LFileMD5.Caption := 'Не известно';
-    LStatus.Caption := 'Неправильный заголовок ответа с сервера.';
+    LFileName.Caption := GetLangStr('Unknown');
+    LFileDescription.Caption := GetLangStr('Unknown');
+    LFileMD5.Caption := GetLangStr('Unknown');
+    LStatus.Caption := GetLangStr('InvalidResponseHeader');
+    LStatus.Hint := 'InvalidResponseHeader';
   end
   else
   begin
-    LStatus.Caption := 'Подсчет контрольной суммы файла...';
+    LStatus.Caption := GetLangStr('IsChecksum');
+    LStatus.Hint := 'IsChecksum';
     LStatus.Repaint;
     if MD5InMemory <> 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF' then
     begin
-      LogMemo.Lines.Add('MD5 файла в памяти: ' + MD5InMemory);
-      LogMemo.Lines.Add('Размер файла в памяти: ' + IntToStr(IMDownloader1.OutStream.Size));
+      LogMemo.Lines.Add(GetLangStr('MD5FileInMemory') + ' ' + MD5InMemory);
+      LogMemo.Lines.Add(GetLangStr('FileSizeInMemory') + ' ' + IntToStr(IMDownloader1.OutStream.Size));
     end;
     if IMMD5Correct and IMSizeCorrect then
     begin
       if MD5InMemory <> 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF' then
       begin
-        LStatus.Caption := 'Контрольная сумма и размер файла подтверждены.';
+        LStatus.Caption := GetLangStr('ChecksumConfirmed');
+        LStatus.Hint := 'ChecksumConfirmed';
         LStatus.Repaint;
-        LogMemo.Lines.Add('Контрольная сумма и размер файла подтверждены.');
+        LogMemo.Lines.Add(GetLangStr('ChecksumConfirmed'));
       end
       else
       begin
-        LStatus.Caption := 'Контрольная сумма файла на диске и на сервере совпадают.';
+        LStatus.Caption := GetLangStr('ChecksumFileEqServer');
+        LStatus.Hint := 'ChecksumFileEqServer';
         LStatus.Repaint;
-        LogMemo.Lines.Add('Контрольная сумма файла на диске и на сервере совпадают.');
+        LogMemo.Lines.Add(GetLangStr('ChecksumFileEqServer'));
       end;
       // Если первый шаг - скачивание INI файла
       if CurrentUpdateStep = 0 then
@@ -440,9 +457,10 @@ begin
         if MD5InMemory <> 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF' then
         begin
           IMDownloader1.OutStream.SaveToFile(SavePath + HeaderFileName);
-          LStatus.Caption := 'Файл сохранен под именем ' + HeaderFileName;
+          LStatus.Caption := GetLangStr('FileSavedAs') + ' ' + HeaderFileName;
+          LStatus.Hint := 'FileSavedAs';
           LStatus.Repaint;
-          LogMemo.Lines.Add('Файл сохранен под именем ' + HeaderFileName);
+          LogMemo.Lines.Add(GetLangStr('FileSavedAs') + ' ' + HeaderFileName);
         end;
         Inc(CurrentUpdateStep);
         if CurrentUpdateStep > 0 then
@@ -450,9 +468,10 @@ begin
       except
         on E: Exception do
         begin
-          LStatus.Caption := 'Ошибка сохранения файла ' + HeaderFileName;
+          LStatus.Caption := GetLangStr('ErrFileSavedAs') + ' ' + HeaderFileName;
+          LStatus.Hint := 'ErrFileSavedAs';
           LStatus.Repaint;
-          LogMemo.Lines.Add('Ошибка сохранения файла ' + HeaderFileName);
+          LogMemo.Lines.Add(GetLangStr('ErrFileSavedAs') + ' ' + HeaderFileName);
         end;
       end;
     end
@@ -460,15 +479,17 @@ begin
     begin
       if not IMMD5Correct then
       begin
-        LStatus.Caption := 'Не сходится контрольная сумма принятых данных.';
+        LStatus.Caption := GetLangStr('ChecksumNotConfirmed');
+        LStatus.Hint := 'ChecksumNotConfirmed';
         LStatus.Repaint;
-        LogMemo.Lines.Add('Не сходится контрольная сумма принятых данных.');
+        LogMemo.Lines.Add(GetLangStr('ChecksumNotConfirmed'));
       end;
       if not IMSizeCorrect then
       begin
-        LStatus.Caption := 'Не сходится размер принятых данных.';
+        LStatus.Caption := GetLangStr('SizeNotConfirmed');
+        LStatus.Hint := 'SizeNotConfirmed';
         LStatus.Repaint;
-        LogMemo.Lines.Add('Не сходится размер принятых данных.');
+        LogMemo.Lines.Add(GetLangStr('SizeNotConfirmed'));
       end;
       ButtonUpdateEnableStart;
     end;
@@ -491,7 +512,8 @@ begin
     UpdateINI := TIniFile.Create(INIFileName);
     MaxStep := UpdateINI.ReadInteger('HistoryToDBUpdate', 'FileCount', 0);
     IMClientCount := UpdateINI.ReadInteger('HistoryToDBUpdate', 'IMClientCount', 0);
-    LogMemo.Lines.Add('Число IM-клиентов в INI-файле = ' + IntToStr(IMClientCount));
+    if EnableDebug then
+      LogMemo.Lines.Add('Число IM-клиентов в INI-файле = ' + IntToStr(IMClientCount));
     IMClientDownloadFileCount := 0;
     SetLength(DownloadListArray, 0);
     if IMClientCount > 0 then
@@ -520,7 +542,8 @@ begin
     end;
     DatabaseCount := UpdateINI.ReadInteger('HistoryToDBUpdate', 'DatabaseCount', 0);
     DatabaseDownloadFileCount := 0;
-    LogMemo.Lines.Add('Число типов Database в INI-файле = ' + IntToStr(DatabaseCount));
+    if EnableDebug then
+      LogMemo.Lines.Add('Число типов Database в INI-файле = ' + IntToStr(DatabaseCount));
     if DatabaseCount > 0 then
     begin
       DatabaseName := '';
@@ -557,27 +580,29 @@ begin
       LogMemo.Lines.Add('Число шагов = ' + IntToStr(MaxStep));
     if CurrentUpdateStep > MaxStep then
     begin
-      LStatus.Caption := 'Все обновления успешно загружены.';
+      LStatus.Caption := GetLangStr('AllUpdatesDownloaded');
+      LStatus.Hint := 'AllUpdatesDownloaded';
       LStatus.Repaint;
       LogMemo.Lines.Add('=========================================');
-      LogMemo.Lines.Add('Все обновления успешно загружены.');
+      LogMemo.Lines.Add(GetLangStr('AllUpdatesDownloaded'));
       InstallUpdate;
-      LStatus.Caption := 'Все обновления успешно установлены.';
+      LStatus.Caption := GetLangStr('AllUpdatesInstalled');
+      LStatus.Hint := 'AllUpdatesInstalled';
       LStatus.Repaint;
       LogMemo.Lines.Add('=========================================');
-      LogMemo.Lines.Add('Все обновления успешно установлены.');
+      LogMemo.Lines.Add(GetLangStr('AllUpdatesInstalled'));
       ButtonUpdateEnableStart;
       Close;
       Exit;
     end;
-    LogMemo.Lines.Add('================= Шаг '+IntToStr(CurrStep)+' =================');
-    LogMemo.Lines.Add('Число файлов для обновления = ' + IntToStr(MaxStep));
+    LogMemo.Lines.Add('================= ' + GetLangStr('Step') + ' '+IntToStr(CurrStep)+' =================');
+    LogMemo.Lines.Add(GetLangStr('NumberFilesUpdate') + ' = ' + IntToStr(MaxStep));
     if MaxStep > 0 then
     begin
       UpdateURL := UpdateINI.ReadString('HistoryToDBUpdate', 'File'+DownloadListArray[CurrStep-1], '');
       if (UpdateURL <> '') and (CurrStep <= MaxStep) then
       begin
-        LogMemo.Lines.Add('Очередной файл для обновления = ' + UpdateURL);
+        LogMemo.Lines.Add(GetLangStr('FileToUpdate') + ' = ' + UpdateURL);
         IMDownloader1.URL := UpdateURL;
         IMDownloader1.DownLoad;
       end
@@ -586,7 +611,7 @@ begin
     end;
   end
   else
-    LogMemo.Lines.Add('Не найден файл настроек обновления ' + INIFileName);
+    LogMemo.Lines.Add(GetLangStr('UpdateSettingsFileNotFound') + ' ' + INIFileName);
 end;
 
 procedure TMainForm.InstallUpdate;
@@ -603,54 +628,58 @@ begin
       end;
       if MatchStrings(SR.Name, '*.xml') then
       begin
-        LStatus.Caption := 'Обновление файла локализации ' + SR.Name;
+        LStatus.Caption := GetLangStr('UpdateLangFile') + ' ' + SR.Name;
+        LStatus.Hint := 'UpdateLangFile';
         LStatus.Repaint;
-        LogMemo.Lines.Add('Обновление файла локализации ' + SR.Name);
+        LogMemo.Lines.Add(GetLangStr('UpdateLangFile') + ' ' + SR.Name);
         if FileExists(PluginPath + dirLangs + SR.Name) then
           DeleteFile(PluginPath + dirLangs + SR.Name);
         if CopyFileEx(PChar(PluginPath + 'temp\' + SR.Name), PChar(PluginPath + dirLangs + SR.Name), nil, nil, nil, COPY_FILE_FAIL_IF_EXISTS) then
         begin
           DeleteFile(PluginPath + 'temp\' + SR.Name);
-          LogMemo.Lines.Add('Обновление файла локализации ' + SR.Name + ' выполнено.');
+          LogMemo.Lines.Add(Format(GetLangStr('UpdateLangFileDone'), [SR.Name]));
         end;
       end;
       if MatchStrings(SR.Name, '*.exe') then
       begin
-        LStatus.Caption := 'Обновление исполняемого файла ' + SR.Name;
+        LStatus.Caption := GetLangStr('UpdateFile') + ' ' + SR.Name;
+        LStatus.Hint := 'UpdateFile';
         LStatus.Repaint;
-        LogMemo.Lines.Add('Обновление исполняемого файла ' + SR.Name);
+        LogMemo.Lines.Add(GetLangStr('UpdateFile') + ' ' + SR.Name);
         if FileExists(PluginPath + SR.Name) then
           DeleteFile(PluginPath + SR.Name);
         if CopyFileEx(PChar(PluginPath + 'temp\' + SR.Name), PChar(PluginPath + SR.Name), nil, nil, nil, COPY_FILE_FAIL_IF_EXISTS) then
         begin
           DeleteFile(PluginPath + 'temp\' + SR.Name);
-          LogMemo.Lines.Add('Обновление исполняемого файла ' + SR.Name + ' выполнено.');
+          LogMemo.Lines.Add(Format(GetLangStr('UpdateFileDone'), [SR.Name]));
         end;
       end;
       if MatchStrings(SR.Name, '*.dll') then
       begin
-        LStatus.Caption := 'Обновление файла библиотек ' + SR.Name;
+        LStatus.Caption := GetLangStr('UpdateFile') + ' ' + SR.Name;
+        LStatus.Hint := 'UpdateFile';
         LStatus.Repaint;
-        LogMemo.Lines.Add('Обновление файла библиотек ' + SR.Name);
+        LogMemo.Lines.Add(GetLangStr('UpdateFile') + ' ' + SR.Name);
         if FileExists(PluginPath + SR.Name) then
           DeleteFile(PluginPath + SR.Name);
         if CopyFileEx(PChar(PluginPath + 'temp\' + SR.Name), PChar(PluginPath + SR.Name), nil, nil, nil, COPY_FILE_FAIL_IF_EXISTS) then
         begin
           DeleteFile(PluginPath + 'temp\' + SR.Name);
-          LogMemo.Lines.Add('Обновление файла библиотек ' + SR.Name + ' выполнено.');
+          LogMemo.Lines.Add(Format(GetLangStr('UpdateFileDone'), [SR.Name]));
         end;
       end;
       if MatchStrings(SR.Name, '*.msg') then
       begin
-        LStatus.Caption := 'Обновление вспомогательного файла  ' + SR.Name;
+        LStatus.Caption := GetLangStr('UpdateFile') + ' ' + SR.Name;
+        LStatus.Hint := 'UpdateFile';
         LStatus.Repaint;
-        LogMemo.Lines.Add('Обновление вспомогательного файла ' + SR.Name);
+        LogMemo.Lines.Add(GetLangStr('UpdateFile') + ' ' + SR.Name);
         if FileExists(PluginPath + SR.Name) then
           DeleteFile(PluginPath + SR.Name);
         if CopyFileEx(PChar(PluginPath + 'temp\' + SR.Name), PChar(PluginPath + SR.Name), nil, nil, nil, COPY_FILE_FAIL_IF_EXISTS) then
         begin
           DeleteFile(PluginPath + 'temp\' + SR.Name);
-          LogMemo.Lines.Add('Обновление вспомогательного файла ' + SR.Name + ' выполнено.');
+          LogMemo.Lines.Add(Format(GetLangStr('UpdateFileDone'), [SR.Name]));
         end;
       end;
     until FindNext(SR) <> 0;
@@ -660,8 +689,9 @@ end;
 
 procedure TMainForm.IMDownloader1Break(Sender: TObject);
 begin
-  LStatus.Caption := 'Скачивание остановлено.';
-  LAmount.Caption := CurrToStr(IMDownloader1.AcceptedSize/1024)+' Кбайт';
+  LStatus.Caption := GetLangStr('DownloadStopped');
+  LStatus.Hint := 'DownloadStopped';
+  LAmount.Caption := CurrToStr(IMDownloader1.AcceptedSize/1024)+' '+GetLangStr('Kb');
   LAmount.Repaint;
   ButtonUpdateEnableStart;
 end;
@@ -671,32 +701,50 @@ begin
   QueryPerformanceCounter(C2);
   ProgressBarDownloads.Max := MaxSize;
   ProgressBarDownloads.Position := AcceptedSize;
-  LStatus.Caption := 'Идет загрузка...';
-  LAmount.Caption := CurrToStr(AcceptedSize/1024)+' Кбайт';
+  LStatus.Caption := GetLangStr('Loading');
+  LStatus.Hint := 'Loading';
+  LAmount.Caption := CurrToStr(AcceptedSize/1024)+' '+GetLangStr('Kb');
   LAmount.Repaint;
-  LSpeed.Caption := CurrToStr((AcceptedSize/1024)/((C2 - C1) / iCounterPerSec))+' Кбайт/сек';
+  LSpeed.Caption := CurrToStr((AcceptedSize/1024)/((C2 - C1) / iCounterPerSec))+' '+GetLangStr('KbSec');
   LSpeed.Repaint;
 end;
 
 procedure TMainForm.IMDownloader1Error(Sender: TObject; E: TIMDownloadError);
 var
-  S: String;
+  S, HS: String;
 begin
   case E of
-    deInternetOpen: S := 'Ошибка при открытии сессии.';
-    deInternetOpenUrl: S := 'Ошибка при запрашивании файла.';
-    deDownloadingFile: S := 'Ошибка при чтении файла.';
-    deRequest: S := 'Ошибка при запросе данных через прокси-сервер.';
+    deInternetOpen:
+    begin
+      S := GetLangStr('ErrInternetOpen');
+      HS := 'ErrInternetOpen';
+    end;
+    deInternetOpenUrl:
+    begin
+      S := GetLangStr('ErrInternetOpenURL');
+      HS := 'ErrInternetOpenURL';
+    end;
+    deDownloadingFile:
+    begin
+      S := GetLangStr('ErrDownloadingFile');
+      HS := 'ErrDownloadingFile';
+    end;
+    deRequest:
+    begin
+      S := GetLangStr('ErrRequest');
+      HS := 'ErrRequest';
+    end;
   end;
   LStatus.Caption := S;
+  LStatus.Hint := HS;
   LogMemo.Lines.Add(S);
-  LAmount.Caption := CurrToStr(IMDownloader1.AcceptedSize/1024)+' Кбайт';
+  LAmount.Caption := CurrToStr(IMDownloader1.AcceptedSize/1024)+' '+GetLangStr('Kb');
   LAmount.Repaint;
   if not TrueHeader then
   begin
-    LFileName.Caption := 'Не известно';
-    LFileDescription.Caption := 'Не известно';
-    LFileMD5.Caption := 'Не известно';
+    LFileName.Caption := GetLangStr('Unknown');
+    LFileDescription.Caption := GetLangStr('Unknown');
+    LFileMD5.Caption := GetLangStr('Unknown');
   end;
   ButtonUpdateEnableStart;
 end;
@@ -725,7 +773,7 @@ begin
     ResultFileDesc := 'Test';
     ResultMD5Sum := '00000000000000000000000000000000';
     ResultFileSize := 0;
-    LogMemo.Lines.Add('Парсим заголовок...');
+    LogMemo.Lines.Add(GetLangStr('ParseHeader'));
     for I := 0 to HeadersStrList.Count - 1 do
     begin
       //LogMemo.Lines.Add(HeadersStrList[I]);
@@ -772,11 +820,11 @@ begin
     ResultHeaders := ResultFilename + '|' + ResultFileDesc + '|' + ResultMD5Sum + '|' + IntToStr(ResultFileSize) + '|';
     if(ResultHeaders <> 'Test|Test|00000000000000000000000000000000|' + IntToStr(ResultFileSize) + '|') then
     begin
-      LogMemo.Lines.Add('Данные заголовка:');
-      LogMemo.Lines.Add('Имя файла = ' + ResultFilename);
-      LogMemo.Lines.Add('Описание файла = ' + ResultFileDesc);
-      LogMemo.Lines.Add('MD5 файла = ' + ResultMD5Sum);
-      LogMemo.Lines.Add('Размер файла = ' + IntToStr(ResultFileSize));
+      LogMemo.Lines.Add(GetLangStr('HeaderData'));
+      LogMemo.Lines.Add(GetLangStr('FileName') + ' ' + ResultFilename);
+      LogMemo.Lines.Add(GetLangStr('FileDesc') + ' ' + ResultFileDesc);
+      LogMemo.Lines.Add('MD5: ' + ResultMD5Sum);
+      LogMemo.Lines.Add(GetLangStr('FileSize') + ' ' + IntToStr(ResultFileSize));
       LFileName.Caption := ResultFilename;
       LFileDescription.Caption := ResultFileDesc;
       LFileMD5.Caption := ResultMD5Sum;
@@ -789,7 +837,7 @@ begin
     end
     else
     begin
-      LogMemo.Lines.Add('Неправильный заголовок ответа с сервера.');
+      LogMemo.Lines.Add(GetLangStr('InvalidResponseHeader'));
       HeaderFileName := 'Test';
       HeaderMD5 := '00000000000000000000000000000000';
       HeaderFileSize := 0;
@@ -811,10 +859,11 @@ begin
   QueryPerformanceFrequency(iCounterPerSec);
   QueryPerformanceCounter(C1);
   ButtonUpdateEnableStop;
-  LStatus.Caption := 'Инициализация скачивания...';
-  LAmount.Caption := '0 Кбайт';
-  LSpeed.Caption := '0 Кбайт/сек';
-  LogMemo.Lines.Add('Инициализация скачивания c URL ' + IMDownloader1.URL);
+  LStatus.Caption := GetLangStr('InitDownload');
+  LStatus.Hint := 'InitDownload';
+  LAmount.Caption := '0 '+GetLangStr('Kb');
+  LSpeed.Caption := '0 '+GetLangStr('KbSec');
+  LogMemo.Lines.Add(GetLangStr('InitDownloadFromURL') + ' ' + IMDownloader1.URL);
 end;
 
 procedure TMainForm.ButtonUpdateStopClick(Sender: TObject);
@@ -855,7 +904,8 @@ end;
 procedure TMainForm.ButtonUpdateEnableStart;
 begin
   ButtonUpdate.OnClick := ButtonUpdateStartClick;
-  ButtonUpdate.Caption := 'Обновить';
+  ButtonUpdate.Caption := GetLangStr('UpdateButton');
+  ButtonUpdate.Hint := 'UpdateButton';
   ButtonSettings.Enabled := True;
   CBIMClientType.Enabled := True;
   CBDBType.Enabled := True;
@@ -864,7 +914,8 @@ end;
 procedure TMainForm.ButtonUpdateEnableStop;
 begin
   ButtonUpdate.OnClick := ButtonUpdateStopClick;
-  ButtonUpdate.Caption := 'Остановить';
+  ButtonUpdate.Caption := GetLangStr('StopButton');
+  ButtonUpdate.Hint := 'StopButton';
   ButtonSettings.Enabled := False;
   CBIMClientType.Enabled := False;
   CBDBType.Enabled := False;
@@ -920,7 +971,7 @@ begin
   end
   else
   begin
-    CBLang.Items.Add('Не найден файл локализации');
+    CBLang.Items.Add(GetLangStr('NotFoundLangFile'));
     CBLang.ItemIndex := 0;
     CBLang.Enabled := False;
   end;
@@ -955,7 +1006,7 @@ begin
     end;
     Global.CoreLanguage := CoreLanguage;
     SendMessage(MainFormHandle, WM_LANGUAGECHANGED, 0, 0);
-    SendMessage(AboutFormHandle, WM_LANGUAGECHANGED, 0, 0);
+    //SendMessage(AboutFormHandle, WM_LANGUAGECHANGED, 0, 0);
   except
     on E: Exception do
       MsgDie(ProgramsName, 'Error on CoreLanguageChanged: ' + E.Message + sLineBreak +
@@ -970,14 +1021,50 @@ begin
     Caption := ProgramsName + ' for ' + IMClientType
   else
     Caption := ProgramsName;
-  ButtonUpdate.Caption := GetLangStr('HistoryToDBSyncLogFormReloadLogButton');
+  if ButtonUpdate.Hint = 'UpdateButton' then
+  begin
+    ButtonUpdate.Caption := GetLangStr('UpdateButton');
+    ButtonUpdate.Hint := 'UpdateButton';
+  end
+  else
+  begin
+    ButtonUpdate.Caption := GetLangStr('StopButton');
+    ButtonUpdate.Hint := 'StopButton';
+  end;
   ButtonSettings.Caption := GetLangStr('SettingsButton');
+  LIMClientType.Caption := GetLangStr('IMClientType');
   LDBType.Caption := GetLangStr('LDBType');
   LLanguage.Caption := GetLangStr('Language');
   TabSheetSettings.Caption := GetLangStr('GeneralSettings');
   TabSheetConnectSettings.Caption := GetLangStr('ConnectionSettings');
   TabSheetLog.Caption := GetLangStr('Logs');
   GBSettings.Caption := GetLangStr('GeneralSettings');
+  GBConnectSettings.Caption := GetLangStr('ConnectionSettings');
+  CBUseProxy.Caption := GetLangStr('UseProxy');
+  LProxyAddress.Caption := GetLangStr('ProxyAddress');
+  LProxyPort.Caption := GetLangStr('ProxyPort');
+  CBProxyAuth.Caption := GetLangStr('ProxyAuth');
+  LProxyUser.Caption := GetLangStr('ProxyUser');
+  LProxyUserPasswd.Caption := GetLangStr('ProxyUserPasswd');
+  EProxyAddress.Left := LProxyAddress.Left + LProxyAddress.Width + 5;
+  LProxyPort.Left := EProxyAddress.Left + EProxyAddress.Width + 5;
+  EProxyPort.Left := LProxyPort.Left + LProxyPort.Width + 5;
+  GBUpdater.Caption := GetLangStr('Update');
+  LStatus.Caption := GetLangStr(LStatus.Hint);
+  LAmountDesc.Caption := GetLangStr('Amount');
+  LSpeedDesc.Caption := GetLangStr('Speed');
+  LFileNameDesc.Caption := GetLangStr('FileName');
+  LFileDesc.Caption := GetLangStr('FileDesc');
+  LAmount.Left := LAmountDesc.Left + LAmountDesc.Width + 5;
+  LSpeed.Left := LSpeedDesc.Left + LSpeedDesc.Width + 5;
+  LFileName.Left := LFileNameDesc.Left + LFileNameDesc.Width + 5;
+  LFileDescription.Left := LFileDesc.Left + LFileDesc.Width + 5;
+  if ButtonSettings.Enabled then
+  begin
+    LFileName.Caption := GetLangStr('Unknown');
+    LFileDescription.Caption := GetLangStr('Unknown');
+    LFileMD5.Caption := GetLangStr('Unknown');
+  end;
 end;
 
 function TMainForm.EndTask(TaskName, FormName: String): Boolean;
