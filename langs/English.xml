@@ -480,5 +480,15 @@
   <UpdateLangFileDone>Update localization file %s completed.</UpdateLangFileDone>
   <UpdateFile>Update file</UpdateFile>
   <UpdateFileDone>Update file %s completed.</UpdateFileDone>
+  <InMemoryFoundProcess>In the memory of the process found %s (PID: %s)</InMemoryFoundProcess>
+  <SendExitCommand>Send the command to the end of the program...</SendExitCommand>
+  <SearchProcessInMemory>Re looking for process %s in the memory...</SearchProcessInMemory>
+  <KillProcess>Trying to force terminated the process %s</KillProcess>
+  <KillProcessDone>Process %s forcibly terminated.</KillProcessDone>
+  <NotKillProcess>Process %s can not be forcibly terminated.</NotKillProcess>
+  <SeDebugPrivilege>Set SeDebugPrivilege and try again to terminate the process %s</SeDebugPrivilege>
+  <SeDebugPrivilegeDone>Process %s forcibly terminated when SeDebugPrivilege.</SeDebugPrivilegeDone>
+  <NotKillSeDebugPrivilege>Process %s can not be forced to terminated in SeDebugPrivilege.</NotKillSeDebugPrivilege>
+  <InMemoryNotFoundProcess>Process %s not found in memory.</InMemoryNotFoundProcess>
 
 </strings>

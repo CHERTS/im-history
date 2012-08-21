@@ -697,6 +697,7 @@ end;
              008|0|UserID|UserName|ProtocolType
            дл€ истории чата:
              008|2|ChatName
+  009 - Ёкстренно закрыть все компоненты плагина.
 }
 procedure OnSendMessageToAllComponent(Msg: String);
 var

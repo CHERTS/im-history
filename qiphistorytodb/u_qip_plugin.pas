@@ -68,6 +68,7 @@ type
     procedure OnClick_CheckMD5Hash(Sender: TObject);
     procedure OnClick_CheckAndDeleteMD5Hash(Sender: TObject);
     procedure OnClick_UpdateContactList(Sender: TObject);
+    procedure OnClick_CheckUpdateButton(Sender: TObject);
     procedure OnClick_metaContact(Sender: TObject);
     procedure AntiBoss(HideAllForms: Boolean);
     procedure OnCurrentLang(var PlugMsg: TPluginMessage);
@@ -489,7 +490,6 @@ begin
     MenuItem.OnClick := OnClick_CheckAndDeleteMD5Hash;
     FPopupMenu.Items.Insert(FPopupMenu.Items.Count, MenuItem);
 
-
     MenuItem         := TMenuItem.Create(FPopupMenu);
     MenuItem.Caption := GetLangStr('UpdateContactListButton');
     MenuItem.OnClick := OnClick_UpdateContactList;
@@ -497,6 +497,11 @@ begin
       MenuItem.Enabled := True
     else
       MenuItem.Enabled := False;
+    FPopupMenu.Items.Insert(FPopupMenu.Items.Count, MenuItem);
+
+    MenuItem         := TMenuItem.Create(FPopupMenu);
+    MenuItem.Caption := GetLangStr('CheckUpdateButton');
+    MenuItem.OnClick := OnClick_CheckUpdateButton;
     FPopupMenu.Items.Insert(FPopupMenu.Items.Count, MenuItem);
 
     MenuItem         := TMenuItem.Create(FPopupMenu);
@@ -1437,6 +1442,33 @@ begin
     ShowFadeWindow(Format(GetLangStr('SendUpdateContactListErr'), [ContactListName]), 0, 2);
 end;
 
+{ Запрос на запуск проверки обновлений }
+procedure TQipPlugin.OnClick_CheckUpdateButton(Sender: TObject);
+var
+  WinName: String;
+begin
+  // Ищем окно HistoryToDBUpdater
+  WinName := 'HistoryToDBUpdater';
+  if not SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBUpdater не найден, то ищем другое окно
+  begin
+    WinName := 'HistoryToDBUpdater for QIP';
+    if not SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBUpdater не запущен, то запускаем
+    begin
+      if FileExists(PluginPath + 'HistoryToDBUpdater.exe') then
+      begin
+        // Отправлен запрос
+        ShellExecute(0, 'open', PWideChar(PluginPath + 'HistoryToDBUpdater.exe'), PWideChar(' "'+ProfilePath+'"'), nil, SW_SHOWNORMAL);
+      end
+      else
+        ShowFadeWindow(Format(GetLangStr('ERR_NO_FOUND_UPDATER'), [PluginPath + 'HistoryToDBUpdater.exe']), 0, 2);
+    end
+    else // Иначе посылаем запрос
+      OnSendMessageToOneComponent(WinName, '0040');
+  end
+  else // Иначе посылаем запрос
+    OnSendMessageToOneComponent(WinName, '0040');
+end;
+
 { Клик по субконтакту в меню metaPopupMenu }
 procedure TQipPlugin.OnClick_metaContact(Sender: TObject);
 var
@@ -1697,6 +1729,11 @@ begin
     MenuItem.Enabled := True
   else
     MenuItem.Enabled := False;
+  MPopupMenu.Items.Insert(MPopupMenu.Items.Count, MenuItem);
+
+  MenuItem         := TMenuItem.Create(MPopupMenu);
+  MenuItem.Caption := GetLangStr('CheckUpdateButton');
+  MenuItem.OnClick := OnClick_CheckUpdateButton;
   MPopupMenu.Items.Insert(MPopupMenu.Items.Count, MenuItem);
 
   MenuItem         := TMenuItem.Create(MPopupMenu);

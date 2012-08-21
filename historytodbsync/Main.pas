@@ -93,6 +93,7 @@ type
     ShowSettings: TMenuItem;
     PopupImage: TImage;
     ImageList_Main: TImageList;
+    CheckUpdate: TMenuItem;
     procedure IMExcept(Sender: TObject; E: Exception);
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -160,6 +161,7 @@ type
     function CheckServiceMode: Boolean;
     function GetCurrentEncryptionKeyID(var ActiveKeyID: String): Integer;
     function CheckQueryRecNo(TotalRecNo, CurRecNo: Integer): Boolean;
+    procedure CheckUpdateClick(Sender: TObject);
   private
     { Private declarations }
     Skype: TSkype;
@@ -1079,6 +1081,33 @@ begin
   end;
 end;
 
+{ Запуск проверки обновлений }
+procedure TMainSyncForm.CheckUpdateClick(Sender: TObject);
+var
+  WinName: String;
+begin
+  // Ищем окно HistoryToDBUpdater
+  WinName := 'HistoryToDBUpdater';
+  if not SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBUpdater не найден, то ищем другое окно
+  begin
+    WinName := 'HistoryToDBUpdater for ' + IMClientType;
+    if not SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBUpdater не запущен, то запускаем
+    begin
+      if FileExists(PluginPath + 'HistoryToDBUpdater.exe') then
+      begin
+        // Отправлен запрос
+        ShellExecute(0, 'open', PWideChar(PluginPath + 'HistoryToDBUpdater.exe'), PWideChar(' "'+ProfilePath+'"'), nil, SW_SHOWNORMAL);
+      end
+      else
+        ShowBalloonHint(MainSyncForm.Caption, Format(GetLangStr('ERR_NO_FOUND_UPDATER'), [PluginPath + 'HistoryToDBUpdater.exe']));
+    end
+    else // Иначе посылаем запрос
+      OnSendMessageToOneComponent(WinName, '0040');
+  end
+  else // Иначе посылаем запрос
+    OnSendMessageToOneComponent(WinName, '0040');
+end;
+
 { Парсинг SQL Insert запросов и шифрование поля сообщения }
 function TMainSyncForm.ParseSQLAndEncrypt(SQLStr, EncryptKeyID, EncryptKey: String; var EncryptMsgCount: Integer): WideString;
 var
@@ -1459,6 +1488,11 @@ begin
     // 007  - Запустить обновление списка контактов
     if (ControlStr = '007') and (not SyncHistoryStartedEnabled) and (not CheckMD5HashStartedEnabled) and (not UpdateContactListStartedEnabled) then
       StartUpdateContactList;
+    if ControlStr = '009' then
+    begin
+      if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура OnControlReq: Управляющее сообщение ' + ControlStr + ' - выполняем принудительный выход из программы.', 2);
+      HistoryExitClick(Self);
+    end;
   end;
 end;
 
@@ -3780,10 +3814,11 @@ begin
   HistoryToDbSyncPopupMenu.Items[5].Caption := GetLangStr('CheckMD5Hash');
   HistoryToDbSyncPopupMenu.Items[6].Caption := GetLangStr('CheckAndDeleteMD5Hash');
   HistoryToDbSyncPopupMenu.Items[7].Caption := GetLangStr('UpdateContactListButton');
-  HistoryToDbSyncPopupMenu.Items[8].Caption := GetLangStr('HistoryToDBSyncShowLogFile');
-  HistoryToDbSyncPopupMenu.Items[9].Caption := GetLangStr('SettingsButton');
-  HistoryToDbSyncPopupMenu.Items[11].Caption := GetLangStr('HistoryToDBSyncPopupMenuShowAbout');
-  HistoryToDbSyncPopupMenu.Items[12].Caption := GetLangStr('HistoryToDBSyncPopupMenuShowExit');
+  HistoryToDbSyncPopupMenu.Items[8].Caption := GetLangStr('CheckUpdateButton');
+  HistoryToDbSyncPopupMenu.Items[9].Caption := GetLangStr('HistoryToDBSyncShowLogFile');
+  HistoryToDbSyncPopupMenu.Items[10].Caption := GetLangStr('SettingsButton');
+  HistoryToDbSyncPopupMenu.Items[12].Caption := GetLangStr('HistoryToDBSyncPopupMenuShowAbout');
+  HistoryToDbSyncPopupMenu.Items[13].Caption := GetLangStr('HistoryToDBSyncPopupMenuShowExit');
   SyncButton.Caption := GetLangStr('HistoryToDBSyncPopupMenuSync');
   if StartStopSyncButton.Hint = 'HistoryToDBSyncStop' then
   begin
