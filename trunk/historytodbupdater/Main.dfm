@@ -185,11 +185,15 @@ object MainForm: TMainForm
     object TabSheetSettings: TTabSheet
       Caption = #1054#1073#1097#1080#1077' '#1085#1072#1089#1090#1088#1086#1081#1082#1080
       ImageIndex = 2
+      DesignSize = (
+        464
+        165)
       object GBSettings: TGroupBox
         Left = 3
         Top = 0
         Width = 458
         Height = 161
+        Anchors = [akLeft, akTop, akRight]
         Caption = ' '#1054#1073#1097#1080#1077' '#1085#1072#1089#1090#1088#1086#1081#1082#1080
         TabOrder = 0
         object LLanguage: TLabel

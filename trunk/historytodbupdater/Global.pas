@@ -18,6 +18,8 @@ uses
 
 type
   TCopyDataType = (cdtString = 0, cdtImage = 1, cdtRecord = 2);
+  TDelim = set of Char;
+  TArrayOfString = Array of String;
 
 const
   ProgramsName = 'HistoryToDBUpdater';
@@ -85,6 +87,8 @@ function GetProcessID(ExeFileName: String): Cardinal;
 function KillTask(ExeFileName: String): Integer;
 function ProcessTerminate(dwPID: Cardinal): Boolean;
 function ProcCloseEnum(hwnd: THandle; data: Pointer):BOOL;stdcall;
+function StringToParts(sString:String; tdDelim:TDelim): TArrayOfString;
+function ExtractWord(const AString: string; const ADelimiter: Char; const ANumber: integer): string;
 procedure EncryptInit;
 procedure EncryptFree;
 procedure WriteInLog(LogPath: String; TextString: String; LogType: Integer);
@@ -894,6 +898,48 @@ begin
   if GetLastError() <> ERROR_SUCCESS then
     Exit;
   Result := True;
+end;
+
+function StringToParts(sString:String; tdDelim:TDelim): TArrayOfString;
+var
+  iCounter,iBegin:Integer;
+begin
+  if length(sString)>0 then
+  begin
+    include(tdDelim, #0);
+    iBegin:=1;
+    SetLength(Result, 0);
+    for iCounter:=1 to Length(sString)+1 do
+    begin
+      if(sString[iCounter] in tdDelim) then
+      begin
+        SetLength(Result,Length(Result)+1);
+        Result[Length(Result)-1] := Copy(sString,iBegin,iCounter-iBegin);
+        iBegin:=iCounter+1;
+      end;
+    end;
+  end;
+end;
+
+{ Edit1.Text := ExtractWord(ExtractWord('admin:login:password', ':', 3)); //'password' }
+function ExtractWord(const AString: string; const ADelimiter: Char; const ANumber: integer): string;
+var
+  i, j, k: integer;
+begin
+  i := 1;
+  k := 1;
+  while k <> ANumber do
+  begin
+    if AString[i] = ADelimiter then
+    begin
+      Inc(k);
+    end;
+    Inc(i);
+  end;
+  j := i + 1;
+  while (j <= Length(AString)) and (AString[j] <> ADelimiter) do
+    Inc(j);
+  Result := Copy(AString, i, j - i);
 end;
 
 begin
