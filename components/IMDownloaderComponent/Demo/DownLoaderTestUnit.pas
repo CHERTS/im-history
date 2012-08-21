@@ -45,7 +45,6 @@ var
   MainForm: TMainForm;
 
 const
-  //uURL = 'http://im-history.ru/update/get.php?file=HistoryToDBImport';
   uURL = 'http://im-history.ru/update/get.php?file=HistoryToDB-Update';
 
 implementation
@@ -55,6 +54,7 @@ implementation
 procedure TMainForm.FormShow(Sender: TObject);
 begin
   Edit1.Text := uURL;
+  IMDownloader_Demo.DirPath := ExtractFilePath(Application.ExeName);
 end;
 
 procedure TMainForm.IMDownloader_DemoAccepted(Sender: TObject);
