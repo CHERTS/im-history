@@ -136,6 +136,7 @@ procedure WriteInLog(LogPath: String; TextString: String; LogType: Integer);
 procedure CloseLogFile(LogType: Integer);
 procedure LoadINI(INIPath: String);
 procedure OnSendMessageToAllComponent(Msg: String);
+procedure OnSendMessageToOneComponent(WinName, Msg: String);
 procedure WriteCustomINI(INIPath, CustomParams, ParamsStr: String);
 procedure ProfileDirChangeCallBack(pInfo: TInfoCallBack);
 procedure IMDelay(Value: Cardinal);
@@ -566,6 +567,7 @@ end;
              008|0|UserID|UserName|ProtocolType
            дл€ истории чата:
              008|2|ChatName
+  009 - Ёкстренно закрыть все компоненты плагина.
 }
 procedure OnSendMessageToAllComponent(Msg: String);
 var
@@ -594,6 +596,33 @@ begin
   end;
   // »щем окно HistoryToDBImport и посылаем ему команду
   HToDB := FindWindow(nil,'HistoryToDBImport for QIP');
+  if HToDB <> 0 then
+  begin
+    copyDataStruct.dwData := Integer(cdtString);
+    copyDataStruct.cbData := 2*Length(EncryptMsg);
+    copyDataStruct.lpData := PChar(EncryptMsg);
+    SendMessage(HToDB, WM_COPYDATA, 0, Integer(@copyDataStruct));
+  end;
+  // »щем окно HistoryToDBUpdater и посылаем ему команду
+  HToDB := FindWindow(nil,'HistoryToDBUpdater for QIP');
+  if HToDB <> 0 then
+  begin
+    copyDataStruct.dwData := Integer(cdtString);
+    copyDataStruct.cbData := 2*Length(EncryptMsg);
+    copyDataStruct.lpData := PChar(EncryptMsg);
+    SendMessage(HToDB, WM_COPYDATA, 0, Integer(@copyDataStruct));
+  end;
+end;
+
+procedure OnSendMessageToOneComponent(WinName, Msg: String);
+var
+  HToDB: HWND;
+  copyDataStruct : TCopyDataStruct;
+  EncryptMsg: String;
+begin
+  EncryptMsg := EncryptStr(Msg);
+  // »щем окно HistoryToDBViewer и посылаем ему команду
+  HToDB := FindWindow(nil, pChar(WinName));
   if HToDB <> 0 then
   begin
     copyDataStruct.dwData := Integer(cdtString);

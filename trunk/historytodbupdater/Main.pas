@@ -629,6 +629,11 @@ var
   SR: TSearchRec;
   I: Integer;
 begin
+  LAmount.Caption := '0 '+GetLangStr('Kb');
+  LFileName.Caption := GetLangStr('Unknown');
+  LFileDescription.Caption := GetLangStr('Unknown');
+  LFileMD5.Caption := GetLangStr('Unknown');
+  LSpeed.Caption := '0 '+GetLangStr('KbSec');
   if FindFirst(PluginPath + 'temp' + '\*.*', faAnyFile or faDirectory, SR) = 0 then
   begin
     repeat
@@ -1082,46 +1087,45 @@ begin
   Result := False;
   if IsProcessRun(TaskName) then
   begin
-    LogMemo.Lines.Add('В памяти найден процесс ' + TaskName + ' (PID: '+IntToStr(GetProcessID(TaskName))+')');
-    LogMemo.Lines.Add('Отправляем команду завершения...');
-    OnSendMessageToOneComponent(FormName, '003');
+    LogMemo.Lines.Add(Format(GetLangStr('InMemoryFoundProcess'), [TaskName, IntToStr(GetProcessID(TaskName))]));
+    LogMemo.Lines.Add(GetLangStr('SendExitCommand'));
     OnSendMessageToOneComponent(FormName, '009');
     Sleep(1000);
-    LogMemo.Lines.Add('Повторно ищем процесс '+TaskName+' в памяти...');
+    LogMemo.Lines.Add(Format(GetLangStr('SearchProcessInMemory'), [TaskName]));
     if IsProcessRun(TaskName) then
     begin
-      LogMemo.Lines.Add('В памяти найден процесс ' + TaskName + ' (PID: '+IntToStr(GetProcessID(TaskName))+')');
-      LogMemo.Lines.Add('Пытаемся принудительно завершить процесс '+TaskName);
+      LogMemo.Lines.Add(Format(GetLangStr('InMemoryFoundProcess'), [TaskName, IntToStr(GetProcessID(TaskName))]));
+      LogMemo.Lines.Add(Format(GetLangStr('KillProcess'), [TaskName]));
       if KillTask(TaskName) = 1 then
       begin
-        LogMemo.Lines.Add('Процесс '+TaskName+' принудительно завершен.');
+        LogMemo.Lines.Add(Format(GetLangStr('KillProcessDone'), [TaskName]));
         Result := True;
       end
       else
       begin
-        LogMemo.Lines.Add('Процесс '+TaskName+' не может быть принудительно завершен.');
-        LogMemo.Lines.Add('Повышаем свои привилегии до SeDebugPrivilege и пробуем еще раз завершить процесс '+TaskName);
+        LogMemo.Lines.Add(Format(GetLangStr('NotKillProcess'), [TaskName]));
+        LogMemo.Lines.Add(Format(GetLangStr('SeDebugPrivilege'), [TaskName]));
         if ProcessTerminate(GetProcessID(TaskName)) then
         begin
-          LogMemo.Lines.Add('Процесс '+TaskName+' принудительно завершен при SeDebugPrivilege.');
+          LogMemo.Lines.Add(Format(GetLangStr('SeDebugPrivilegeDone'), [TaskName]));
           Result := True;
         end
         else
         begin
-          LogMemo.Lines.Add('Процесс '+TaskName+' не может быть принудительно завершен даже при SeDebugPrivilege.');
+          LogMemo.Lines.Add(Format(GetLangStr('NotKillSeDebugPrivilege'), [TaskName]));
           Result := False;
         end;
       end;
     end
     else
     begin
-      LogMemo.Lines.Add('Процесс '+TaskName+' не найден в памяти.');
+      LogMemo.Lines.Add(Format(GetLangStr('InMemoryNotFoundProcess'), [TaskName]));
       Result := True;
     end;
   end
   else
   begin
-    LogMemo.Lines.Add('Процесс '+TaskName+' не найден в памяти.');
+    LogMemo.Lines.Add(Format(GetLangStr('InMemoryNotFoundProcess'), [TaskName]));
     Result := True;
   end;
 end;

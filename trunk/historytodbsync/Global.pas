@@ -127,6 +127,7 @@ procedure LoadINI(INIPath: String; NotSettingsForm: Boolean);
 procedure WriteCustomINI(INIPath, CustomSection, CustomParams, ParamsStr: String);
 procedure MakeTransp(winHWND: HWND);
 procedure OnSendMessageToAllComponent(Msg: String);
+procedure OnSendMessageToOneComponent(WinName, Msg: String);
 procedure IMDelay(Value: Cardinal);
 // ƒл€ мульти€зыковой поддержки
 procedure MsgDie(Caption, Msg: WideString);
@@ -776,6 +777,7 @@ end;
              008|0|UserID|UserName|ProtocolType
            дл€ истории чата:
              008|2|ChatName
+  009 - Ёкстренно закрыть все компоненты плагина.
 }
 procedure OnSendMessageToAllComponent(Msg: String);
 var
@@ -785,6 +787,24 @@ var
 begin
   EncryptMsg := EncryptStr(Msg);
   WinName := 'HistoryToDBViewer for ' + IMClientType;
+  // »щем окно HistoryToDBViewer и посылаем ему команду
+  HToDB := FindWindow(nil, pChar(WinName));
+  if HToDB <> 0 then
+  begin
+    copyDataStruct.dwData := Integer(cdtString);
+    copyDataStruct.cbData := 2*Length(EncryptMsg);
+    copyDataStruct.lpData := PChar(EncryptMsg);
+    SendMessage(HToDB, WM_COPYDATA, 0, Integer(@copyDataStruct));
+  end;
+end;
+
+procedure OnSendMessageToOneComponent(WinName, Msg: String);
+var
+  HToDB: HWND;
+  copyDataStruct : TCopyDataStruct;
+  EncryptMsg: String;
+begin
+  EncryptMsg := EncryptStr(Msg);
   // »щем окно HistoryToDBViewer и посылаем ему команду
   HToDB := FindWindow(nil, pChar(WinName));
   if HToDB <> 0 then

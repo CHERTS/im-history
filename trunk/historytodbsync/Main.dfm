@@ -563,6 +563,11 @@
       ImageIndex = 114
       OnClick = StartUpdateContactListsClick
     end
+    object CheckUpdate: TMenuItem
+      Caption = #1055#1088#1086#1074#1077#1088#1080#1090#1100' '#1085#1072#1083#1080#1095#1080#1077' '#1086#1073#1085#1086#1074#1083#1077#1085#1080#1081
+      ImageIndex = 69
+      OnClick = CheckUpdateClick
+    end
     object ViewLogFile: TMenuItem
       Caption = #1055#1086#1089#1084#1086#1090#1088#1077#1090#1100' '#1083#1086#1075'-'#1092#1072#1081#1083#1099
       ImageIndex = 41

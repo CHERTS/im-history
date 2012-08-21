@@ -481,5 +481,15 @@
   <UpdateLangFileDone>Обновление файла локализации %s выполнено.</UpdateLangFileDone>
   <UpdateFile>Обновление файла</UpdateFile>
   <UpdateFileDone>Обновление файла %s выполнено.</UpdateFileDone>
+  <InMemoryFoundProcess>В памяти найден процесс %s (PID: %s)</InMemoryFoundProcess>
+  <SendExitCommand>Отправляем команду завершения...</SendExitCommand>
+  <SearchProcessInMemory>Повторно ищем процесс %s в памяти...</SearchProcessInMemory>
+  <KillProcess>Пытаемся принудительно завершить процесс %s</KillProcess>
+  <KillProcessDone>Процесс %s принудительно завершен.</KillProcessDone>
+  <NotKillProcess>Процесс %s не может быть принудительно завершен.</NotKillProcess>
+  <SeDebugPrivilege>Повышаем свои привилегии до SeDebugPrivilege и пробуем еще раз завершить процесс %s</SeDebugPrivilege>
+  <SeDebugPrivilegeDone>Процесс %s принудительно завершен при SeDebugPrivilege.</SeDebugPrivilegeDone>
+  <NotKillSeDebugPrivilege>Процесс %s не может быть принудительно завершен даже при SeDebugPrivilege.</NotKillSeDebugPrivilege>
+  <InMemoryNotFoundProcess>Процесс %s не найден в памяти.</InMemoryNotFoundProcess>
 
 </strings>

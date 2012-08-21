@@ -3246,7 +3246,8 @@ begin
       LoadDBSettings;
     end;
     // 003 - Выход из программы
-    if ControlStr = '003' then
+    // 009 - Принудительный выход из программы
+    if (ControlStr = '003') or (ControlStr = '009') then
       Close;
     // 004 - Режим Анти-босс
     if ControlStr = '0040' then // Показать формы
