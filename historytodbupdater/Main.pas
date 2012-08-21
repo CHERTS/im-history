@@ -72,10 +72,12 @@ type
     procedure CoreLanguageChanged;
     procedure InstallUpdate;
     procedure SetProxySettings;
+    procedure AntiBoss(HideAllForms: Boolean);
     function  StartStepByStepUpdate(CurrStep: Integer; INIFileName: String): Integer;
   private
     { Private declarations }
     FLanguage : WideString;
+    procedure OnControlReq(var Msg : TWMCopyData); message WM_COPYDATA;
     // Для мультиязыковой поддержки
     procedure OnLanguageChanged(var Msg: TMessage); message WM_LANGUAGECHANGED;
     procedure LoadLanguageStrings;
@@ -565,6 +567,7 @@ begin
       LogMemo.Lines.Add('=========================================');
       LogMemo.Lines.Add('Все обновления успешно установлены.');
       ButtonUpdateEnableStart;
+      Close;
       Exit;
     end;
     LogMemo.Lines.Add('================= Шаг '+IntToStr(CurrStep)+' =================');
@@ -1023,6 +1026,89 @@ begin
   begin
     LogMemo.Lines.Add('Процесс '+TaskName+' не найден в памяти.');
     Result := True;
+  end;
+end;
+
+{ Прием управляющих команд от плагина по событию WM_COPYDATA }
+procedure TMainForm.OnControlReq(var Msg : TWMCopyData);
+var
+  ControlStr, EncryptControlStr: String;
+  TmpStr, TmpUserID, TmpUserName, TmpProtocolType, TmpChatName: String;
+  copyDataType : TCopyDataType;
+begin
+  copyDataType := TCopyDataType(Msg.CopyDataStruct.dwData);
+  if copyDataType = cdtString then
+  begin
+    EncryptControlStr := PChar(Msg.CopyDataStruct.lpData);
+    Delete(EncryptControlStr, (Integer(Msg.CopyDataStruct.cbData) div 2)+1, Length(EncryptControlStr));
+    if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура OnControlReq: Получено шифрованное управляющее сообщение: ' + EncryptControlStr, 1);
+    ControlStr := DecryptStr(EncryptControlStr);
+    if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура OnControlReq: Управляющее сообщение расшифровано: ' + ControlStr, 1);
+    //SetString(ControlStr, PChar(Msg.CopyDataStruct.lpData), StrLen(PChar(Msg.CopyDataStruct.lpData)));
+    //Msg.Result := 2006;
+    if ControlStr = 'Russian' then
+    begin
+      FLanguage := 'Russian';
+      CoreLanguageChanged;
+    end
+    else if ControlStr = 'English' then
+    begin
+      FLanguage := 'English';
+      CoreLanguageChanged;
+    end;
+    // 001 - Перечитать настройки из файла HistoryToDB.ini
+    if ControlStr = '001' then
+    begin
+      // Читаем настройки
+      LoadINI(ProfilePath, true);
+    end;
+    // 003 - Выход из программы
+    {if ControlStr = '003' then
+      Close;}
+    // 004 - Режим Анти-босс
+    if ControlStr = '0040' then // Показать формы
+      AntiBoss(False);
+    if ControlStr = '0041' then // Скрыть формы
+      AntiBoss(True);
+  end;
+end;
+
+{ Поддержка режима Анти-босс }
+procedure TMainForm.AntiBoss(HideAllForms: Boolean);
+begin
+  if not Assigned(MainForm) then Exit;
+  if HideAllForms then
+  begin
+    ShowWindow(MainForm.Handle, SW_HIDE);
+    MainForm.Hide;
+    //ShowWindow(AboutForm.Handle, SW_HIDE);
+    //AboutForm.Hide;
+  end
+  else
+  begin
+    // Если форма была ранее открыта, то показываем её
+    if Global_MainForm_Showing then
+    begin
+      ShowWindow(MainForm.Handle, SW_SHOW);
+      MainForm.Show;
+      // Если форма свернута, то разворачиваем её поверх всех окон
+      if MainForm.WindowState = wsMinimized then
+      begin
+        MainForm.FormStyle := fsStayOnTop;
+        MainForm.WindowState := wsNormal;
+        MainForm.FormStyle := fsNormal;
+      end;
+      if MainForm.WindowState = wsNormal then
+      begin
+        MainForm.FormStyle := fsStayOnTop;
+        MainForm.FormStyle := fsNormal;
+      end;
+    end;
+    {if Global_AboutForm_Showing then
+    begin
+      ShowWindow(AboutForm.Handle, SW_SHOW);
+      AboutForm.Show;
+    end;}
   end;
 end;
 
