@@ -164,6 +164,7 @@
   <Delete>Delete</Delete>
   <GetContactListButton>Save contact list</GetContactListButton>
   <UpdateContactListButton>Update contact information in the DB</UpdateContactListButton>
+  <CheckUpdateButton>Check for updates</CheckUpdateButton>
   <SaveContactListCompleted>A list of contacts stored.</SaveContactListCompleted>
   <SendUpdateContactListCompleted>Sent a request to update the list of contacts in the database.</SendUpdateContactListCompleted>
   <SendUpdateContactListErr>The file %s to update your contact list can not be found. Request for update is not sent.</SendUpdateContactListErr>
@@ -250,6 +251,7 @@
   <ERR_NO_DB_CONNECTED>[%s] Database connection is not established.</ERR_NO_DB_CONNECTED>
   <ERR_NO_FOUND_VIEWER>History viewer %s not found.</ERR_NO_FOUND_VIEWER>
   <ERR_NO_FOUND_SYNC>The history synchronization program %s not found.</ERR_NO_FOUND_SYNC>
+  <ERR_NO_FOUND_UPDATER>Update program %s not found.</ERR_NO_FOUND_UPDATER>
   <ERR_OLD_SDK_VER>Wrong SDK version. To work needed QIP 2012 and above.</ERR_OLD_SDK_VER>
   <ERR_NO_FOUND_IMPORT>The history import program %s not found.</ERR_NO_FOUND_IMPORT>
   <ERR_DB_SERVICE_MODE>Unable to perform operation. Database on service mode.</ERR_DB_SERVICE_MODE>

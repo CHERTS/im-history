@@ -52,7 +52,7 @@ var
   Glogal_History_Type, Glogal_Selected_History_Type: Integer;
   Global_ChatName: WideString;
   PluginPath, ProfilePath: WideString;
-  Global_MainForm_Showing, Global_LogForm_Showing, Global_AboutForm_Showing, Global_KeyPasswdForm_Showing: Boolean;
+  Global_MainForm_Showing, Global_AboutForm_Showing: Boolean;
   EncryptionKey, EncryptionKeyID, SyncHotKey: String;
   KeyPasswdSaveOnlySession, KeyPasswdSave: Boolean;
   // Шифрование
