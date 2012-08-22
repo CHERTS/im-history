@@ -14,7 +14,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls, ComCtrls, XMLIntf, XMLDoc, Global, IniFiles, uIMDownloader;
+  Dialogs, StdCtrls, ComCtrls, XMLIntf, XMLDoc, Global, IniFiles, uIMDownloader, ShellApi;
 
 type
   TMainForm = class(TForm)
@@ -83,6 +83,7 @@ type
     procedure InstallUpdate;
     procedure SetProxySettings;
     procedure AntiBoss(HideAllForms: Boolean);
+    procedure RunIMClient(IMClientName: String; IMProcessArray: TProcessInfoArray);
     function  StartStepByStepUpdate(CurrStep: Integer; INIFileName: String): Integer;
   private
     { Private declarations }
@@ -106,6 +107,10 @@ type
     IMMD5Correct: Boolean;
     IMSizeCorrect: Boolean;
     INISavePath: String;
+    QIPProcessInfo: TProcessInfoArray;
+    RnQProcessInfo: TProcessInfoArray;
+    SkypeProcessInfo: TProcessInfoArray;
+    MirandaProcessInfo: TProcessInfoArray;
     property CoreLanguage: WideString read FLanguage;
   end;
 
@@ -340,8 +345,16 @@ end;
 
 procedure TMainForm.ButtonUpdateStartClick(Sender: TObject);
 var
-  AllProcessEndErr: Integer;
+  AllProcessEndErr, i: Integer;
+  RetVal: TProcessInfoArray;
 begin
+  //RetVal := TProcessInfoArray(EndIMClient('svchost.exe', False));
+  //RetVal := TProcessInfoArray(EndIMClient('postgres.exe', False));
+  {RetVal := EndIMClient('pcapsvc.exe', False);
+  for i := Low(RetVal) to High(RetVal) do
+    showmessage(RetVal[i].ProcessName + #10#13 + IntToStr(RetVal[i].PID) + #10#13 +
+      RetVal[i].ProcessFullCmd + #10#13 + RetVal[i].ProcessPath + #10#13 +
+      RetVal[i].ProcessParamCmd);}
   AllProcessEndErr := 0;
   if (DBType = 'Unknown') or (IMClientType  = 'Unknown') then
     MsgInf(Caption, GetLangStr('SelectDBTypeAndIMClient'))
@@ -358,15 +371,15 @@ begin
     // Если все процессы убиты, то обновляемся
     if AllProcessEndErr = 0 then
     begin
-      // Ищем IM-клиент и закрываем его
+      // Ищем все экземпляры IM-клиентов и закрываем их
       if IMClientType = 'QIP' then
-        EnumWindows(@ProcCloseEnum, GetProcessID('qip.exe'));
+        QIPProcessInfo := EndIMClient('qip.exe', True);
       if IMClientType = 'Miranda' then
-        EnumWindows(@ProcCloseEnum, GetProcessID('miranda32.exe'));
+        MirandaProcessInfo := EndIMClient('miranda32.exe', True);
       if IMClientType = 'RnQ' then
-        EnumWindows(@ProcCloseEnum, GetProcessID('rnq.exe'));
+        RnQProcessInfo := EndIMClient('rnq.exe', True);
       if IMClientType = 'Skype' then
-        EnumWindows(@ProcCloseEnum, GetProcessID('skype.exe'));
+        SkypeProcessInfo := EndIMClient('skype.exe', True);
       // Начинаем обновление
       TrueHeader := False;
       CurrentUpdateStep := 0;
@@ -602,6 +615,14 @@ begin
       LogMemo.Lines.Add('=========================================');
       LogMemo.Lines.Add(GetLangStr('AllUpdatesInstalled'));
       ButtonUpdateEnableStart;
+      if IMClientType = 'QIP' then
+        RunIMClient('qip.exe', QIPProcessInfo);
+      if IMClientType = 'Miranda' then
+        RunIMClient('miranda32.exe', MirandaProcessInfo);
+      if IMClientType = 'RnQ' then
+        RunIMClient('rnq.exe', RnQProcessInfo);
+      if IMClientType = 'Skype' then
+        RunIMClient('skype.exe', SkypeProcessInfo);
       Close;
       Exit;
     end;
@@ -1090,7 +1111,7 @@ begin
     LogMemo.Lines.Add(Format(GetLangStr('InMemoryFoundProcess'), [TaskName, IntToStr(GetProcessID(TaskName))]));
     LogMemo.Lines.Add(GetLangStr('SendExitCommand'));
     OnSendMessageToOneComponent(FormName, '009');
-    Sleep(1000);
+    Sleep(1200);
     LogMemo.Lines.Add(Format(GetLangStr('SearchProcessInMemory'), [TaskName]));
     if IsProcessRun(TaskName) then
     begin
@@ -1210,6 +1231,20 @@ begin
       ShowWindow(AboutForm.Handle, SW_SHOW);
       AboutForm.Show;
     end;}
+  end;
+end;
+
+procedure TMainForm.RunIMClient(IMClientName: String; IMProcessArray: TProcessInfoArray);
+var
+  i: Integer;
+begin
+  for i := Low(IMProcessArray) to High(IMProcessArray) do
+  begin
+    if IMClientName = IMProcessArray[i].ProcessName then
+    begin
+      if FileExists(IMProcessArray[i].ProcessPath) then
+        ShellExecute(0, 'open', PWideChar(IMProcessArray[i].ProcessPath), PWideChar(' '+IMProcessArray[i].ProcessParamCmd), nil, SW_SHOWNORMAL);
+    end;
   end;
 end;
 

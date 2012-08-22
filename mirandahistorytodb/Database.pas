@@ -41,6 +41,10 @@ procedure SetSafetyMode(Safe: Boolean);
 
 function DBGetContactSettingString(hContact: THandle; const szModule: PAnsiChar; const szSetting: PAnsiChar; ErrorValue: PAnsiChar): AnsiString;
 function DBGetContactSettingWideString(hContact: THandle; const szModule: PAnsiChar; const szSetting: PAnsiChar; ErrorValue: PWideChar): WideString;
+function DBWriteContactSettingWideString(hContact: THandle; const szModule: PAnsiChar; const szSetting: PAnsiChar; const val: PWideChar): Integer;
+
+function DBDelete(const Module, Param: AnsiString): Boolean; overload;
+function DBDelete(const hContact: THandle; const Module, Param: AnsiString): Boolean; overload;
 function DBExists(const Module, Param: AnsiString): Boolean; overload;
 function DBExists(const hContact: THandle; const Module, Param: AnsiString): Boolean; overload;
 
@@ -62,6 +66,25 @@ function GetDBBool(const Module,Param: AnsiString; Default: Boolean): Boolean; o
 function GetDBBool(const hContact: THandle; const Module,Param: AnsiString; Default: Boolean): Boolean; overload;
 function GetDBDateTime(const hContact: THandle; const Module,Param: AnsiString; Default: TDateTime): TDateTime; overload;
 function GetDBDateTime(const Module,Param: AnsiString; Default: TDateTime): TDateTime; overload;
+
+function WriteDBBlob(const Module,Param: AnsiString; Value: Pointer; Size: Integer): Integer; overload;
+function WriteDBBlob(const hContact: THandle; const Module,Param: AnsiString; Value: Pointer; Size: Integer): Integer; overload;
+function WriteDBByte(const Module,Param: AnsiString; Value: Byte): Integer; overload;
+function WriteDBByte(const hContact: THandle; const Module,Param: AnsiString; Value: Byte): Integer; overload;
+function WriteDBWord(const Module,Param: AnsiString; Value: Word): Integer; overload;
+function WriteDBWord(const hContact: THandle; const Module,Param: AnsiString; Value: Word): Integer; overload;
+function WriteDBDWord(const Module,Param: AnsiString; Value: DWord): Integer; overload;
+function WriteDBDWord(const hContact: THandle; const Module,Param: AnsiString; Value: DWord): Integer; overload;
+function WriteDBInt(const Module,Param: AnsiString; Value: Integer): Integer; overload;
+function WriteDBInt(const hContact: THandle; const Module,Param: AnsiString; Value: Integer): Integer; overload;
+function WriteDBStr(const Module,Param: AnsiString; Value: AnsiString): Integer; overload;
+function WriteDBStr(const hContact: THandle; const Module,Param: AnsiString; Value: AnsiString): Integer; overload;
+function WriteDBWideStr(const Module,Param: AnsiString; Value: WideString): Integer; overload;
+function WriteDBWideStr(const hContact: THandle; const Module,Param: AnsiString; Value: WideString): Integer; overload;
+function WriteDBBool(const Module,Param: AnsiString; Value: Boolean): Integer; overload;
+function WriteDBBool(const hContact: THandle; const Module,Param: AnsiString; Value: Boolean): Integer; overload;
+function WriteDBDateTime(const hContact: THandle; const Module,Param: AnsiString; Value: TDateTime): Integer; overload;
+function WriteDBDateTime(const Module,Param: AnsiString; Value: TDateTime): Integer; overload;
 
 implementation
 
@@ -263,6 +286,136 @@ end;
 function GetDBDateTime(const Module,Param: AnsiString; Default: TDateTime): TDateTime; overload;
 begin
   Result := GetDBDateTime(0,Module,Param,Default);
+end;
+
+function DBDelete(const Module, Param: AnsiString): Boolean;
+begin
+  Result := DBDelete(0,Module,Param);
+end;
+
+function DBDelete(const hContact: THandle; const Module, Param: AnsiString): Boolean;
+begin
+  Result := (DBDeleteContactSetting(hContact,PAnsiChar(Module),PAnsiChar(Param)) = 0);
+end;
+
+function WriteDBBool(const Module,Param: AnsiString; Value: Boolean): Integer;
+begin
+  Result := WriteDBBool(0,Module,Param,Value);
+end;
+
+function WriteDBBool(const hContact: THandle; const Module,Param: AnsiString; Value: Boolean): Integer;
+begin
+  Result := WriteDBByte(hContact,Module,Param,Byte(Value));
+end;
+
+function WriteDBByte(const Module,Param: AnsiString; Value: Byte): Integer;
+begin
+  Result := WriteDBByte(0,Module,Param,Value);
+end;
+
+function WriteDBByte(const hContact: THandle; const Module,Param: AnsiString; Value: Byte): Integer;
+begin
+  Result := DBWriteContactSettingByte(hContact,PAnsiChar(Module), PAnsiChar(Param), Value);
+end;
+
+function WriteDBWord(const Module,Param: AnsiString; Value: Word): Integer;
+begin
+  Result := WriteDBWord(0,Module,Param,Value);
+end;
+
+function WriteDBWord(const hContact: THandle; const Module,Param: AnsiString; Value: Word): Integer;
+begin
+  Result := DBWriteContactSettingWord(hContact,PAnsiChar(Module),PAnsiChar(Param),Value);
+end;
+
+function WriteDBDWord(const Module,Param: AnsiString; Value: DWord): Integer;
+begin
+  Result := WriteDBWord(0,Module,Param,Value);
+end;
+
+function WriteDBDWord(const hContact: THandle; const Module,Param: AnsiString; Value: DWord): Integer;
+begin
+  Result := DBWriteContactSettingDWord(hContact,PAnsiChar(Module),PAnsiChar(Param),Value);
+end;
+
+function WriteDBInt(const Module,Param: AnsiString; Value: Integer): Integer;
+begin
+  Result := WriteDBInt(0,Module,Param,Value);
+end;
+
+function WriteDBInt(const hContact: THandle; const Module,Param: AnsiString; Value: Integer): Integer;
+var
+  cws: TDBCONTACTWRITESETTING;
+begin
+  cws.szModule := PAnsiChar(Module);
+  cws.szSetting := PAnsiChar(Param);
+  cws.value.type_ := DBVT_DWORD;
+  cws.value.dVal := Value;
+  Result := PluginLink^.CallService(MS_DB_CONTACT_WRITESETTING, hContact, lParam(@cws));
+end;
+
+function WriteDBStr(const Module,Param: AnsiString; Value: AnsiString): Integer;
+begin
+  Result := WriteDBStr(0,Module,Param,Value);
+end;
+
+function WriteDBStr(const hContact: THandle; const Module,Param: AnsiString; Value: AnsiString): Integer;
+begin
+  Result := DBWriteContactSettingString(hContact,PAnsiChar(Module),PAnsiChar(Param),PAnsiChar(Value));
+end;
+
+function WriteDBWideStr(const Module,Param: AnsiString; Value: WideString): Integer;
+begin
+  Result := WriteDBWideStr(0,Module,Param,Value);
+end;
+
+function WriteDBWideStr(const hContact: THandle; const Module,Param: AnsiString; Value: WideString): Integer;
+begin
+  Result := DBWriteContactSettingWideString(hContact,PAnsiChar(Module),PAnsiChar(Param),PWideChar(Value));
+end;
+
+function DBWriteContactSettingWideString(hContact: THandle; const szModule: PAnsiChar; const szSetting: PAnsiChar; const val: PWideChar): Integer;
+var
+  cws: TDBCONTACTWRITESETTING;
+begin
+  cws.szModule := szModule;
+  cws.szSetting := szSetting;
+  cws.value.type_ := DBVT_WCHAR;
+  cws.value.pwszVal := val;
+  Result := PluginLink^.CallService(MS_DB_CONTACT_WRITESETTING, hContact, lParam(@cws));
+end;
+
+function WriteDBBlob(const Module,Param: AnsiString; Value: Pointer; Size: Integer): Integer;
+begin
+  Result := WriteDBBlob(0,Module,Param,Value,Size);
+end;
+
+function WriteDBBlob(const hContact: THandle; const Module,Param: AnsiString; Value: Pointer; Size: Integer): Integer;
+var
+  cws: TDBContactWriteSetting;
+begin
+  ZeroMemory(@cws,SizeOf(cws));
+  cws.szModule := PAnsiChar(Module);
+  cws.szSetting := PAnsiChar(Param);
+  cws.value.type_ := DBVT_BLOB;
+  cws.value.pbVal := Value;
+  cws.value.cpbVal := Word(Size);
+  Result := PluginLink^.CallService(MS_DB_CONTACT_WRITESETTING,hContact,lParam(@cws));
+end;
+
+function WriteDBDateTime(const hContact: THandle; const Module,Param: AnsiString; Value: TDateTime): Integer; overload;
+var
+  p: PDateTime;
+begin
+  GetMem(p,SizeOf(TDateTime));
+  p^ := Value;
+  Result := WriteDBBlob(hContact,Module,Param,p,SizeOf(TDateTime));
+  FreeMem(p,SizeOf(TDateTime));
+end;
+
+function WriteDBDateTime(const Module,Param: AnsiString; Value: TDateTime): Integer; overload;
+begin
+  Result := WriteDBDateTime(0,Module,Param,Value);
 end;
 
 end.

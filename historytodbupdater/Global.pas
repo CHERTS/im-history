@@ -14,12 +14,20 @@ interface
 
 uses
   Windows, Forms, Classes, SysUtils, IniFiles, DCPcrypt2, DCPblockciphers, DCPsha1,
-  DCPdes, DCPmd5, TypInfo, Messages, XMLIntf, XMLDoc, TLHELP32;
+  DCPdes, DCPmd5, TypInfo, Messages, XMLIntf, XMLDoc, TLHELP32, PsAPI, NTNative;
 
 type
   TCopyDataType = (cdtString = 0, cdtImage = 1, cdtRecord = 2);
   TDelim = set of Char;
   TArrayOfString = Array of String;
+  TProcessInfo = packed record
+    ProcessName: String;
+    PID: DWord;
+    ProcessFullCmd: String;
+    ProcessPath: String;
+    ProcessParamCmd: String;
+  end;
+  TProcessInfoArray = Array of TProcessInfo;
 
 const
   ProgramsName = 'HistoryToDBUpdater';
@@ -80,9 +88,14 @@ function SearchMainWindow(MainWindowName: pWideChar): Boolean;
 function StrContactProtoToInt(Proto: AnsiString): Integer;
 function IsProcessRun(ProcessName: String): Boolean;
 function GetProcessID(ExeFileName: String): Cardinal;
+function GetProcessIDMulti(ExeFileName: String): TArrayOfString;
 function KillTask(ExeFileName: String): Integer;
 function ProcessTerminate(dwPID: Cardinal): Boolean;
 function ProcCloseEnum(hwnd: THandle; data: Pointer):BOOL;stdcall;
+function GetProcessFileName(PID: DWord; FullPath: Boolean=True): String;
+function GetProcessCmdLine(PID:DWord): String;
+function SetProcessDebugPrivelege: Boolean;
+function EndIMClient(IMClientExeName: String; EndProcess: Boolean): TProcessInfoArray;
 function StringToParts(sString:String; tdDelim:TDelim): TArrayOfString;
 function ExtractWord(const AString: string; const ADelimiter: Char; const ANumber: integer): string;
 procedure EncryptInit;
@@ -801,7 +814,65 @@ begin
  end;
 end;
 
-{ Проверка запуска процесса }
+{ Функция отправляет WM_QUIT процессу
+  и возвращает TArrayOfString со списком полных путей + параметры запуска
+  этих процессов }
+function EndIMClient(IMClientExeName: String; EndProcess: Boolean): TProcessInfoArray;
+var
+  I: Integer;
+  ProcessPIDListArray: TArrayOfString;
+  MyFullCMD, MyCMD, MyCMDParam: String;
+begin
+  SetLength(Result, 0);
+  SetLength(ProcessPIDListArray, 0);
+  ProcessPIDListArray := GetProcessIDMulti(IMClientExeName);
+  for I := 0 to High(ProcessPIDListArray) do
+  begin
+    SetLength(Result, Length(Result)+1);
+    Result[Length(Result)-1].ProcessName := IMClientExeName;
+    Result[Length(Result)-1].PID := StrToInt(ProcessPIDListArray[I]);
+    Result[Length(Result)-1].ProcessFullCmd := GetProcessCmdLine(StrToInt(ProcessPIDListArray[I]));
+    //Result[Length(Result)-1] := GetProcessFileName(StrToInt(ProcessListArray[I]), True);
+    // Если в полном CMD вида
+    // "C:/Program Files/PostgreSQL/9.1/bin/postgres.exe" "--forklog" "244" "248"
+    // или
+    // "C:\Program Files\Microsoft Firewall Client 2004\FwcAgent.exe"
+    if Result[Length(Result)-1].ProcessFullCmd[1] = '"' then
+    begin
+      MyFullCMD := Result[Length(Result)-1].ProcessFullCmd;
+      Delete(MyFullCMD, 1, 1);
+      MyCMD := Copy(MyFullCMD, 1, Pos('"', MyFullCMD)-1);
+      Delete(MyFullCMD, 1, Pos('"', MyFullCMD)+1);
+      Result[Length(Result)-1].ProcessPath := MyCMD;
+      Result[Length(Result)-1].ProcessParamCmd := MyFullCMD;
+    end
+    else
+    begin
+      MyFullCMD := Result[Length(Result)-1].ProcessFullCmd;
+      // Если в полном CMD вида
+      // C:\WINDOWS\system32\svchost -k DcomLaunch
+      if Pos(' ', MyFullCMD) > 0 then
+      begin
+        MyCMD := Copy(MyFullCMD, 1, Pos(' ', MyFullCMD)-1);
+        Delete(MyFullCMD, 1, Pos(' ', MyFullCMD));
+        Result[Length(Result)-1].ProcessPath := MyCMD;
+        Result[Length(Result)-1].ProcessParamCmd := MyFullCMD;
+      end
+      // Если в полном CMD вида
+      // C:\WINDOWS\system32\lsass.exe
+      else
+      begin
+        Result[Length(Result)-1].ProcessPath := MyFullCMD;
+        Result[Length(Result)-1].ProcessParamCmd := '';
+      end;
+    end;
+    // Завершение процесса
+    if EndProcess then
+      EnumWindows(@ProcCloseEnum, StrToInt(ProcessPIDListArray[I]));
+  end;
+end;
+
+{ Проверка процесса на наличие в памяти }
 function IsProcessRun(ProcessName: String): Boolean;
 var
   Snapshot: THandle;
@@ -847,7 +918,7 @@ begin
   CloseHandle(FSnapshotHandle);
 end;
 
-{ Получение ID процесса }
+{ Получение PID программы в памяти }
 function GetProcessID(ExeFileName: String): Cardinal;
 var
   ContinueLoop: BOOL;
@@ -868,6 +939,117 @@ begin
     ContinueLoop := Process32Next(FSnapshotHandle, FProcessEntry32);
   until not ContinueLoop;
   CloseHandle(FSnapshotHandle);
+end;
+
+{ Получение PID для нескольких процессов с одинаковым именем }
+function GetProcessIDMulti(ExeFileName: String): TArrayOfString;
+var
+  ContinueLoop: BOOL;
+  FSnapshotHandle: THandle;
+  FProcessEntry32: TProcessEntry32;
+begin
+  SetLength(Result, 0);
+  //Result := 0;
+  FSnapshotHandle := CreateToolHelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+  FProcessEntry32.dwSize := Sizeof(FProcessEntry32);
+  ContinueLoop := Process32First(FSnapshotHandle, FProcessEntry32);
+  repeat
+    if ((UpperCase(ExtractFileName(FProcessEntry32.szExeFile)) = UpperCase(ExeFileName))
+       or (UpperCase(FProcessEntry32.szExeFile) = UpperCase(ExeFileName))) then
+    begin
+       SetLength(Result, Length(Result)+1);
+       Result[Length(Result)-1] := IntToStr(FProcessEntry32.th32ProcessID);
+    end;
+    ContinueLoop := Process32Next(FSnapshotHandle, FProcessEntry32);
+  until not ContinueLoop;
+  CloseHandle(FSnapshotHandle);
+end;
+
+{ Получаем полный путь до приложения по его PID }
+function GetProcessFileName(PID: DWord; FullPath: Boolean=True): String;
+var
+  Handle: THandle;
+begin
+  Result := '';
+  Handle := OpenProcess(PROCESS_QUERY_INFORMATION or PROCESS_VM_READ, False, PID);
+  try
+    if Handle <> 0 then
+    begin
+      SetLength(Result, MAX_PATH);
+      if FullPath then
+      begin
+        if GetModuleFileNameEx(Handle, 0, PChar(Result), MAX_PATH) > 0 then
+          SetLength(Result, StrLen(PChar(Result)))
+        else
+          Result := '';
+      end
+      else
+      begin
+        if GetModuleBaseNameA(Handle, 0, PAnsiChar(Result), MAX_PATH) > 0 then
+          SetLength(Result, StrLen(PChar(Result)))
+        else
+          Result := '';
+      end;
+    end;
+  finally
+    CloseHandle(Handle);
+  end;
+end;
+
+{ Получаем команду запуска программы с полным путем по её PID }
+function GetProcessCmdLine(PID: DWord): String;
+var
+  hProcess: THandle;
+  pProcBasicInfo: PROCESS_BASIC_INFORMATION;
+  ReturnLength: DWORD;
+  prb: PEB;
+  ProcessParameters: PROCESS_PARAMETERS;
+  cb: cardinal;
+  ws: WideString;
+begin
+  Result := '';
+  if PID = 0 then
+    Exit;
+  hProcess := OpenProcess(PROCESS_QUERY_INFORMATION or PROCESS_VM_READ, FALSE, PID);
+  if (hProcess <> 0) then
+  try
+    if (NtQueryInformationProcess(hProcess,ProcessBasicInformation,
+                               @pProcBasicInfo,
+                               sizeof(PROCESS_BASIC_INFORMATION),@ReturnLength) = STATUS_SUCCESS) then
+  begin
+   if ReadProcessMemory(hProcess,pProcBasicInfo.PebBaseAddress,@prb,sizeof(PEB),cb) then
+     if ReadProcessMemory(hProcess,prb.ProcessParameters,@ProcessParameters,sizeof(PROCESS_PARAMETERS),cb) then
+     begin
+       SetLength(ws,(ProcessParameters.CommandLine.Length div 2));
+       if ReadProcessMemory(hProcess,ProcessParameters.CommandLine.Buffer,
+                            PWideChar(ws),ProcessParameters.CommandLine.Length,cb) then
+       Result := String(ws)
+     end
+  end
+ finally
+  Closehandle(hProcess);
+ end
+end;
+
+{ Включаем себе SeDebugPrivilege }
+function SetProcessDebugPrivelege: Boolean;
+var
+  hToken: THandle;
+  tp: TTokenPrivileges;
+  rl: Cardinal;
+begin
+  Result := False;
+  if not OpenProcessToken(GetCurrentProcess,TOKEN_ADJUST_PRIVILEGES,hToken) then
+    Exit;
+  try
+    if not LookupPrivilegeValue(nil,'SeDebugPrivilege', tp.Privileges[0].Luid) then
+      Exit;
+    tp.Privileges[0].Attributes := SE_PRIVILEGE_ENABLED;
+    tp.PrivilegeCount := 1;
+    Result := AdjustTokenPrivileges(hToken,false,tp,0,nil,rl) and (GetLastError=0);
+  finally
+    CloseHandle(hToken);
+  end
 end;
 
 // Завершение любых процессов в том числе системных.
@@ -923,7 +1105,7 @@ begin
   Result := True;
 end;
 
-function StringToParts(sString:String; tdDelim:TDelim): TArrayOfString;
+function StringToParts(sString: String; tdDelim: TDelim): TArrayOfString;
 var
   iCounter,iBegin:Integer;
 begin
@@ -936,9 +1118,9 @@ begin
     begin
       if(sString[iCounter] in tdDelim) then
       begin
-        SetLength(Result,Length(Result)+1);
-        Result[Length(Result)-1] := Copy(sString,iBegin,iCounter-iBegin);
-        iBegin:=iCounter+1;
+        SetLength(Result, Length(Result)+1);
+        Result[Length(Result)-1] := Copy(sString, iBegin, iCounter-iBegin);
+        iBegin := iCounter+1;
       end;
     end;
   end;

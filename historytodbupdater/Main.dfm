@@ -187,10 +187,6 @@ object MainForm: TMainForm
     object TabSheetSettings: TTabSheet
       Caption = #1054#1073#1097#1080#1077' '#1085#1072#1089#1090#1088#1086#1081#1082#1080
       ImageIndex = 2
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       DesignSize = (
         464
         165)
@@ -349,10 +345,6 @@ object MainForm: TMainForm
     object TabSheetLog: TTabSheet
       Caption = #1051#1086#1075#1080
       ImageIndex = 1
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       DesignSize = (
         464
         165)
