@@ -70,6 +70,8 @@ var
 
   PluginStatus: Boolean = False;
   StartExport: Boolean = False;
+  StartUpdate: Boolean = False;
+  DefaultINICopy: Boolean = False;
 
   HookModulesLoad,
   HookBuildMenu,
@@ -469,29 +471,56 @@ begin
   begin
     if FileExists(ProfilePath + ININame) then
       RenameFile(ProfilePath + ININame, ProfilePath + ININame + '.' + FormatDateTime('ddmmyyhhmmss', Now));
-    CopyFileEx(PChar(PluginPath + DefININame), PChar(ProfilePath + ININame), nil, nil, nil, COPY_FILE_FAIL_IF_EXISTS);
-    if FileExists(ProfilePath + ININame) then
+    if CopyFileEx(PChar(PluginPath + DefININame), PChar(ProfilePath + ININame), nil, nil, nil, COPY_FILE_FAIL_IF_EXISTS) then
     begin
-      DeleteFile(PluginPath + DefININame);
-      if AutoCoreLang = 'Russian' then
-      begin
-        //MsgInf(htdPluginShortName, 'Вы впервые активировали плагин ' + htdPluginShortName + '.' + #13 + 'Для корректной работы плагина проверьте настройки соединения с базой данных.' + #13 + 'Спасибо за использование плагина ' + htdPluginShortName + '.')
-        case MessageBox(DialogMainWindow, PWideChar('Вы впервые активировали плагин ' + htdPluginShortName + '.' + #13 +
-          'Для корректной работы плагина проверьте настройки соединения с базой данных.' + #13 +
-          'Вы хотите начать экспорт истории?'), PWideChar(htdPluginShortName),36) of
-          6: StartExport := True; // Да
-          7: StartExport := False; // Нет
-        end;
-      end
-      else
-      begin
-        //MsgInf(htdPluginShortName, 'The first time you activate the plugin ' + htdPluginShortName + '.' + #13 + 'To work correctly, check your plug-in connection to the database.' + #13 + 'Thank you for using the plugin ' + htdPluginShortName + '.');
-        case MessageBox(DialogMainWindow, PWideChar('The first time you activate the plugin ' + htdPluginShortName + '.' + #13 +
-          'To work correctly, check your plug-in connection to the database.' + #13 +
-          'Do you want to start exporting the history?'), PWideChar(htdPluginShortName),36) of
-          6: StartExport := True; // Да
-          7: StartExport := False; // Нет
-        end;
+      DefaultINICopy := True;
+      if FileExists(ProfilePath + ININame) then
+        DeleteFile(PluginPath + DefININame);
+    end;
+  end;
+  // Задяем вопросы при первом запуске
+  if (GetDBInt(htdDBName, 'FirstRun.FirstActivate', 0) = 0) or (DefaultINICopy) then
+  begin
+    if AutoCoreLang = 'Russian' then
+    begin
+      case MessageBox(DialogMainWindow, PWideChar('Вы впервые активировали плагин ' + htdPluginShortName + '.' + #13 +
+        'Для корректной работы плагина проверьте настройки соединения с базой данных.' + #13 +
+        'Вы хотите начать экспорт истории?'), PWideChar(htdPluginShortName),36) of
+        6: StartExport := True; // Да
+        7: StartExport := False; // Нет
+      end;
+    end
+    else
+    begin
+      case MessageBox(DialogMainWindow, PWideChar('The first time you activate the plugin ' + htdPluginShortName + '.' + #13 +
+        'To work correctly, check your plug-in connection to the database.' + #13 +
+        'Do you want to start exporting the history?'), PWideChar(htdPluginShortName),36) of
+        6: StartExport := True; // Да
+        7: StartExport := False; // Нет
+      end;
+    end;
+  end;
+  // Проверяем значения флага обновления
+  if GetDBInt(htdDBName, 'FirstRun.RunUpdateDoneV'+IntToStr(htdVersion), 0) = 0 then
+  begin
+    if AutoCoreLang = 'Russian' then
+    begin
+      //MsgInf(htdPluginShortName, 'Вы впервые активировали плагин ' + htdPluginShortName + '.' + #13 + 'Для корректной работы плагина проверьте настройки соединения с базой данных.' + #13 + 'Спасибо за использование плагина ' + htdPluginShortName + '.')
+      case MessageBox(DialogMainWindow, PWideChar('Вы впервые активировали плагин ' + htdPluginShortName + '.' + #13 +
+        'Для корректной работы плагина необходимо запустить процесс обновления плагина через Интернет.' + #13 +
+        'Вы хотите начать процесс обновления?'), PWideChar(htdPluginShortName),36) of
+        6: StartUpdate := True; // Да
+        7: StartUpdate := False; // Нет
+      end;
+    end
+    else
+    begin
+      //MsgInf(htdPluginShortName, 'The first time you activate the plugin ' + htdPluginShortName + '.' + #13 + 'To work correctly, check your plug-in connection to the database.' + #13 + 'Thank you for using the plugin ' + htdPluginShortName + '.');
+      case MessageBox(DialogMainWindow, PWideChar('The first time you activate the plugin ' + htdPluginShortName + '.' + #13 +
+        'To work correctly, the plugin must run the update plugin via the Internet.' + #13 +
+        'Do you want to start the update process?'), PWideChar(htdPluginShortName),36) of
+        6: StartUpdate := True; // Да
+        7: StartUpdate := False; // Нет
       end;
     end;
   end;
@@ -606,16 +635,6 @@ begin
   end;}
   // Регистрируемся в dbeditor
   PluginLink^.CallService(MS_DBEDIT_REGISTERSINGLEMODULE, WPARAM(PAnsiChar(htdDBName)), 0);
-  // Запускаем программу синхронизации HistoryToDBSync
-  if FileExists(PluginPath + 'HistoryToDBSync.exe') then
-    ShellExecute(0, 'open', PWideChar(PluginPath + 'HistoryToDBSync.exe'), PWideChar(' "'+PluginPath+'" "'+ProfilePath+'"'), nil, SW_SHOWNORMAL)
-  else
-  begin
-    if CoreLanguage = 'Russian' then
-      MsgInf(htdPluginShortName, Format('Программа синхронизации истории %s не найден.', [PluginPath + 'HistoryToDBSync.exe']))
-    else
-      MsgInf(htdPluginShortName, Format('The history synchronization program %s not found.', [PluginPath + 'HistoryToDBSync.exe']));
-  end;
   { Запускаем контроль файла конфигурации
   FILE_NOTIFY_CHANGE_FILE_NAME        = $00000001;//Изменение имени файла
   FILE_NOTIFY_CHANGE_DIR_NAME         = $00000002;//Изменение имени папки
@@ -631,6 +650,21 @@ begin
   PluginStatus := True;
   // Кол. сообщений
   MessageCount := 0;
+  // Пишем данные о первом запуске в базу
+  WriteDBInt(htdDBName, 'FirstRun.FirstActivate', 1);
+  // Запуск обновления
+  if StartUpdate then
+  begin
+    if FileExists(PluginPath + 'HistoryToDBUpdater.exe') then
+    begin
+      // Пишем данные в базу
+      WriteDBInt(htdDBName, 'FirstRun.RunUpdateDoneV'+IntToStr(htdVersion), 1);
+      // Отправлен запрос
+      ShellExecute(0, 'open', PWideChar(PluginPath + 'HistoryToDBUpdater.exe'), PWideChar(' "'+ProfilePath+'"'), nil, SW_SHOWNORMAL);
+    end
+    else
+      MsgInf(htdPluginShortName, Format(GetLangStr('ERR_NO_FOUND_UPDATER'), [PluginPath + 'HistoryToDBUpdater.exe']));
+  end;
   // Показать окно экспорта
   if StartExport then
   begin
@@ -640,6 +674,19 @@ begin
       ChildExport.Show
     else
       ChildExport.BringFormToFront(ChildExport);
+  end;
+  // Если не запускаем обновление, то запускаем программу синхронизации HistoryToDBSync
+  if not StartUpdate then
+  begin
+    if FileExists(PluginPath + 'HistoryToDBSync.exe') then
+      ShellExecute(0, 'open', PWideChar(PluginPath + 'HistoryToDBSync.exe'), PWideChar(' "'+PluginPath+'" "'+ProfilePath+'"'), nil, SW_SHOWNORMAL)
+    else
+    begin
+      if CoreLanguage = 'Russian' then
+        MsgInf(htdPluginShortName, Format('Программа синхронизации истории %s не найдена.' + #13 + 'Запустите процесс обновления плагина.', [PluginPath + 'HistoryToDBSync.exe']))
+      else
+        MsgInf(htdPluginShortName, Format('The history synchronization program %s not found.' + #13 + 'Begin the process of updating the plugin.', [PluginPath + 'HistoryToDBSync.exe']));
+    end;
   end;
   Result := 0;
 end;

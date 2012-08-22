@@ -25,15 +25,16 @@ type
   end;
 
 var
-  MainMenuItems: Array [1..8] of TMenuItem;
-  MainMenuHandle: Array [1..8] of THandle;
-  MenuHandle: Array [1..8] of THandle;
+  MainMenuItems: Array [1..9] of TMenuItem;
+  MainMenuHandle: Array [1..9] of THandle;
+  MenuHandle: Array [1..9] of THandle;
   ChildExport: TExportForm;
 
 procedure MenuMainItemsInit; cdecl; forward;
 procedure RebuildMainMenu; cdecl; forward;
 function MainMenuSync(wParam: wParam; lParam: lParam; lParam1: integer): integer; cdecl; forward;
 function MainMenuGetContactList(wParam: wParam; lParam: lParam; lParam1: integer): integer; cdecl; forward;
+function MainMenuCheckUpdate(wParam: wParam; lParam: lParam; lParam1: integer): integer; cdecl; forward;
 function MainMenuExportAllHistory(wParam: wParam; lParam: lParam; lParam1: integer): integer; cdecl; forward;
 function MainMenuCheckMD5Hash(wParam: wParam; lParam: lParam; lParam1: integer): integer; cdecl; forward;
 function MainMenuCheckAndDeleteMD5Hash(wParam: wParam; lParam: lParam; lParam1: integer): integer; cdecl; forward;
@@ -78,15 +79,20 @@ begin
   MainMenuItems[6].Position := 100004;
   MainMenuItems[6].Proc := MainMenuUpdateContactList;
 
-  MainMenuItems[7].Name := WideStringToString(GetLangStr('SettingsButton'), CP_ACP);
+  MainMenuItems[7].Name := WideStringToString(GetLangStr('CheckUpdateButton'), CP_ACP);
   MainMenuItems[7].Icon := '';
-  MainMenuItems[7].Position := 200000;
-  MainMenuItems[7].Proc := MainMenuSettings;
+  MainMenuItems[7].Position := 100004;
+  MainMenuItems[7].Proc := MainMenuCheckUpdate;
 
-  MainMenuItems[8].Name := WideStringToString(GetLangStr('AboutButton'), CP_ACP);
+  MainMenuItems[8].Name := WideStringToString(GetLangStr('SettingsButton'), CP_ACP);
   MainMenuItems[8].Icon := '';
-  MainMenuItems[8].Position := 300000;
-  MainMenuItems[8].Proc := MainMenuAbout;
+  MainMenuItems[8].Position := 200000;
+  MainMenuItems[8].Proc := MainMenuSettings;
+
+  MainMenuItems[9].Name := WideStringToString(GetLangStr('AboutButton'), CP_ACP);
+  MainMenuItems[9].Icon := '';
+  MainMenuItems[9].Position := 300000;
+  MainMenuItems[9].Proc := MainMenuAbout;
 end;
 
 { Перестройка пунктов в основном меню }
@@ -196,6 +202,33 @@ begin
     OnSendMessageToAllComponent('007')
   else
     MsgInf(htdPluginShortName, Format(GetLangStr('SendUpdateContactListErr'), [ContactListName]));
+end;
+
+{ Запустить обновление }
+function MainMenuCheckUpdate(wParam: wParam; lParam: lParam; lParam1: integer): integer; cdecl;
+var
+  WinName: String;
+begin
+  // Ищем окно HistoryToDBUpdater
+  WinName := 'HistoryToDBUpdater';
+  if not SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBUpdater не найден, то ищем другое окно
+  begin
+    WinName := 'HistoryToDBUpdater for QIP';
+    if not SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBUpdater не запущен, то запускаем
+    begin
+      if FileExists(PluginPath + 'HistoryToDBUpdater.exe') then
+      begin
+        // Отправлен запрос
+        ShellExecute(0, 'open', PWideChar(PluginPath + 'HistoryToDBUpdater.exe'), PWideChar(' "'+ProfilePath+'"'), nil, SW_SHOWNORMAL);
+      end
+      else
+        MsgInf(htdPluginShortName, Format(GetLangStr('ERR_NO_FOUND_UPDATER'), [PluginPath + 'HistoryToDBUpdater.exe']));
+    end
+    else // Иначе посылаем запрос
+      OnSendMessageToOneComponent(WinName, '0040');
+  end
+  else // Иначе посылаем запрос
+    OnSendMessageToOneComponent(WinName, '0040');
 end;
 
 { Показываем окно Настроек плагина }
