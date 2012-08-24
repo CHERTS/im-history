@@ -477,9 +477,9 @@
   <NumberFilesUpdate>Число файлов для обновления</NumberFilesUpdate>
   <FileToUpdate>Очередной файл для обновления</FileToUpdate>
   <UpdateSettingsFileNotFound>Не найден файл настроек обновления</UpdateSettingsFileNotFound>
-  <UpdateLangFile>Обновление файла локализации</UpdateLangFile>
+  <UpdateLangFile>Начинаем обновление файла локализации %s...</UpdateLangFile>
   <UpdateLangFileDone>Обновление файла локализации %s выполнено.</UpdateLangFileDone>
-  <UpdateFile>Обновление файла</UpdateFile>
+  <UpdateFile>Начинаем обновление файла %s...</UpdateFile>
   <UpdateFileDone>Обновление файла %s выполнено.</UpdateFileDone>
   <InMemoryFoundProcess>В памяти найден процесс %s (PID: %s)</InMemoryFoundProcess>
   <SendExitCommand>Отправляем команду завершения...</SendExitCommand>
@@ -491,5 +491,9 @@
   <SeDebugPrivilegeDone>Процесс %s принудительно завершен при SeDebugPrivilege.</SeDebugPrivilegeDone>
   <NotKillSeDebugPrivilege>Процесс %s не может быть принудительно завершен даже при SeDebugPrivilege.</NotKillSeDebugPrivilege>
   <InMemoryNotFoundProcess>Процесс %s не найден в памяти.</InMemoryNotFoundProcess>
+  <EndProcess>Пытаемся завершить процесс %s</EndProcess>
+  <StartProgram>Запускаем программу %s</StartProgram>
+  <StartProgramDone>Программа %s запущена.</StartProgramDone>
+  <StartProgramFail>Программа %s не запущена.</StartProgramFail>
 
 </strings>
