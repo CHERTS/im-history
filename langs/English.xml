@@ -434,7 +434,7 @@
   <UseProxy>Use a proxy server</UseProxy>
   <ProxyAddress>Proxy server:</ProxyAddress>
   <ProxyPort>Port:</ProxyPort>
-  <ProxyAuth>Proxy server requires authentication</ProxyAuth>
+  <ProxyAuth>Proxy server requires a password</ProxyAuth>
   <ProxyUser>User:</ProxyUser>
   <ProxyUserPasswd>Password:</ProxyUserPasswd>
   <Update> Update </Update>
@@ -476,9 +476,9 @@
   <NumberFilesUpdate>The number of files to update</NumberFilesUpdate>
   <FileToUpdate>File to update</FileToUpdate>
   <UpdateSettingsFileNotFound>Update settings file not found</UpdateSettingsFileNotFound>
-  <UpdateLangFile>Update localization file</UpdateLangFile>
+  <UpdateLangFile>Start update localization file %s...</UpdateLangFile>
   <UpdateLangFileDone>Update localization file %s completed.</UpdateLangFileDone>
-  <UpdateFile>Update file</UpdateFile>
+  <UpdateFile>Start update file %s...</UpdateFile>
   <UpdateFileDone>Update file %s completed.</UpdateFileDone>
   <InMemoryFoundProcess>In the memory of the process found %s (PID: %s)</InMemoryFoundProcess>
   <SendExitCommand>Send the command to the end of the program...</SendExitCommand>
@@ -490,5 +490,9 @@
   <SeDebugPrivilegeDone>Process %s forcibly terminated when SeDebugPrivilege.</SeDebugPrivilegeDone>
   <NotKillSeDebugPrivilege>Process %s can not be forced to terminated in SeDebugPrivilege.</NotKillSeDebugPrivilege>
   <InMemoryNotFoundProcess>Process %s not found in memory.</InMemoryNotFoundProcess>
+  <EndProcess>We are trying to close the process %s</EndProcess>
+  <StartProgram>Запускаем программу %s</StartProgram>
+  <StartProgramDone>Программа %s запущена.</StartProgramDone>
+  <StartProgramFail>Программа %s не запущена.</StartProgramFail>
 
 </strings>

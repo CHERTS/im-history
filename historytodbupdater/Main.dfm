@@ -181,7 +181,7 @@ object MainForm: TMainForm
     Top = 159
     Width = 472
     Height = 193
-    ActivePage = TabSheetConnectSettings
+    ActivePage = TabSheetSettings
     Anchors = [akLeft, akTop, akRight]
     TabOrder = 1
     object TabSheetSettings: TTabSheet

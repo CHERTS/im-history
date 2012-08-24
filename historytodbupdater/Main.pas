@@ -107,6 +107,8 @@ type
     IMMD5Correct: Boolean;
     IMSizeCorrect: Boolean;
     INISavePath: String;
+    SavePath: String;
+    DropboxProcessInfo: TProcessInfoArray;
     QIPProcessInfo: TProcessInfoArray;
     RnQProcessInfo: TProcessInfoArray;
     SkypeProcessInfo: TProcessInfoArray;
@@ -166,6 +168,8 @@ begin
       INI.Free;
     end;
   end;
+  if FileExists(INISavePath) then
+    DeleteFile(INISavePath);
 end;
 
 procedure TMainForm.FormCreate(Sender: TObject);
@@ -209,7 +213,9 @@ begin
       ProfilePath := ExtractFilePath(Application.ExeName);
     end;
     PluginPath := ExtractFilePath(Application.ExeName);
-    INISavePath := ExtractFilePath(Application.ExeName)+'HistoryToDBUpdate.ini';
+    // Временный каталог
+    SavePath := GetUserTempPath + 'IMHistory\';
+    INISavePath := SavePath + 'HistoryToDBUpdate.ini';
     IMDownloader1.DirPath := PluginPath;
     // Инициализация криптования
     EncryptInit;
@@ -263,6 +269,8 @@ begin
 end;
 
 procedure TMainForm.FormShow(Sender: TObject);
+var
+  I: Integer;
 begin
   // Переменная для режима анти-босс
   Global_MainForm_Showing := True;
@@ -282,7 +290,7 @@ begin
   SettingsPageControl.ActivePage := TabSheetSettings;
   SettingsPageControl.Visible := False;
   MainForm.Height := SettingsPageControl.Height + 5;
-  if DBType = 'Unknown' then
+  if (DBType = 'Unknown') or (ParamCount = 0) then
   begin
     CBDBType.Enabled := True;
     CBDBType.Items.Add('Unknown');
@@ -292,7 +300,14 @@ begin
     CBDBType.Items.Add('sqlite-3');
     CBDBType.Items.Add('firebird-2.0');
     CBDBType.Items.Add('firebird-2.5');
-    CBDBType.ItemIndex := 0;
+    if ParamCount = 0 then
+    begin
+      for I := 0 to CBDBType.Items.Count-1 do
+        if CBDBType.Items[I] = DBType then
+          CBDBType.ItemIndex := I
+    end
+    else
+      CBDBType.ItemIndex := 0;
     // Показываем настройки
     ButtonSettingsClick(Self);
   end
@@ -302,7 +317,7 @@ begin
     CBDBType.Items.Add(DBType);
     CBDBType.ItemIndex := 0;
   end;
-  if IMClientType = 'Unknown' then
+  if (IMClientType = 'Unknown') or (ParamCount = 0) then
   begin
     CBIMClientType.Enabled := True;
     CBIMClientType.Items.Add('Unknown');
@@ -310,7 +325,14 @@ begin
     CBIMClientType.Items.Add('RnQ');
     CBIMClientType.Items.Add('Skype');
     CBIMClientType.Items.Add('Miranda');
-    CBIMClientType.ItemIndex := 0;
+    if ParamCount = 0 then
+    begin
+      for I := 0 to CBIMClientType.Items.Count-1 do
+        if CBIMClientType.Items[I] = IMClientType then
+          CBIMClientType.ItemIndex := I
+    end
+    else
+      CBIMClientType.ItemIndex := 0;
     // Показываем настройки если не были показыны ранее
     if not SettingsPageControl.Visible then
       ButtonSettingsClick(Self);
@@ -345,9 +367,13 @@ end;
 
 procedure TMainForm.ButtonUpdateStartClick(Sender: TObject);
 var
-  AllProcessEndErr, i: Integer;
   RetVal: TProcessInfoArray;
+  AllProcessEndErr, I: Integer;
+  MsgString: String;
 begin
+  //IsProcessRun('HistoryToDBSync.exe', 'HistoryToDBSync for ' + IMClientType);
+  //KillTask('HistoryToDBSync.exe', 'HistoryToDBSync for ' + IMClientType);
+  //EndTask('HistoryToDBSync.exe', 'HistoryToDBSync for ' + IMClientType);
   //RetVal := TProcessInfoArray(EndIMClient('svchost.exe', False));
   //RetVal := TProcessInfoArray(EndIMClient('postgres.exe', False));
   {RetVal := EndIMClient('pcapsvc.exe', False);
@@ -361,6 +387,23 @@ begin
   else
   begin
     LogMemo.Clear;
+    // Ищем программы синхронизации типа Dropbox
+    if IsProcessRun('Dropbox.exe') then
+    begin
+      if GetSysLang = 'Русский' then
+        MsgString := 'В памяти найдена программа Dropbox.' + #13 +
+        'Если Вы используете её для синхронизации IM-клиента, то для корректного обновления' + #13 +
+        'всех компонентов плагина необходимо её закрыть.' + #13 +
+        'Закрыть Dropbox?'
+      else
+        MsgString := 'Find the program in the memory of Dropbox.' + #13 +
+        'If you use it to synchronize the IM-client, to properly' + #13 +
+        'update all the components necessary to close the plug.' + #13 +
+        'Close Dropbox?';
+      case MessageBox(MainForm.Handle, PWideChar(MsgString), PWideChar(Caption),36) of
+        6: DropboxProcessInfo := EndProcess('Dropbox.exe', True);
+      end;
+    end;
     // Ищем запущенные компоненты плагина и закрываем их
     if not EndTask('HistoryToDBSync.exe', 'HistoryToDBSync for ' + IMClientType) then
       Inc(AllProcessEndErr);
@@ -373,13 +416,25 @@ begin
     begin
       // Ищем все экземпляры IM-клиентов и закрываем их
       if IMClientType = 'QIP' then
-        QIPProcessInfo := EndIMClient('qip.exe', True);
+      begin
+        LogMemo.Lines.Add(Format(GetLangStr('EndProcess'), ['qip.exe']));
+        QIPProcessInfo := EndProcess('qip.exe', True);
+      end;
       if IMClientType = 'Miranda' then
-        MirandaProcessInfo := EndIMClient('miranda32.exe', True);
+      begin
+        LogMemo.Lines.Add(Format(GetLangStr('EndProcess'), ['miranda32.exe']));
+        MirandaProcessInfo := EndProcess('miranda32.exe', True);
+      end;
       if IMClientType = 'RnQ' then
-        RnQProcessInfo := EndIMClient('rnq.exe', True);
+      begin
+        RnQProcessInfo := EndProcess('rnq.exe', True);
+        LogMemo.Lines.Add(Format(GetLangStr('EndProcess'), ['rnq.exe']));
+      end;
       if IMClientType = 'Skype' then
-        SkypeProcessInfo := EndIMClient('skype.exe', True);
+      begin
+        SkypeProcessInfo := EndProcess('skype.exe', True);
+        LogMemo.Lines.Add(Format(GetLangStr('EndProcess'), ['skype.exe']));
+      end;
       // Начинаем обновление
       TrueHeader := False;
       CurrentUpdateStep := 0;
@@ -419,7 +474,6 @@ end;
 
 procedure TMainForm.IMDownloader1Accepted(Sender: TObject);
 var
-  SavePath: String;
   MaxSteps: Integer;
 begin
   LStatus.Caption := GetLangStr('DownloadSuccessful');
@@ -463,16 +517,16 @@ begin
       end;
       // Если первый шаг - скачивание INI файла
       if CurrentUpdateStep = 0 then
-      begin
-        SavePath := ExtractFilePath(Application.ExeName);
-        INISavePath := ExtractFilePath(Application.ExeName)+HeaderFileName;
-      end
-      else
-        SavePath := ExtractFilePath(Application.ExeName)+'temp\';
+        INISavePath := SavePath + HeaderFileName;
       // Проверяем каталог для сохранения
       if not DirectoryExists(SavePath) then
         CreateDir(SavePath);
       // Удаляем старый файл
+      if CurrentUpdateStep = 0 then
+      begin
+        if FileExists(INISavePath) then
+          DeleteFile(INISavePath);
+      end;
       if FileExists(SavePath + HeaderFileName) then
         DeleteFile(SavePath + HeaderFileName);
       // Сохряняем новый
@@ -614,7 +668,7 @@ begin
       LStatus.Repaint;
       LogMemo.Lines.Add('=========================================');
       LogMemo.Lines.Add(GetLangStr('AllUpdatesInstalled'));
-      ButtonUpdateEnableStart;
+      // Запуск IM-клиента
       if IMClientType = 'QIP' then
         RunIMClient('qip.exe', QIPProcessInfo);
       if IMClientType = 'Miranda' then
@@ -623,7 +677,13 @@ begin
         RunIMClient('rnq.exe', RnQProcessInfo);
       if IMClientType = 'Skype' then
         RunIMClient('skype.exe', SkypeProcessInfo);
-      Close;
+      // Запуск Dropbox
+      if not IsProcessRun('Dropbox.exe') then
+        RunIMClient('Dropbox.exe', DropboxProcessInfo);
+      // Вкл. кнопки
+      ButtonUpdateEnableStart;
+      MsgInf(Caption, GetLangStr('AllUpdatesInstalled'));
+      //Close;
       Exit;
     end;
     LogMemo.Lines.Add('================= ' + GetLangStr('Step') + ' '+IntToStr(CurrStep)+' =================');
@@ -648,14 +708,14 @@ end;
 procedure TMainForm.InstallUpdate;
 var
   SR: TSearchRec;
-  I: Integer;
 begin
   LAmount.Caption := '0 '+GetLangStr('Kb');
   LFileName.Caption := GetLangStr('Unknown');
   LFileDescription.Caption := GetLangStr('Unknown');
   LFileMD5.Caption := GetLangStr('Unknown');
   LSpeed.Caption := '0 '+GetLangStr('KbSec');
-  if FindFirst(PluginPath + 'temp' + '\*.*', faAnyFile or faDirectory, SR) = 0 then
+  // Обновление
+  if FindFirst(SavePath + '*.*', faAnyFile or faDirectory, SR) = 0 then
   begin
     repeat
       if (SR.Attr = faDirectory) and ((SR.Name = '.') or (SR.Name = '..')) then // Чтобы не было файлов . и ..
@@ -664,57 +724,57 @@ begin
       end;
       if MatchStrings(SR.Name, '*.xml') then
       begin
-        LStatus.Caption := GetLangStr('UpdateLangFile') + ' ' + SR.Name;
+        LStatus.Caption := Format(GetLangStr('UpdateLangFile'), [SR.Name]);
         LStatus.Hint := 'UpdateLangFile';
         LStatus.Repaint;
-        LogMemo.Lines.Add(GetLangStr('UpdateLangFile') + ' ' + SR.Name);
+        LogMemo.Lines.Add(Format(GetLangStr('UpdateLangFile'), [SR.Name]));
         if FileExists(PluginPath + dirLangs + SR.Name) then
           DeleteFile(PluginPath + dirLangs + SR.Name);
-        if CopyFileEx(PChar(PluginPath + 'temp\' + SR.Name), PChar(PluginPath + dirLangs + SR.Name), nil, nil, nil, COPY_FILE_FAIL_IF_EXISTS) then
+        if CopyFileEx(PChar(SavePath + SR.Name), PChar(PluginPath + dirLangs + SR.Name), nil, nil, nil, COPY_FILE_FAIL_IF_EXISTS) then
         begin
-          DeleteFile(PluginPath + 'temp\' + SR.Name);
+          DeleteFile(SavePath + SR.Name);
           LogMemo.Lines.Add(Format(GetLangStr('UpdateLangFileDone'), [SR.Name]));
         end;
       end;
       if MatchStrings(SR.Name, '*.exe') then
       begin
-        LStatus.Caption := GetLangStr('UpdateFile') + ' ' + SR.Name;
+        LStatus.Caption := Format(GetLangStr('UpdateFile'), [SR.Name]);
         LStatus.Hint := 'UpdateFile';
         LStatus.Repaint;
-        LogMemo.Lines.Add(GetLangStr('UpdateFile') + ' ' + SR.Name);
+        LogMemo.Lines.Add(Format(GetLangStr('UpdateFile'), [SR.Name]));
         if FileExists(PluginPath + SR.Name) then
           DeleteFile(PluginPath + SR.Name);
-        if CopyFileEx(PChar(PluginPath + 'temp\' + SR.Name), PChar(PluginPath + SR.Name), nil, nil, nil, COPY_FILE_FAIL_IF_EXISTS) then
+        if CopyFileEx(PChar(SavePath + SR.Name), PChar(PluginPath + SR.Name), nil, nil, nil, COPY_FILE_FAIL_IF_EXISTS) then
         begin
-          DeleteFile(PluginPath + 'temp\' + SR.Name);
+          DeleteFile(SavePath + SR.Name);
           LogMemo.Lines.Add(Format(GetLangStr('UpdateFileDone'), [SR.Name]));
         end;
       end;
       if MatchStrings(SR.Name, '*.dll') then
       begin
-        LStatus.Caption := GetLangStr('UpdateFile') + ' ' + SR.Name;
+        LStatus.Caption := Format(GetLangStr('UpdateFile'), [SR.Name]);
         LStatus.Hint := 'UpdateFile';
         LStatus.Repaint;
-        LogMemo.Lines.Add(GetLangStr('UpdateFile') + ' ' + SR.Name);
+        LogMemo.Lines.Add(Format(GetLangStr('UpdateFile'), [SR.Name]));
         if FileExists(PluginPath + SR.Name) then
           DeleteFile(PluginPath + SR.Name);
-        if CopyFileEx(PChar(PluginPath + 'temp\' + SR.Name), PChar(PluginPath + SR.Name), nil, nil, nil, COPY_FILE_FAIL_IF_EXISTS) then
+        if CopyFileEx(PChar(SavePath + SR.Name), PChar(PluginPath + SR.Name), nil, nil, nil, COPY_FILE_FAIL_IF_EXISTS) then
         begin
-          DeleteFile(PluginPath + 'temp\' + SR.Name);
+          DeleteFile(SavePath + SR.Name);
           LogMemo.Lines.Add(Format(GetLangStr('UpdateFileDone'), [SR.Name]));
         end;
       end;
       if MatchStrings(SR.Name, '*.msg') then
       begin
-        LStatus.Caption := GetLangStr('UpdateFile') + ' ' + SR.Name;
+        LStatus.Caption := Format(GetLangStr('UpdateFile'), [SR.Name]);
         LStatus.Hint := 'UpdateFile';
         LStatus.Repaint;
-        LogMemo.Lines.Add(GetLangStr('UpdateFile') + ' ' + SR.Name);
+        LogMemo.Lines.Add(Format(GetLangStr('UpdateFile'), [SR.Name]));
         if FileExists(PluginPath + SR.Name) then
           DeleteFile(PluginPath + SR.Name);
-        if CopyFileEx(PChar(PluginPath + 'temp\' + SR.Name), PChar(PluginPath + SR.Name), nil, nil, nil, COPY_FILE_FAIL_IF_EXISTS) then
+        if CopyFileEx(PChar(SavePath + SR.Name), PChar(PluginPath + SR.Name), nil, nil, nil, COPY_FILE_FAIL_IF_EXISTS) then
         begin
-          DeleteFile(PluginPath + 'temp\' + SR.Name);
+          DeleteFile(SavePath + SR.Name);
           LogMemo.Lines.Add(Format(GetLangStr('UpdateFileDone'), [SR.Name]));
         end;
       end;
@@ -1106,35 +1166,38 @@ end;
 function TMainForm.EndTask(TaskName, FormName: String): Boolean;
 begin
   Result := False;
-  if IsProcessRun(TaskName) then
+  if IsProcessRun(TaskName, FormName) then
   begin
     LogMemo.Lines.Add(Format(GetLangStr('InMemoryFoundProcess'), [TaskName, IntToStr(GetProcessID(TaskName))]));
     LogMemo.Lines.Add(GetLangStr('SendExitCommand'));
     OnSendMessageToOneComponent(FormName, '009');
     Sleep(1200);
     LogMemo.Lines.Add(Format(GetLangStr('SearchProcessInMemory'), [TaskName]));
-    if IsProcessRun(TaskName) then
+    if IsProcessRun(TaskName, FormName) then
     begin
       LogMemo.Lines.Add(Format(GetLangStr('InMemoryFoundProcess'), [TaskName, IntToStr(GetProcessID(TaskName))]));
       LogMemo.Lines.Add(Format(GetLangStr('KillProcess'), [TaskName]));
-      if KillTask(TaskName) = 1 then
+      if KillTask(TaskName, FormName) = 1 then
       begin
         LogMemo.Lines.Add(Format(GetLangStr('KillProcessDone'), [TaskName]));
         Result := True;
       end
       else
       begin
-        LogMemo.Lines.Add(Format(GetLangStr('NotKillProcess'), [TaskName]));
-        LogMemo.Lines.Add(Format(GetLangStr('SeDebugPrivilege'), [TaskName]));
-        if ProcessTerminate(GetProcessID(TaskName)) then
+        if Global_IMProcessPID <> 0 then
         begin
-          LogMemo.Lines.Add(Format(GetLangStr('SeDebugPrivilegeDone'), [TaskName]));
-          Result := True;
-        end
-        else
-        begin
-          LogMemo.Lines.Add(Format(GetLangStr('NotKillSeDebugPrivilege'), [TaskName]));
-          Result := False;
+          LogMemo.Lines.Add(Format(GetLangStr('NotKillProcess'), [TaskName]));
+          LogMemo.Lines.Add(Format(GetLangStr('SeDebugPrivilege'), [TaskName]));
+          if ProcessTerminate(Global_IMProcessPID) then
+          begin
+            LogMemo.Lines.Add(Format(GetLangStr('SeDebugPrivilegeDone'), [TaskName]));
+            Result := True;
+          end
+          else
+          begin
+            LogMemo.Lines.Add(Format(GetLangStr('NotKillSeDebugPrivilege'), [TaskName]));
+            Result := False;
+          end;
         end;
       end;
     end
@@ -1243,7 +1306,15 @@ begin
     if IMClientName = IMProcessArray[i].ProcessName then
     begin
       if FileExists(IMProcessArray[i].ProcessPath) then
+      begin
+        LogMemo.Lines.Add(Format(GetLangStr('StartProgram'), [IMProcessArray[i].ProcessPath + IMProcessArray[i].ProcessParamCmd]));
         ShellExecute(0, 'open', PWideChar(IMProcessArray[i].ProcessPath), PWideChar(' '+IMProcessArray[i].ProcessParamCmd), nil, SW_SHOWNORMAL);
+        Sleep(500);
+        if IsProcessRun(IMProcessArray[i].ProcessName) then
+          LogMemo.Lines.Add(Format(GetLangStr('StartProgramDone'), [IMProcessArray[i].ProcessPath]))
+        else
+          LogMemo.Lines.Add(Format(GetLangStr('StartProgramFail'), [IMProcessArray[i].ProcessPath]));
+      end;
     end;
   end;
 end;

@@ -14,12 +14,13 @@ interface
 
 uses
   Windows, Forms, Classes, SysUtils, IniFiles, DCPcrypt2, DCPblockciphers, DCPsha1,
-  DCPdes, DCPmd5, TypInfo, Messages, XMLIntf, XMLDoc, TLHELP32, PsAPI, NTNative;
+  DCPdes, DCPmd5, TypInfo, Messages, XMLIntf, XMLDoc, StrUtils, Types, TLHELP32, PsAPI, NTNative;
 
 type
   TCopyDataType = (cdtString = 0, cdtImage = 1, cdtRecord = 2);
   TDelim = set of Char;
   TArrayOfString = Array of String;
+  TArrayOfCardinal = Array of Cardinal;
   TProcessInfo = packed record
     ProcessName: String;
     PID: DWord;
@@ -56,6 +57,7 @@ var
   DBType, DefaultLanguage, IMClientType: String;
   PluginPath, ProfilePath: WideString;
   Global_MainForm_Showing, Global_AboutForm_Showing: Boolean;
+  Global_IMProcessPID: DWORD;
   // Прокси
   IMUseProxy, IMProxyAuth: Boolean;
   IMProxyAddress, IMProxyPort, IMProxyUser, IMProxyUserPagsswd: String;
@@ -86,16 +88,23 @@ function Tok(Sep: String; var S: String): String;
 function GetMyFileSize(const Path: String): Integer;
 function SearchMainWindow(MainWindowName: pWideChar): Boolean;
 function StrContactProtoToInt(Proto: AnsiString): Integer;
-function IsProcessRun(ProcessName: String): Boolean;
+function IsProcessRun(ProcessName: String): Boolean; overload;
+function IsProcessRun(ProcessName, WinCaption: String): Boolean; overload;
 function GetProcessID(ExeFileName: String): Cardinal;
-function GetProcessIDMulti(ExeFileName: String): TArrayOfString;
-function KillTask(ExeFileName: String): Integer;
+//function GetProcessIDMulti(ExeFileName: String): TArrayOfString;
+function GetProcessIDMulti2(ExeFileName: String): TArrayOfCardinal;
+function GetThreadsOfProcess(APID: Cardinal): TIntegerDynArray;
+function KillTask(ExeFileName: String): Integer; overload;
+function KillTask(ExeFileName, WinCaption: String): Integer; overload;
 function ProcessTerminate(dwPID: Cardinal): Boolean;
 function ProcCloseEnum(hwnd: THandle; data: Pointer):BOOL;stdcall;
 function GetProcessFileName(PID: DWord; FullPath: Boolean=True): String;
 function GetProcessCmdLine(PID:DWord): String;
 function SetProcessDebugPrivelege: Boolean;
-function EndIMClient(IMClientExeName: String; EndProcess: Boolean): TProcessInfoArray;
+function EndProcess(IMClientExeName: String; EndProcess: Boolean): TProcessInfoArray;
+function GetUserTempPath: WideString;
+//function ProcGetCaptionForHandleEnum(hwnd: THandle; data: Pointer):BOOL;stdcall;
+function EnumThreadWndProc(hwnd: HWND; lParam: LPARAM): BOOL; stdcall;
 function StringToParts(sString:String; tdDelim:TDelim): TArrayOfString;
 function ExtractWord(const AString: string; const ADelimiter: Char; const ANumber: integer): string;
 procedure EncryptInit;
@@ -806,32 +815,48 @@ function ProcCloseEnum(hwnd: THandle; data: Pointer):BOOL;stdcall;
 var
   Pid: DWORD;
 begin
- Result := True;
- GetWindowThreadProcessId(hwnd, pid);
- if Pid = DWORD(data) then
- begin
+  Result := True;
+  GetWindowThreadProcessId(hwnd, pid);
+  if Pid = DWORD(data) then
+  begin
     PostMessage(hwnd, WM_QUIT, 0, 0);
- end;
+  end;
 end;
+
+{function ProcGetCaptionForHandleEnum(hwnd: THandle; data: Pointer):BOOL;stdcall;
+var
+  Pid: DWORD;
+  WinCaption: Array [0 .. 255] of Char;
+begin
+  Result := True;
+  GetWindowThreadProcessId(hwnd, pid);
+  if Pid = DWORD(data) then
+  begin
+    //PostMessage(hwnd, WM_QUIT, 0, 0);
+    GetWindowText(hwnd, WinCaption, SizeOf(WinCaption));
+    if WinCaption <> '' then
+      MsgInf('ProcGetCaptionForHandleEnum', WinCaption);
+  end;
+end;}
 
 { Функция отправляет WM_QUIT процессу
   и возвращает TArrayOfString со списком полных путей + параметры запуска
   этих процессов }
-function EndIMClient(IMClientExeName: String; EndProcess: Boolean): TProcessInfoArray;
+function EndProcess(IMClientExeName: String; EndProcess: Boolean): TProcessInfoArray;
 var
   I: Integer;
-  ProcessPIDListArray: TArrayOfString;
+  ProcessPIDListArray: TArrayOfCardinal;
   MyFullCMD, MyCMD, MyCMDParam: String;
 begin
   SetLength(Result, 0);
   SetLength(ProcessPIDListArray, 0);
-  ProcessPIDListArray := GetProcessIDMulti(IMClientExeName);
+  ProcessPIDListArray := GetProcessIDMulti2(IMClientExeName);
   for I := 0 to High(ProcessPIDListArray) do
   begin
     SetLength(Result, Length(Result)+1);
     Result[Length(Result)-1].ProcessName := IMClientExeName;
-    Result[Length(Result)-1].PID := StrToInt(ProcessPIDListArray[I]);
-    Result[Length(Result)-1].ProcessFullCmd := GetProcessCmdLine(StrToInt(ProcessPIDListArray[I]));
+    Result[Length(Result)-1].PID := ProcessPIDListArray[I];
+    Result[Length(Result)-1].ProcessFullCmd := GetProcessCmdLine(ProcessPIDListArray[I]);
     //Result[Length(Result)-1] := GetProcessFileName(StrToInt(ProcessListArray[I]), True);
     // Если в полном CMD вида
     // "C:/Program Files/PostgreSQL/9.1/bin/postgres.exe" "--forklog" "244" "248"
@@ -868,12 +893,61 @@ begin
     end;
     // Завершение процесса
     if EndProcess then
-      EnumWindows(@ProcCloseEnum, StrToInt(ProcessPIDListArray[I]));
+      EnumWindows(@ProcCloseEnum, ProcessPIDListArray[I]);
   end;
 end;
 
-{ Проверка процесса на наличие в памяти }
-function IsProcessRun(ProcessName: String): Boolean;
+function EnumThreadWndProc(hwnd: HWND; lParam: LPARAM): BOOL; stdcall;
+var
+  WindowClassName: String;
+  WindowClassNameLength: Integer;
+  WinCaption: Array [0 .. 255] of Char;
+  ThreadProcessWinCaption: String;
+  PID: DWORD;
+begin
+  Result := True;
+  ThreadProcessWinCaption := String(LPARAM);
+  GetWindowThreadProcessId(hwnd, pid);
+  SetLength(WindowClassName, MAX_PATH);
+  WindowClassNameLength := GetClassName(hwnd, PChar(WindowClassName), MAX_PATH);
+  GetWindowText(hwnd, WinCaption, SizeOf(WinCaption));
+  if MatchStrings(LeftStr(WindowClassName, WindowClassNameLength), 'TMain*') and (WinCaption = ThreadProcessWinCaption) then
+  begin
+    Global_IMProcessPID := PID;
+    //MsgInf('EnumThreadWndProc', 'PID процесса родителя: ' + IntToStr(PID) + #10#13 + 'Класс: ' + LeftStr(WindowClassName, WindowClassNameLength) + #10#13 + 'Заголовок окна: ' + WinCaption);
+  end;
+  // Получим дочерние окна.
+  //EnumChildWindows(hwnd, @EnumThreadWndProc, lParam);
+end;
+
+{ Получение ID всех потоков указанного процесса }
+function GetThreadsOfProcess(APID: Cardinal): TIntegerDynArray;
+var
+ lSnap: DWord;
+ lThread: TThreadEntry32;
+begin
+  Result := nil;
+  if APID <> INVALID_HANDLE_VALUE then
+  begin
+    lSnap := CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
+    if (lSnap <> INVALID_HANDLE_VALUE) then
+    begin
+      lThread.dwSize := SizeOf(TThreadEntry32);
+      if Thread32First(lSnap, lThread) then
+      repeat
+        if lThread.th32OwnerProcessID = APID then
+        begin
+          SetLength(Result, Length(Result) + 1);
+          Result[High(Result)] := lThread.th32ThreadID;
+        end;
+      until not Thread32Next(lSnap, lThread);
+      CloseHandle(lSnap);
+    end;
+  end;
+end;
+
+{ Проверка процесса на наличие в памяти по его имени }
+function IsProcessRun(ProcessName: String): Boolean; overload;
 var
   Snapshot: THandle;
   Proc: TProcessEntry32;
@@ -894,7 +968,40 @@ begin
   CloseHandle(Snapshot);
 end;
 
-{ Завершение процесса }
+function IsProcessRun(ProcessName, WinCaption: String): Boolean; overload;
+var
+  Snapshot: THandle;
+  Proc: TProcessEntry32;
+  lThreads: TIntegerDynArray;
+  J: Integer;
+begin
+  Result := False;
+  Snapshot := CreateToolHelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+  if Snapshot = INVALID_HANDLE_VALUE then
+    Exit;
+  Proc.dwSize := SizeOf(TProcessEntry32);
+  if Process32First(Snapshot, Proc) then
+  repeat
+    if ((UpperCase(ExtractFileName(Proc.szExeFile)) = UpperCase(ProcessName))
+     or (UpperCase(Proc.szExeFile) = UpperCase(ProcessName))) then
+     begin
+      // Получение Заголовков окон процесса
+      //EnumWindows(@ProcGetCaptionForHandleEnum, FProcessEntry32.th32ProcessID);
+      // Получение ClassName и Заголовков окон всех потоков процесса
+      Global_IMProcessPID := 0;
+      lThreads := GetThreadsOfProcess(Proc.th32ProcessID);
+      for J := Low(lThreads) to High(lThreads) do
+        EnumThreadWindows(lThreads[J], @EnumThreadWndProc, LPARAM(WinCaption));
+      if Global_IMProcessPID = Proc.th32ProcessID then
+        //MsgInf('IsProcessRun', 'Найден нужный процесс');
+        Result := True;
+      // Ends
+     end;
+  until not Process32Next(Snapshot, Proc);
+  CloseHandle(Snapshot);
+end;
+
+{ Завершение процесса по имени }
 function KillTask(ExeFileName: String): Integer;
 const
   PROCESS_TERMINATE=$0001;
@@ -913,6 +1020,43 @@ begin
      or (UpperCase(FProcessEntry32.szExeFile) = UpperCase(ExeFileName))) then
       Result := Integer(TerminateProcess(OpenProcess(PROCESS_TERMINATE, BOOL(0),
                         FProcessEntry32.th32ProcessID), 0));
+    ContinueLoop := Process32Next(FSnapshotHandle, FProcessEntry32);
+  end;
+  CloseHandle(FSnapshotHandle);
+end;
+
+{ Завершение процесса по имени и заголовку окна }
+function KillTask(ExeFileName, WinCaption: String): Integer; overload;
+const
+  PROCESS_TERMINATE=$0001;
+var
+  ContinueLoop: BOOL;
+  FSnapshotHandle: THandle;
+  FProcessEntry32: TProcessEntry32;
+  lThreads: TIntegerDynArray;
+  J: Integer;
+begin
+  Result := 0;
+  FSnapshotHandle := CreateToolHelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+  FProcessEntry32.dwSize := Sizeof(FProcessEntry32);
+  ContinueLoop := Process32First(FSnapshotHandle, FProcessEntry32);
+  while Integer(ContinueLoop) <> 0 do
+  begin
+    if ((UpperCase(ExtractFileName(FProcessEntry32.szExeFile)) = UpperCase(ExeFileName))
+     or (UpperCase(FProcessEntry32.szExeFile) = UpperCase(ExeFileName))) then
+     begin
+      // Получение Заголовков окон процесса
+      //EnumWindows(@ProcGetCaptionForHandleEnum, FProcessEntry32.th32ProcessID);
+      // Получение ClassName и Заголовков окон всех потоков процесса
+      Global_IMProcessPID := 0;
+      lThreads := GetThreadsOfProcess(FProcessEntry32.th32ProcessID);
+      for J := Low(lThreads) to High(lThreads) do
+        EnumThreadWindows(lThreads[J], @EnumThreadWndProc, LPARAM(WinCaption));
+      if Global_IMProcessPID = FProcessEntry32.th32ProcessID then
+        //MsgInf('KillTask', 'Найден нужный процесс');
+        Result := Integer(TerminateProcess(OpenProcess(PROCESS_TERMINATE, BOOL(0), FProcessEntry32.th32ProcessID), 0));
+      // Ends
+     end;
     ContinueLoop := Process32Next(FSnapshotHandle, FProcessEntry32);
   end;
   CloseHandle(FSnapshotHandle);
@@ -942,7 +1086,7 @@ begin
 end;
 
 { Получение PID для нескольких процессов с одинаковым именем }
-function GetProcessIDMulti(ExeFileName: String): TArrayOfString;
+{function GetProcessIDMulti(ExeFileName: String): TArrayOfString;
 var
   ContinueLoop: BOOL;
   FSnapshotHandle: THandle;
@@ -959,6 +1103,30 @@ begin
     begin
        SetLength(Result, Length(Result)+1);
        Result[Length(Result)-1] := IntToStr(FProcessEntry32.th32ProcessID);
+    end;
+    ContinueLoop := Process32Next(FSnapshotHandle, FProcessEntry32);
+  until not ContinueLoop;
+  CloseHandle(FSnapshotHandle);
+end;}
+
+{ Получение PID для нескольких процессов с одинаковым именем }
+function GetProcessIDMulti2(ExeFileName: String): TArrayOfCardinal;
+var
+  ContinueLoop: BOOL;
+  FSnapshotHandle: THandle;
+  FProcessEntry32: TProcessEntry32;
+begin
+  SetLength(Result, 0);
+  //Result := 0;
+  FSnapshotHandle := CreateToolHelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+  FProcessEntry32.dwSize := Sizeof(FProcessEntry32);
+  ContinueLoop := Process32First(FSnapshotHandle, FProcessEntry32);
+  repeat
+    if ((UpperCase(ExtractFileName(FProcessEntry32.szExeFile)) = UpperCase(ExeFileName))
+       or (UpperCase(FProcessEntry32.szExeFile) = UpperCase(ExeFileName))) then
+    begin
+       SetLength(Result, Length(Result)+1);
+       Result[Length(Result)-1] := FProcessEntry32.th32ProcessID;
     end;
     ContinueLoop := Process32Next(FSnapshotHandle, FProcessEntry32);
   until not ContinueLoop;
@@ -1145,6 +1313,19 @@ begin
   while (j <= Length(AString)) and (AString[j] <> ADelimiter) do
     Inc(j);
   Result := Copy(AString, i, j - i);
+end;
+
+{ Функция возвращает путь до пользовательской временной папки }
+function GetUserTempPath: WideString;
+var
+  UserPath: WideString;
+begin
+  Result := '';
+  SetLength(UserPath, MAX_PATH);
+  GetTempPath(MAX_PATH, PChar(UserPath));
+  GetLongPathName(PChar(UserPath), PChar(UserPath), MAX_PATH);
+  SetLength(UserPath, StrLen(PChar(UserPath)));
+  Result := UserPath;
 end;
 
 begin
