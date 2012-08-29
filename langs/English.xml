@@ -451,6 +451,7 @@
   <KbSec>Kbytes/sec</KbSec>
   <InitDownloadFromURL>Initializing download from the URL</InitDownloadFromURL>
   <InvalidResponseHeader>Invalid response header from the server.</InvalidResponseHeader>
+  <InvalidResponseHeaderDesc>Check the settings for connecting to the Internet. Maybe your proxy server blocks access to the site updates.</InvalidResponseHeaderDesc>
   <HeaderData>Header data:</HeaderData>
   <ParseHeader>Parse the header...</ParseHeader>
   <ErrInternetOpen>Error opening session.</ErrInternetOpen>

@@ -14,7 +14,8 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls, ComCtrls, XMLIntf, XMLDoc, Global, IniFiles, uIMDownloader, ShellApi;
+  Dialogs, StdCtrls, ComCtrls, XMLIntf, XMLDoc, Global, IniFiles, uIMDownloader, ShellApi,
+  ImgList;
 
 type
   TMainForm = class(TForm)
@@ -57,6 +58,7 @@ type
     CBIMClientType: TComboBox;
     LDBType: TLabel;
     CBDBType: TComboBox;
+    ImageList_Main: TImageList;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
@@ -488,6 +490,8 @@ begin
     LFileMD5.Caption := GetLangStr('Unknown');
     LStatus.Caption := GetLangStr('InvalidResponseHeader');
     LStatus.Hint := 'InvalidResponseHeader';
+    LStatus.Repaint;
+    ButtonUpdateEnableStart;
   end
   else
   begin
@@ -683,7 +687,7 @@ begin
       // ¬кл. кнопки
       ButtonUpdateEnableStart;
       MsgInf(Caption, GetLangStr('AllUpdatesInstalled'));
-      //Close;
+      Close;
       Exit;
     end;
     LogMemo.Lines.Add('================= ' + GetLangStr('Step') + ' '+IntToStr(CurrStep)+' =================');
@@ -934,6 +938,7 @@ begin
     else
     begin
       LogMemo.Lines.Add(GetLangStr('InvalidResponseHeader'));
+      LogMemo.Lines.Add(GetLangStr('InvalidResponseHeaderDesc'));
       HeaderFileName := 'Test';
       HeaderMD5 := '00000000000000000000000000000000';
       HeaderFileSize := 0;
