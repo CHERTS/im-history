@@ -452,6 +452,7 @@
   <KbSec>Кбайт/сек</KbSec>
   <InitDownloadFromURL>Инициализация скачивания c URL</InitDownloadFromURL>
   <InvalidResponseHeader>Неправильный заголовок ответа с сервера.</InvalidResponseHeader>
+  <InvalidResponseHeaderDesc>Проверьте настройки подключения к Интернет. Возможно Ваш прокси-сервер блокирует доступ к сайту обновления.</InvalidResponseHeaderDesc>
   <HeaderData>Данные заголовка:</HeaderData>
   <ParseHeader>Парсим заголовок...</ParseHeader>
   <ErrInternetOpen>Ошибка при открытии сессии.</ErrInternetOpen>
