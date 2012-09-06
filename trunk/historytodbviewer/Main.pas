@@ -612,12 +612,12 @@ begin
     begin
       JvNetscapeSplitter.Maximized := true;
       ShowHistory(Glogal_History_Type, Global_ChatName, -1);
-    end;
-    {else if (Glogal_History_Type = 10) and (not ShowSettingsFormOnStart)  then
+    end
+    else if (Glogal_History_Type = 10) and (not ShowSettingsFormOnStart)  then
     begin
       JvNetscapeSplitter.Maximized := true;
       ShowSummaryHistory;
-    end;}
+    end;
     // ѕроверка на открытие настроек при запуске
     if ShowSettingsFormOnStart then
     begin
@@ -972,7 +972,10 @@ begin
     SummaryQuery.ParamCheck := False;
     SummaryQuery.SQL.Clear;
     SQL_Zeos('select msg_time from uin_'+ DBUserName + ' where msg_direction = 1 order by msg_time desc limit 1');
-    EndHistoryDateTimePicker.DateTime := StrToDateTime(ViewerQuery.FieldByName('msg_time').AsString);
+    if ViewerQuery.FieldByName('msg_time').AsString <> '' then
+      EndHistoryDateTimePicker.DateTime := StrToDateTime(ViewerQuery.FieldByName('msg_time').AsString)
+    else
+      EndHistoryDateTimePicker.DateTime := StrToDateTime(FormatDateTime('dd.mm.yy 23:59:59', Now));
     //SummaryQuery.SQL.Text := 'select IM.my_nick,IM.my_uin,IM.nick,IM.uin,IM.msg_direction,IM.msg_time,IM.msg_text,IM.key_id from (select my_nick,my_uin,nick,uin,msg_direction,msg_time,msg_text,key_id from uin_'+ DBUserName + ' where nick is not null and msg_direction = 1 and msg_time >= ''' + FormatDateTime('yyyy-MM-dd HH:mm:ss', StartHistoryDateTimePicker.DateTime) + ''' and msg_time <= ''' + FormatDateTime('yyyy-MM-dd HH:mm:ss', EndHistoryDateTimePicker.DateTime) + ''' group by uin order by nick asc) as IM order by IM.msg_time asc';
     SummaryQuery.SQL.Text := 'select my_nick,my_uin,nick,uin,msg_direction,msg_time,msg_text,key_id from uin_'+ DBUserName + ' where msg_direction = 1 and msg_time >= ''' + FormatDateTime('yyyy-MM-dd HH:mm:ss', StartHistoryDateTimePicker.DateTime) + ''' and msg_time <= ''' + FormatDateTime('yyyy-MM-dd HH:mm:ss', EndHistoryDateTimePicker.DateTime) + ''' order by msg_time desc';
     try
@@ -2139,8 +2142,8 @@ begin
     if Global_AccountUIN <> '' then
       ShowHistory(Glogal_History_Type, Global_ChatName, -1)
   end
-  {else if Glogal_History_Type = 10 then
-    ShowSummaryHistory}
+  else if Glogal_History_Type = 10 then
+    ShowSummaryHistory
   else
     MsgInf(MainForm.Caption, GetLangStr('NoSelectContactRefreshHistory'));
 end;
