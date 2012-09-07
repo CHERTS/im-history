@@ -819,7 +819,7 @@ begin
   GetWindowThreadProcessId(hwnd, pid);
   if Pid = DWORD(data) then
   begin
-    PostMessage(hwnd, WM_QUIT, 0, 0);
+    PostMessage(hwnd, WM_CLOSE, 0, 0);//WM_QUIT
   end;
 end;
 

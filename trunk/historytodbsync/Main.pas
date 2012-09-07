@@ -133,6 +133,7 @@ type
     procedure ShowBalloonHint(BalloonTitle, BalloonMsg : WideString);
     procedure DoAlertShow(Sender: TObject);
     procedure DoAlertClose(Sender: TObject);
+    procedure CheckUpdateClick(Sender: TObject);
     procedure CheckDBUpdate(PluginDllPath: String);
     procedure DBUpdate(SQLUpdateFile: String);
     procedure StartCheckMD5Hash;
@@ -161,7 +162,6 @@ type
     function CheckServiceMode: Boolean;
     function GetCurrentEncryptionKeyID(var ActiveKeyID: String): Integer;
     function CheckQueryRecNo(TotalRecNo, CurRecNo: Integer): Boolean;
-    procedure CheckUpdateClick(Sender: TObject);
   private
     { Private declarations }
     Skype: TSkype;
@@ -309,6 +309,7 @@ begin
       begin
         if not GlobalSkypeSupport then
           WriteCustomINI(ProfilePath, 'Main', 'SkypeSupport', '1');
+        GlobalSkypeSupportOnRun := True;
         GlobalSkypeSupport := True;
         if IMClientType <> 'Skype' then
           WriteCustomINI(ProfilePath, 'Main', 'IMClientType', 'Skype');
@@ -321,6 +322,7 @@ begin
         Exit;
       end;
     end;
+    GlobalSkypeSupportOnRun := GlobalSkypeSupport;
     // Устанавливаем настройки соединения с БД
     LoadDBSettings;
     // Загружаем настройки локализации
@@ -1392,7 +1394,6 @@ begin
     if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура OnControlReq: Получено шифрованное управляющее сообщение: ' + EncryptControlStr, 2);
     ControlStr := DecryptStr(EncryptControlStr);
     if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура OnControlReq: Управляющее сообщение расшифровано: ' + ControlStr, 2);
-    //SetString(ControlStr, PChar(Msg.CopyDataStruct.lpData), StrLen(PChar(Msg.CopyDataStruct.lpData)));
     Msg.Result := 2006;
     if ControlStr = 'Russian' then
     begin
@@ -1421,16 +1422,24 @@ begin
       if (not SyncHistoryStartedEnabled) and (not CheckMD5HashStartedEnabled) and (not UpdateContactListStartedEnabled) then
         RunTimeSync;
       // Поддержка Skype
-      if GlobalSkypeSupport then
+      if GlobalSkypeSupportOnRun <> GlobalSkypeSupport then
       begin
-        DisableSkype;
-        EnableSkype;
-      end
-      else
-      begin
-        DisableSkype;
-        LSkypeStatus.Caption := GetLangStr('HistoryToDBSyncSkypeOff');
-        LSkypeStatus.Hint := 'HistoryToDBSyncSkypeOff';
+        GlobalSkypeSupportOnRun := GlobalSkypeSupport;
+        if GlobalSkypeSupport then
+        begin
+          if Assigned(Skype) then
+            DisableSkype;
+          EnableSkype;
+        end
+        else
+        begin
+          if Assigned(Skype) then
+          begin
+            DisableSkype;
+            LSkypeStatus.Caption := GetLangStr('HistoryToDBSyncSkypeOff');
+            LSkypeStatus.Hint := 'HistoryToDBSyncSkypeOff';
+          end;
+        end;
       end;
     end;
     // 002 - Синхронизация истории
