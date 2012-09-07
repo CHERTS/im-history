@@ -13,25 +13,27 @@ unit About;
 interface
 
 uses Windows, Messages, SysUtils, Classes, Graphics, Forms, Controls, StdCtrls,
-  Buttons, ExtCtrls, ShellAPI, Global;
+  Buttons, ExtCtrls, ShellAPI, Global, ComCtrls;
 
 type
   TAboutForm = class(TForm)
     AboutImage: TImage;
-    BAbout: TBevel;
     CloseButton: TButton;
+    AboutPageControl: TPageControl;
+    VersionTabSheet: TTabSheet;
+    ThankYouTabSheet: TTabSheet;
+    BAbout: TBevel;
     LProgramName: TLabel;
     LCopyright: TLabel;
     LabelAuthor: TLabel;
+    LVersionNum: TLabel;
     LVersion: TLabel;
     LLicense: TLabel;
+    LLicenseType: TLabel;
     LWeb: TLabel;
     LabelWebSite: TLabel;
-    LVersionNum: TLabel;
-    LLicenseType: TLabel;
-    Bevel1: TBevel;
-    LThankYou: TLabel;
-    MemoThankYou: TMemo;
+    BThankYou: TBevel;
+    ThankYou: TLabel;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
@@ -123,20 +125,20 @@ end;
 procedure TAboutForm.LoadLanguageStrings;
 begin
   Caption := GetLangStr('AboutFormCaption');
+  LProgramName.Caption := PluginName;
   CloseButton.Caption := GetLangStr('CloseButton');
   LVersion.Caption := GetLangStr('Version');
   LLicense.Caption := GetLangStr('License');
-  LProgramName.Caption := PluginName;
+  VersionTabSheet.Caption := GetLangStr('AboutFormCaption');
+  ThankYouTabSheet.Caption := GetLangStr('LThankYou');
   // Позиционируем лейблы
   LVersionNum.Left := LVersion.Left + 1 + LVersion.Width;
   LLicenseType.Left := LLicense.Left + 1 + LLicense.Width;
   // Благодарности
-  LThankYou.Caption := GetLangStr('LThankYou');
-  MemoThankYou.Clear;
   if CoreLanguage = 'Russian' then
-    MemoThankYou.Text := ThankYouText_Rus
+    ThankYou.Caption := ThankYouText_Rus
   else
-    MemoThankYou.Text := ThankYouText_Eng;
+    ThankYou.Caption := ThankYouText_Eng;
   // End
 end;
 

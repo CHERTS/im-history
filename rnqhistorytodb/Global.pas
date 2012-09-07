@@ -47,13 +47,13 @@ const
   DebugLogName = 'HistoryToDBDebug.log';
   // Благодарности
   ThankYouText_Rus = 'Анна Никифорова за активное тестирование плагина.' + #13#10 +
-                    'Кирил Уксусов (UksusoFF) за активное тестирование плагина и новые идеи.' + #13#10 +
+                    'Кирилл Уксусов (UksusoFF) за активное тестирование плагина и новые идеи.' + #13#10 +
                     'Игорь Гурьянов за активное тестирование плагина.' + #13#10 +
                     'Вячеслав С. (HDHMETRO) за активное тестирование плагина.' + #13#10 +
                     'Providence за активное тестирование плагина и новые идеи.' + #13#10 +
                     'Cy6 за помощь в реализации импорта истории RnQ.';
   ThankYouText_Eng = 'Anna Nikiforova for active testing of plug-in.' + #13#10 +
-                    'Kiril Uksusov (UksusoFF) for active testing of plug-in and new ideas.' + #13#10 +
+                    'Kirill Uksusov (UksusoFF) for active testing of plug-in and new ideas.' + #13#10 +
                     'Igor Guryanov for active testing of plug-in.' + #13#10 +
                     'Vyacheslav S. (HDHMETRO) for active testing of plug-in.' + #13#10 +
                     'Providence for active testing of plug-in and new ideas.' + #13#10 +

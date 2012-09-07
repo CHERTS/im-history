@@ -1814,10 +1814,6 @@ end;
 { Процедура для мультиязыковой поддержки }
 procedure TQipPlugin.OnCurrentLang(var PlugMsg: TPluginMessage);
 begin
-  {if (PlugMsg.WParam <> 0) and (Trim(PWideChar(PlugMsg.WParam)) <> '') then
-  begin
-    if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура OnCurrentLang: Текущий язык = ' + PWideChar(PlugMsg.WParam), 2);
-  end;}
   with PlugMsg do
   if (WParam <> 0) and (Trim(PWideChar(WParam)) <> '') and not WideSameStr(PWideChar(WParam), FLanguage) then
   begin

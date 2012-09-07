@@ -4,8 +4,8 @@ object AboutForm: TAboutForm
   BorderIcons = [biMinimize, biMaximize]
   BorderStyle = bsSingle
   Caption = 'About'
-  ClientHeight = 365
-  ClientWidth = 341
+  ClientHeight = 263
+  ClientWidth = 346
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -50,7 +50,7 @@ object AboutForm: TAboutForm
     FFFFE007FFFFC003FFFF8001FFFF0000FFFF8001FFFFC003FFFFC003FFFFC003
     FFFFC003FFFFC003FFFFC003FFFFC003FFFFC003FFFFC003FFFFE007FFFF}
   OldCreateOrder = False
-  Position = poMainFormCenter
+  Position = poScreenCenter
   OnClose = FormClose
   OnCreate = FormCreate
   OnShow = FormShow
@@ -59,143 +59,158 @@ object AboutForm: TAboutForm
   object AboutImage: TImage
     Left = 8
     Top = 2
-    Width = 325
+    Width = 328
     Height = 55
     Transparent = True
   end
-  object BAbout: TBevel
-    Left = 8
-    Top = 63
-    Width = 325
-    Height = 93
-  end
-  object LProgramName: TLabel
-    Left = 24
-    Top = 72
-    Width = 72
-    Height = 13
-    Caption = 'HistoryToDB'
-    Font.Charset = DEFAULT_CHARSET
-    Font.Color = clWindowText
-    Font.Height = -11
-    Font.Name = 'MS Sans Serif'
-    Font.Style = [fsBold]
-    ParentFont = False
-  end
-  object LCopyright: TLabel
-    Left = 24
-    Top = 88
-    Width = 124
-    Height = 13
-    Caption = 'Copyright '#169' 2011-2012 by'
-  end
-  object LabelAuthor: TLabel
-    Left = 151
-    Top = 88
-    Width = 80
-    Height = 13
-    Cursor = crHandPoint
-    Caption = 'Michael Grigorev'
-    Font.Charset = DEFAULT_CHARSET
-    Font.Color = clBlue
-    Font.Height = -11
-    Font.Name = 'MS Sans Serif'
-    Font.Style = []
-    ParentFont = False
-    OnClick = LabelAuthorClick
-  end
-  object LVersion: TLabel
-    Left = 24
-    Top = 104
-    Width = 41
-    Height = 13
-    Caption = 'Version: '
-  end
-  object LLicense: TLabel
-    Left = 24
-    Top = 120
-    Width = 43
-    Height = 13
-    Caption = 'License: '
-  end
-  object LWeb: TLabel
-    Left = 24
-    Top = 136
-    Width = 29
-    Height = 13
-    Caption = 'Web: '
-  end
-  object LabelWebSite: TLabel
-    Left = 54
-    Top = 136
-    Width = 82
-    Height = 13
-    Cursor = crHandPoint
-    Caption = 'www.im-history.ru'
-    Font.Charset = DEFAULT_CHARSET
-    Font.Color = clBlue
-    Font.Height = -11
-    Font.Name = 'MS Sans Serif'
-    Font.Style = []
-    ParentFont = False
-    OnClick = LabelWebSiteClick
-  end
-  object LVersionNum: TLabel
-    Left = 64
-    Top = 104
-    Width = 33
-    Height = 13
-    Caption = '1.0.0.0'
-  end
-  object LLicenseType: TLabel
-    Left = 67
-    Top = 120
-    Width = 33
-    Height = 13
-    Caption = 'GPLv3'
-  end
-  object Bevel1: TBevel
-    Left = 8
-    Top = 162
-    Width = 325
-    Height = 165
-  end
-  object LThankYou: TLabel
-    Left = 24
-    Top = 168
-    Width = 95
-    Height = 13
-    Caption = #1041#1083#1072#1075#1086#1076#1072#1088#1085#1086#1089#1090#1080':'
-    Font.Charset = DEFAULT_CHARSET
-    Font.Color = clWindowText
-    Font.Height = -11
-    Font.Name = 'MS Sans Serif'
-    Font.Style = [fsBold]
-    ParentFont = False
-  end
   object CloseButton: TButton
-    Left = 263
-    Top = 333
+    Left = 270
+    Top = 233
     Width = 70
     Height = 25
     Caption = 'Close'
     TabOrder = 0
     OnClick = CloseButtonClick
   end
-  object MemoThankYou: TMemo
-    Left = 24
-    Top = 187
-    Width = 305
-    Height = 126
-    BevelInner = bvNone
-    BevelKind = bkFlat
-    BevelOuter = bvNone
-    BorderStyle = bsNone
-    Color = clBtnFace
-    Lines.Strings = (
-      #1057#1087#1072#1089#1080#1073#1086' '#1074#1089#1077#1084'!')
-    ReadOnly = True
+  object AboutPageControl: TPageControl
+    Left = 8
+    Top = 63
+    Width = 332
+    Height = 168
+    ActivePage = VersionTabSheet
     TabOrder = 1
-    OnEnter = MemoThankYouEnter
+    object VersionTabSheet: TTabSheet
+      Caption = #1054' '#1087#1088#1086#1075#1088#1072#1084#1084#1077
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 317
+      ExplicitHeight = 121
+      DesignSize = (
+        324
+        140)
+      object BAbout: TBevel
+        Left = 3
+        Top = 7
+        Width = 318
+        Height = 130
+        Anchors = [akLeft, akTop, akRight, akBottom]
+        ExplicitWidth = 363
+        ExplicitHeight = 187
+      end
+      object LProgramName: TLabel
+        Left = 16
+        Top = 16
+        Width = 72
+        Height = 13
+        Caption = 'HistoryToDB'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'MS Sans Serif'
+        Font.Style = [fsBold]
+        ParentFont = False
+      end
+      object LCopyright: TLabel
+        Left = 16
+        Top = 32
+        Width = 124
+        Height = 13
+        Caption = 'Copyright '#169' 2011-2012 by'
+      end
+      object LabelAuthor: TLabel
+        Left = 143
+        Top = 32
+        Width = 80
+        Height = 13
+        Cursor = crHandPoint
+        Caption = 'Michael Grigorev'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clBlue
+        Font.Height = -11
+        Font.Name = 'MS Sans Serif'
+        Font.Style = []
+        ParentFont = False
+        OnClick = LabelAuthorClick
+      end
+      object LVersionNum: TLabel
+        Left = 56
+        Top = 48
+        Width = 33
+        Height = 13
+        Caption = '1.0.0.0'
+      end
+      object LVersion: TLabel
+        Left = 16
+        Top = 48
+        Width = 41
+        Height = 13
+        Caption = 'Version: '
+      end
+      object LLicense: TLabel
+        Left = 16
+        Top = 64
+        Width = 43
+        Height = 13
+        Caption = 'License: '
+      end
+      object LLicenseType: TLabel
+        Left = 59
+        Top = 64
+        Width = 33
+        Height = 13
+        Caption = 'GPLv3'
+      end
+      object LWeb: TLabel
+        Left = 16
+        Top = 80
+        Width = 29
+        Height = 13
+        Caption = 'Web: '
+      end
+      object LabelWebSite: TLabel
+        Left = 46
+        Top = 80
+        Width = 82
+        Height = 13
+        Cursor = crHandPoint
+        Caption = 'www.im-history.ru'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clBlue
+        Font.Height = -11
+        Font.Name = 'MS Sans Serif'
+        Font.Style = []
+        ParentFont = False
+        OnClick = LabelWebSiteClick
+      end
+    end
+    object ThankYouTabSheet: TTabSheet
+      Caption = #1041#1083#1072#1075#1086#1076#1072#1088#1085#1086#1089#1090#1080
+      ImageIndex = 1
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 317
+      ExplicitHeight = 121
+      DesignSize = (
+        324
+        140)
+      object BThankYou: TBevel
+        Left = 3
+        Top = 3
+        Width = 318
+        Height = 134
+        Anchors = [akLeft, akTop, akRight, akBottom]
+        ExplicitWidth = 311
+        ExplicitHeight = 115
+      end
+      object ThankYou: TLabel
+        Left = 11
+        Top = 11
+        Width = 305
+        Height = 118
+        AutoSize = False
+        Caption = #1057#1087#1072#1089#1080#1073#1086' '#1074#1089#1077#1084'!'
+        WordWrap = True
+      end
+    end
   end
 end
