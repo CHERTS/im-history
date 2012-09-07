@@ -102,6 +102,7 @@ function SearchMainWindow(MainWindowName: pWideChar): Boolean;
 procedure EncryptInit;
 procedure EncryptFree;
 procedure OnSendMessageToAllComponent(Msg: String);
+procedure OnSendMessageToOneComponent(WinName, Msg: String);
 procedure WriteInLog(DllPath: String; TextString: WideString; LogType: Integer);
 procedure LoadINI(INIPath: String; NotSettingsForm: Boolean);
 procedure WriteCustomINI(INIPath, CustomParams, ParamsStr: String);
@@ -390,6 +391,13 @@ end;
   0060 - Запущен импорт истории
   0061 - Импорт истории завершен
   007  - Обновить контакт-лист в БД
+  008  - Показать историю контакта/чата
+         Формат команды:
+           для истории контакта:
+             008|0|UserID|UserName|ProtocolType
+           для истории чата:
+             008|2|ChatName
+  009 - Экстренно закрыть все компоненты плагина.
 }
 procedure OnSendMessageToAllComponent(Msg: String);
 var
@@ -418,6 +426,24 @@ begin
   end;
   // Ищем окно HistoryToDBImport и посылаем ему команду
   HToDB := FindWindow(nil,'HistoryToDBImport for RnQ');
+  if HToDB <> 0 then
+  begin
+    copyDataStruct.dwData := Integer(cdtString);
+    copyDataStruct.cbData := 2*Length(EncryptMsg);
+    copyDataStruct.lpData := PChar(EncryptMsg);
+    SendMessage(HToDB, WM_COPYDATA, 0, Integer(@copyDataStruct));
+  end;
+end;
+
+procedure OnSendMessageToOneComponent(WinName, Msg: String);
+var
+  HToDB: HWND;
+  copyDataStruct : TCopyDataStruct;
+  EncryptMsg: String;
+begin
+  EncryptMsg := EncryptStr(Msg);
+  // Ищем окно HistoryToDBViewer и посылаем ему команду
+  HToDB := FindWindow(nil, pChar(WinName));
   if HToDB <> 0 then
   begin
     copyDataStruct.dwData := Integer(cdtString);

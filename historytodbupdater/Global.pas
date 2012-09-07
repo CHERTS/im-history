@@ -32,7 +32,7 @@ type
 
 const
   ProgramsName = 'HistoryToDBUpdater';
-  ProgramsVer : WideString = '1.0.0.0';
+  ProgramsVer : WideString = '2.4.0.0';
   DefaultDBAddres = 'db01.im-history.ru';
   DefaultDBName = 'imhistory';
   ININame = 'HistoryToDB.ini';
@@ -98,10 +98,11 @@ function KillTask(ExeFileName: String): Integer; overload;
 function KillTask(ExeFileName, WinCaption: String): Integer; overload;
 function ProcessTerminate(dwPID: Cardinal): Boolean;
 function ProcCloseEnum(hwnd: THandle; data: Pointer):BOOL;stdcall;
+function ProcQuitEnum(hwnd: THandle; data: Pointer):BOOL;stdcall;
 function GetProcessFileName(PID: DWord; FullPath: Boolean=True): String;
 function GetProcessCmdLine(PID:DWord): String;
 function SetProcessDebugPrivelege: Boolean;
-function EndProcess(IMClientExeName: String; EndProcess: Boolean): TProcessInfoArray;
+function EndProcess(IMClientExeName: String; EndType: Integer; EndProcess: Boolean): TProcessInfoArray;
 function GetUserTempPath: WideString;
 //function ProcGetCaptionForHandleEnum(hwnd: THandle; data: Pointer):BOOL;stdcall;
 function EnumThreadWndProc(hwnd: HWND; lParam: LPARAM): BOOL; stdcall;
@@ -810,7 +811,7 @@ begin
   until (N - F >= (Value mod 10)) or (N < F);
 end;
 
-{ Закрытие программы через WM_QUIT по её PID }
+{ Закрытие программы через WM_CLOSE по её PID }
 function ProcCloseEnum(hwnd: THandle; data: Pointer):BOOL;stdcall;
 var
   Pid: DWORD;
@@ -819,7 +820,20 @@ begin
   GetWindowThreadProcessId(hwnd, pid);
   if Pid = DWORD(data) then
   begin
-    PostMessage(hwnd, WM_CLOSE, 0, 0);//WM_QUIT
+    PostMessage(hwnd, WM_CLOSE, 0, 0);
+  end;
+end;
+
+{ Закрытие программы через WM_QUIT по её PID }
+function ProcQuitEnum(hwnd: THandle; data: Pointer):BOOL;stdcall;
+var
+  Pid: DWORD;
+begin
+  Result := True;
+  GetWindowThreadProcessId(hwnd, pid);
+  if Pid = DWORD(data) then
+  begin
+    PostMessage(hwnd, WM_QUIT, 0, 0);
   end;
 end;
 
@@ -841,8 +855,11 @@ end;}
 
 { Функция отправляет WM_QUIT процессу
   и возвращает TArrayOfString со списком полных путей + параметры запуска
-  этих процессов }
-function EndProcess(IMClientExeName: String; EndProcess: Boolean): TProcessInfoArray;
+  этих процессов
+  EndType = 0 - WM_CLOSE
+  EndType = 1 - WM_QUIT
+   }
+function EndProcess(IMClientExeName: String; EndType: Integer; EndProcess: Boolean): TProcessInfoArray;
 var
   I: Integer;
   ProcessPIDListArray: TArrayOfCardinal;
@@ -893,7 +910,12 @@ begin
     end;
     // Завершение процесса
     if EndProcess then
-      EnumWindows(@ProcCloseEnum, ProcessPIDListArray[I]);
+    begin
+      if EndType = 0 then //WM_CLOSE
+        EnumWindows(@ProcCloseEnum, ProcessPIDListArray[I])
+      else //WM_QUIT
+        EnumWindows(@ProcQuitEnum, ProcessPIDListArray[I]);
+    end;
   end;
 end;
 

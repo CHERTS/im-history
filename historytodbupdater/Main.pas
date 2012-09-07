@@ -390,7 +390,7 @@ begin
   begin
     LogMemo.Clear;
     // Ищем программы синхронизации типа Dropbox
-    if IsProcessRun('Dropbox.exe') then
+    {if IsProcessRun('Dropbox.exe') then
     begin
       if GetSysLang = 'Русский' then
         MsgString := 'В памяти найдена программа Dropbox.' + #13 +
@@ -405,7 +405,7 @@ begin
       case MessageBox(MainForm.Handle, PWideChar(MsgString), PWideChar(Caption),36) of
         6: DropboxProcessInfo := EndProcess('Dropbox.exe', True);
       end;
-    end;
+    end;}
     // Ищем запущенные компоненты плагина и закрываем их
     if not EndTask('HistoryToDBSync.exe', 'HistoryToDBSync for ' + IMClientType) then
       Inc(AllProcessEndErr);
@@ -420,21 +420,21 @@ begin
       if IMClientType = 'QIP' then
       begin
         LogMemo.Lines.Add(Format(GetLangStr('EndProcess'), ['qip.exe']));
-        QIPProcessInfo := EndProcess('qip.exe', True);
+        QIPProcessInfo := EndProcess('qip.exe', 0, True);
       end;
       if IMClientType = 'Miranda' then
       begin
         LogMemo.Lines.Add(Format(GetLangStr('EndProcess'), ['miranda32.exe']));
-        MirandaProcessInfo := EndProcess('miranda32.exe', True);
+        MirandaProcessInfo := EndProcess('miranda32.exe', 1, True);
       end;
       if IMClientType = 'RnQ' then
       begin
-        RnQProcessInfo := EndProcess('rnq.exe', True);
+        RnQProcessInfo := EndProcess('rnq.exe', 0, True);
         LogMemo.Lines.Add(Format(GetLangStr('EndProcess'), ['rnq.exe']));
       end;
       if IMClientType = 'Skype' then
       begin
-        SkypeProcessInfo := EndProcess('skype.exe', True);
+        SkypeProcessInfo := EndProcess('skype.exe', 0, True);
         LogMemo.Lines.Add(Format(GetLangStr('EndProcess'), ['skype.exe']));
       end;
       // Начинаем обновление
@@ -672,6 +672,8 @@ begin
       LStatus.Repaint;
       LogMemo.Lines.Add('=========================================');
       LogMemo.Lines.Add(GetLangStr('AllUpdatesInstalled'));
+      // Вкл. кнопки
+      ButtonUpdateEnableStart;
       // Запуск IM-клиента
       if IMClientType = 'QIP' then
         RunIMClient('qip.exe', QIPProcessInfo);
@@ -682,11 +684,9 @@ begin
       if IMClientType = 'Skype' then
         RunIMClient('skype.exe', SkypeProcessInfo);
       // Запуск Dropbox
-      if not IsProcessRun('Dropbox.exe') then
-        RunIMClient('Dropbox.exe', DropboxProcessInfo);
-      // Вкл. кнопки
-      ButtonUpdateEnableStart;
-      MsgInf(Caption, GetLangStr('AllUpdatesInstalled'));
+      {if not IsProcessRun('Dropbox.exe') then
+        RunIMClient('Dropbox.exe', DropboxProcessInfo);}
+      //MsgInf(Caption, GetLangStr('AllUpdatesInstalled'));
       Close;
       Exit;
     end;
@@ -725,6 +725,18 @@ begin
       if (SR.Attr = faDirectory) and ((SR.Name = '.') or (SR.Name = '..')) then // Чтобы не было файлов . и ..
       begin
         Continue; // Продолжаем цикл
+      end;
+      if MatchStrings(SR.Name, 'HistoryToDBUpdater.exe') then
+      begin
+        LStatus.Caption := Format(GetLangStr('UpdateFile'), [SR.Name]);
+        LStatus.Hint := 'UpdateFile';
+        LStatus.Repaint;
+        LogMemo.Lines.Add(Format(GetLangStr('UpdateFile'), [SR.Name]));
+        if CopyFileEx(PChar(SavePath + SR.Name), PChar(PluginPath + 'HistoryToDBUpdater.upd'), nil, nil, nil, COPY_FILE_FAIL_IF_EXISTS) then
+        begin
+          DeleteFile(SavePath + SR.Name);
+          LogMemo.Lines.Add(Format(GetLangStr('UpdateFileDone'), [SR.Name]));
+        end;
       end;
       if MatchStrings(SR.Name, '*.xml') then
       begin
@@ -1252,14 +1264,14 @@ begin
       // Читаем настройки
       LoadINI(ProfilePath, true);
     end;
-    // 003 - Выход из программы
-    {if ControlStr = '003' then
-      Close;}
     // 004 - Режим Анти-босс
     if ControlStr = '0040' then // Показать формы
       AntiBoss(False);
     if ControlStr = '0041' then // Скрыть формы
       AntiBoss(True);
+    // 009 - Экстренный выход из программы
+    if ControlStr = '009' then
+      Close;
   end;
 end;
 

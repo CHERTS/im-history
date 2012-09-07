@@ -452,7 +452,7 @@ var
   //{$ifdef REPLDEFHISTMOD}
   Si: TCListMenuItem;
   //{$endif REPLDEFHISTMOD}
-  AutoCoreLang: String;
+  AutoCoreLang, WinName: String;
   I: Byte;
   MenuMainService: PAnsiChar;
   //IMUPD: TUpdate;
@@ -652,6 +652,40 @@ begin
   MessageCount := 0;
   // Пишем данные о первом запуске в базу
   WriteDBInt(htdDBName, 'FirstRun.FirstActivate', 1);
+  // Обновление утилиты HistoryToDBUpdater.exe
+  if FileExists(PluginPath + 'HistoryToDBUpdater.upd') then
+  begin
+    // Ищем окно HistoryToDBUpdater
+    WinName := 'HistoryToDBUpdater';
+    if not SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBUpdater не найден, то ищем другое окно
+    begin
+      WinName := 'HistoryToDBUpdater for ' + htdIMClientName;
+      if SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBUpdater запущен, то закрываем его
+        OnSendMessageToOneComponent(WinName, '009');
+    end
+    else // Иначе посылаем запрос
+      OnSendMessageToOneComponent(WinName, '009');
+    // Удаляем старую утилиту
+    if DeleteFile(PluginPath + 'HistoryToDBUpdater.exe') then
+    begin
+      if CopyFileEx(PChar(PluginPath + 'HistoryToDBUpdater.upd'), PChar(PluginPath + 'HistoryToDBUpdater.exe'), nil, nil, nil, COPY_FILE_FAIL_IF_EXISTS) then
+      begin
+        DeleteFile(PluginPath + 'HistoryToDBUpdater.upd');
+        if CoreLanguage = 'Russian' then
+          MsgInf(htdPluginShortName, Format('Утилита обновления %s успешно обновлена.', ['HistoryToDBUpdater.exe']))
+        else
+          MsgInf(htdPluginShortName, Format('Update utility %s successfully updated.', ['HistoryToDBUpdater.exe']));
+      end;
+    end
+    else
+    begin
+      DeleteFile(PluginPath + 'HistoryToDBUpdater.upd');
+      if CoreLanguage = 'Russian' then
+        MsgInf(htdPluginShortName, Format('Ошибка обновления утилиты %s', [PluginPath + 'HistoryToDBUpdater.exe']))
+      else
+        MsgInf(htdPluginShortName, Format('Error update utility %s', [PluginPath + 'HistoryToDBUpdater.exe']));
+    end;
+  end;
   // Запуск обновления
   if StartUpdate then
   begin
