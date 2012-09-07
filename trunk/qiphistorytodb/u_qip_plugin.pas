@@ -186,6 +186,8 @@ end;
 
 { Создать формы и загрузить настройки }
 procedure TQipPlugin.CreateControls;
+var
+  WinName: String;
 begin
   try
     GetContactList := False;
@@ -258,6 +260,40 @@ begin
     StartWatch(ProfilePath, FILE_NOTIFY_CHANGE_LAST_WRITE, False, @ProfileDirChangeCallBack);
     // Реализация интерфейса ICLSnapshot для сохранения контакт-листа
     SnapshotIntf := Self;
+    // Обновление утилиты HistoryToDBUpdater.exe
+    if FileExists(PluginPath + 'HistoryToDBUpdater.upd') then
+    begin
+      // Ищем окно HistoryToDBUpdater
+      WinName := 'HistoryToDBUpdater';
+      if not SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBUpdater не найден, то ищем другое окно
+      begin
+        WinName := 'HistoryToDBUpdater for QIP';
+        if SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBUpdater запущен, то закрываем его
+          OnSendMessageToOneComponent(WinName, '009');
+      end
+      else // Иначе посылаем запрос
+        OnSendMessageToOneComponent(WinName, '009');
+      // Удаляем старую утилиту
+      if DeleteFile(PluginPath + 'HistoryToDBUpdater.exe') then
+      begin
+        if CopyFileEx(PChar(PluginPath + 'HistoryToDBUpdater.upd'), PChar(PluginPath + 'HistoryToDBUpdater.exe'), nil, nil, nil, COPY_FILE_FAIL_IF_EXISTS) then
+        begin
+          DeleteFile(PluginPath + 'HistoryToDBUpdater.upd');
+          if CoreLanguage = 'Russian' then
+            ShowFadeWindow(Format('Утилита обновления %s успешно обновлена.', ['HistoryToDBUpdater.exe']), 0, 1)
+          else
+            ShowFadeWindow(Format('Update utility %s successfully updated.', ['HistoryToDBUpdater.exe']), 0, 1);
+        end;
+      end
+      else
+      begin
+        DeleteFile(PluginPath + 'HistoryToDBUpdater.upd');
+        if CoreLanguage = 'Russian' then
+          ShowFadeWindow(Format('Ошибка обновления утилиты %s', [PluginPath + 'HistoryToDBUpdater.exe']), 0, 2)
+        else
+          ShowFadeWindow(Format('Error update utility %s', [PluginPath + 'HistoryToDBUpdater.exe']), 0, 2);
+      end;
+    end;
     // Плагин загружен
     PluginStatus := True;
     // Кол. сообщений

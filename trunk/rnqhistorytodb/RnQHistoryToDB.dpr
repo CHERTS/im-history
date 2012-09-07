@@ -328,6 +328,8 @@ begin
 end;
 
 function pluginFun(Data: Pointer): Pointer; stdcall;
+var
+  WinName: String;
 begin
   Result := nil;
   if (Data=nil) or (_int_at(Data)=0) then exit;
@@ -360,7 +362,7 @@ begin
             Exit;
           end;
           try
-            PluginStatus := true;
+            PluginStatus := True;
             MessageCount := 0;
             if not Assigned(AboutForm) then
               AboutForm := TAboutForm.create(nil);
@@ -408,6 +410,40 @@ begin
               AppendMenu(PopupMenu, MF_STRING, 8, PWideChar(GetLangStr('SettingsButton')));
               AppendMenu(PopupMenu, MF_SEPARATOR, 9, '-');
               AppendMenu(PopupMenu, MF_STRING, 10, PWideChar(GetLangStr('AboutButton')));
+            end;
+            // Обновление утилиты HistoryToDBUpdater.exe
+            if FileExists(PluginPath + 'HistoryToDBUpdater.upd') then
+            begin
+              // Ищем окно HistoryToDBUpdater
+              WinName := 'HistoryToDBUpdater';
+              if not SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBUpdater не найден, то ищем другое окно
+              begin
+                WinName := 'HistoryToDBUpdater for RnQ';
+                if SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBUpdater запущен, то закрываем его
+                  OnSendMessageToOneComponent(WinName, '009');
+              end
+              else // Иначе посылаем запрос
+                OnSendMessageToOneComponent(WinName, '009');
+              // Удаляем старую утилиту
+              if DeleteFile(PluginPath + 'HistoryToDBUpdater.exe') then
+              begin
+                if CopyFileEx(PChar(PluginPath + 'HistoryToDBUpdater.upd'), PChar(PluginPath + 'HistoryToDBUpdater.exe'), nil, nil, nil, COPY_FILE_FAIL_IF_EXISTS) then
+                begin
+                  DeleteFile(PluginPath + 'HistoryToDBUpdater.upd');
+                  if CoreLanguage = 'Russian' then
+                    MsgInf(PluginName, Format('Утилита обновления %s успешно обновлена.', ['HistoryToDBUpdater.exe']))
+                  else
+                    MsgInf(PluginName, Format('Update utility %s successfully updated.', ['HistoryToDBUpdater.exe']));
+                end;
+              end
+              else
+              begin
+                DeleteFile(PluginPath + 'HistoryToDBUpdater.upd');
+                if CoreLanguage = 'Russian' then
+                  MsgDie(PluginName, Format('Ошибка обновления утилиты %s', [PluginPath + 'HistoryToDBUpdater.exe']))
+                else
+                  MsgDie(PluginName, Format('Error update utility %s', [PluginPath + 'HistoryToDBUpdater.exe']));
+              end;
             end;
             Result := str2comm(ansichar(PM_DATA)+_istring(PluginName)+_int(APIversion));
           except

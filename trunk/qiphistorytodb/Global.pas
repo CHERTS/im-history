@@ -130,6 +130,7 @@ function SearchMainWindow(MainWindowName: pWideChar): Boolean;
 function OpenLogFile(LogPath: String; LogType: Integer): Boolean;
 function GetMyFileSize(const Path: String): Integer;
 function GetWindowsLanguage: String;
+function GetUserTempPath: WideString;
 procedure EncryptInit;
 procedure EncryptFree;
 procedure WriteInLog(LogPath: String; TextString: String; LogType: Integer);
@@ -830,6 +831,19 @@ var
 begin
   VerLanguageName(GetSystemDefaultLangID, WinLanguage, 50);
   Result := StrPas(WinLanguage);
+end;
+
+{ Функция возвращает путь до пользовательской временной папки }
+function GetUserTempPath: WideString;
+var
+  UserPath: WideString;
+begin
+  Result := '';
+  SetLength(UserPath, MAX_PATH);
+  GetTempPath(MAX_PATH, PChar(UserPath));
+  GetLongPathName(PChar(UserPath), PChar(UserPath), MAX_PATH);
+  SetLength(UserPath, StrLen(PChar(UserPath)));
+  Result := UserPath;
 end;
 
 end.
