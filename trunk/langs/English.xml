@@ -231,6 +231,8 @@
   <DBReconnectCount>Number of reconnection attempts:</DBReconnectCount>
   <DBReconnectInterval>Reconnect interval (ms):</DBReconnectInterval>
   <AutoScrollText>Auto scrolling messages</AutoScrollText>
+  <AutoRunHistoryToDBSync>HistoryToDBSync run at Windows startup</AutoRunHistoryToDBSync>
+  <RunningSkypeOnStartup>Launch Skype at startup HistoryToDBSync</RunningSkypeOnStartup>
 
   <AboutButton>About</AboutButton>
   <AboutFormCaption>About</AboutFormCaption>

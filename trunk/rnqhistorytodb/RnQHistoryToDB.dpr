@@ -128,6 +128,7 @@ procedure OnMenuItemClick(ItemID: Integer);
 var
   List: TIntegerDynArray;
   I: Integer;
+  WinName: String;
 begin
   case ItemID of
     1: OnSendMessageToOneComponent('HistoryToDBSync for RnQ ('+MyAccount+')', '002');
@@ -148,8 +149,31 @@ begin
     4: OnSendMessageToOneComponent('HistoryToDBSync for RnQ ('+MyAccount+')', '0050');
     5: OnSendMessageToOneComponent('HistoryToDBSync for RnQ ('+MyAccount+')', '0051');
     6: if FileExists(ProfilePath+ContactListName) then OnSendMessageToOneComponent('HistoryToDBSync for RnQ ('+MyAccount+')', '007');
-    8: OnClickSettings;
-    10: AboutForm.Show;
+    7:
+    begin
+      // Ищем окно HistoryToDBUpdater
+      WinName := 'HistoryToDBUpdater';
+      if not SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBUpdater не найден, то ищем другое окно
+      begin
+        WinName := 'HistoryToDBUpdater for RnQ ('+MyAccount+')';
+        if not SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBUpdater не запущен, то запускаем
+        begin
+          if FileExists(PluginPath + 'HistoryToDBUpdater.exe') then
+          begin
+            // Отправлен запрос
+            ShellExecute(0, 'open', PWideChar(PluginPath + 'HistoryToDBUpdater.exe'), PWideChar(' "'+ProfilePath+'"'), nil, SW_SHOWNORMAL);
+          end
+          else
+            MsgInf(PluginName, Format(GetLangStr('ERR_NO_FOUND_UPDATER'), [PluginPath + 'HistoryToDBUpdater.exe']));
+        end
+        else // Иначе посылаем запрос
+          OnSendMessageToOneComponent(WinName, '0040');
+      end
+      else // Иначе посылаем запрос
+        OnSendMessageToOneComponent(WinName, '0040');
+    end;
+    9: OnClickSettings;
+    11: AboutForm.Show;
   end;
 end;
 
@@ -418,10 +442,11 @@ begin
               AppendMenu(PopupMenu, MF_STRING, 4, PWideChar(GetLangStr('CheckMD5Hash')));
               AppendMenu(PopupMenu, MF_STRING, 5, PWideChar(GetLangStr('CheckAndDeleteMD5Hash')));
               AppendMenu(PopupMenu, MF_STRING, 6, PWideChar(GetLangStr('UpdateContactListButton')));
-              AppendMenu(PopupMenu, MF_SEPARATOR, 7, '-');
-              AppendMenu(PopupMenu, MF_STRING, 8, PWideChar(GetLangStr('SettingsButton')));
-              AppendMenu(PopupMenu, MF_SEPARATOR, 9, '-');
-              AppendMenu(PopupMenu, MF_STRING, 10, PWideChar(GetLangStr('AboutButton')));
+              AppendMenu(PopupMenu, MF_STRING, 7, PWideChar(GetLangStr('CheckUpdateButton')));
+              AppendMenu(PopupMenu, MF_SEPARATOR, 8, '-');
+              AppendMenu(PopupMenu, MF_STRING, 9, PWideChar(GetLangStr('SettingsButton')));
+              AppendMenu(PopupMenu, MF_SEPARATOR, 10, '-');
+              AppendMenu(PopupMenu, MF_STRING, 11, PWideChar(GetLangStr('AboutButton')));
             end;
             // Обновление утилиты HistoryToDBUpdater.exe из временной папки
             UpdTmpPath := GetUserTempPath + 'IMHistory\';
