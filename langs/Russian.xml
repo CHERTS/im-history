@@ -232,6 +232,8 @@
   <DBReconnectCount>Кол. попыток переподключения:</DBReconnectCount>
   <DBReconnectInterval>Интервал переподключения (мсек):</DBReconnectInterval>
   <AutoScrollText>Автоскроллинг сообщений</AutoScrollText>
+  <AutoRunHistoryToDBSync>Запускать HistoryToDBSync при загрузке Windows</AutoRunHistoryToDBSync>
+  <RunningSkypeOnStartup>Запускать Skype при запуске HistoryToDBSync</RunningSkypeOnStartup>
 
   <AboutButton>О плагине</AboutButton>
   <AboutFormCaption>О плагине</AboutFormCaption>
