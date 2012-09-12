@@ -88,18 +88,14 @@ var
   EnableDebug, EnableCallBackDebug, ExPrivateChatName, GetContactList: Boolean;
   SyncMethod, SyncInterval, SyncMessageCount, MaxErrLogSize: Integer;
   DBType, DBName, DBUserName, DefaultLanguage: String;
-  Global_AccountUIN: WideString;
-  Global_AccountName: WideString;
-  Global_CurrentAccountUIN: WideString;
-  Global_CurrentAccountName: WideString;
+  Global_AccountUIN, Global_AccountName, Global_CurrentAccountUIN, Global_CurrentAccountName: WideString;
+  Global_CurrentAccountProtoName, Global_CurrentAccountProtoAccount, Global_ChatName: WideString;
   Global_CurrentAccountProtoID: Integer;
-  Global_CurrentAccountProtoName, Global_CurrentAccountProtoAccount: WideString;
   Glogal_History_Type: Integer;
-  Global_ChatName: WideString;
   Global_AboutForm_Showing: Boolean;
-  DllPath, ProfilePath: String;
+  DllPath, ProfilePath, MyAccount: String;
   // Для мультиязыковой поддержки
-  CoreLanguage: String;
+  //CoreLanguage: String;
   AboutFormHandle: HWND;
   LangDoc: IXMLDocument;
   PluginPath: String = '';
@@ -557,6 +553,7 @@ end;
   003  - Закрыть все компоненты плагина
   0040 - Показать все окна плагина (Режим AntiBoss)
   0041 - Скрыть все окна плагина (Режим AntiBoss)
+  005  - Показать окно настроек
   0050 - Запустить перерасчет MD5-хешей
   0051 - Запустить перерасчет MD5-хешей и удаления дубликатов
   0060 - Запущен импорт истории
@@ -574,11 +571,12 @@ procedure OnSendMessageToAllComponent(Msg: String);
 var
   HToDB: HWND;
   copyDataStruct : TCopyDataStruct;
-  EncryptMsg: String;
+  EncryptMsg, WinName: String;
 begin
   EncryptMsg := EncryptStr(Msg);
   // Ищем окно HistoryToDBViewer и посылаем ему команду
-  HToDB := FindWindow(nil,'HistoryToDBViewer for QIP');
+  WinName := 'HistoryToDBViewer for QIP ('+MyAccount+')';
+  HToDB := FindWindow(nil, pWideChar(WinName));
   if HToDB <> 0 then
   begin
     copyDataStruct.dwData := Integer(cdtString);
@@ -587,7 +585,8 @@ begin
     SendMessage(HToDB, WM_COPYDATA, 0, Integer(@copyDataStruct));
   end;
   // Ищем окно HistoryToDBSync и посылаем ему команду
-  HToDB := FindWindow(nil,'HistoryToDBSync for QIP');
+  WinName := 'HistoryToDBSync for QIP ('+MyAccount+')';
+  HToDB := FindWindow(nil, pWideChar(WinName));
   if HToDB <> 0 then
   begin
     copyDataStruct.dwData := Integer(cdtString);
@@ -596,7 +595,8 @@ begin
     SendMessage(HToDB, WM_COPYDATA, 0, Integer(@copyDataStruct));
   end;
   // Ищем окно HistoryToDBImport и посылаем ему команду
-  HToDB := FindWindow(nil,'HistoryToDBImport for QIP');
+  WinName := 'HistoryToDBImport for QIP ('+MyAccount+')';
+  HToDB := FindWindow(nil, pWideChar(WinName));
   if HToDB <> 0 then
   begin
     copyDataStruct.dwData := Integer(cdtString);
@@ -605,7 +605,8 @@ begin
     SendMessage(HToDB, WM_COPYDATA, 0, Integer(@copyDataStruct));
   end;
   // Ищем окно HistoryToDBUpdater и посылаем ему команду
-  HToDB := FindWindow(nil,'HistoryToDBUpdater for QIP');
+  WinName := 'HistoryToDBUpdater for QIP ('+MyAccount+')';
+  HToDB := FindWindow(nil, pWideChar(WinName));
   if HToDB <> 0 then
   begin
     copyDataStruct.dwData := Integer(cdtString);

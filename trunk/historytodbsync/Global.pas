@@ -88,7 +88,8 @@ var
   Global_ChatName: WideString;
   PluginPath, ProfilePath: WideString;
   Global_MainForm_Showing, Global_LogForm_Showing, Global_AboutForm_Showing, Global_KeyPasswdForm_Showing: Boolean;
-  EncryptionKey, EncryptionKeyID, SyncHotKey: String;
+  Global_AutoRunHistoryToDBSync, Global_RunningSkypeOnStartup: Boolean;
+  EncryptionKey, EncryptionKeyID, SyncHotKey, MyAccount: String;
   KeyPasswdSaveOnlySession, KeyPasswdSave: Boolean;
   // Шифрование
   Cipher: TDCP_3des;
@@ -356,9 +357,11 @@ begin
         DBPasswd := DecryptStr(DBPasswd);
       SyncMethod := INI.ReadInteger('Main', 'SyncMethod', 0);
       SyncInterval := INI.ReadInteger('Main', 'SyncInterval', 0);
+
       Temp := INI.ReadString('Main', 'SyncWhenExit', '0');
       if Temp = '1' then SyncWhenExit := True
       else SyncWhenExit := False;
+
       NumLastHistoryMsg := INI.ReadInteger('Main', 'NumLastHistoryMsg', 6);
 
       Temp := INI.ReadString('Main', 'WriteErrLog', '0');
@@ -375,6 +378,7 @@ begin
 
       DefaultLanguage := INI.ReadString('Main', 'DefaultLanguage', 'English');
       IMClientType := INI.ReadString('Main', 'IMClientType', 'Unknown');
+      MyAccount := INI.ReadString('Main', 'MyAccount', DBUserName);
 
       Temp := INI.ReadString('Main', 'HideHistorySyncIcon', '0');
       if Temp = '1' then HideSyncIcon := true
@@ -410,6 +414,14 @@ begin
       Temp := INI.ReadString('Main', 'SkypeSupport', '0');
       if Temp = '1' then GlobalSkypeSupport := True
       else GlobalSkypeSupport := False;
+
+      Temp := INI.ReadString('Main', 'RunningSkypeOnStartup', '0');
+      if Temp = '1' then Global_RunningSkypeOnStartup := True
+      else Global_RunningSkypeOnStartup := False;
+
+      Temp := INI.ReadString('Main', 'AutoRunHistoryToDBSync', '0');
+      if Temp = '1' then Global_AutoRunHistoryToDBSync := True
+      else Global_AutoRunHistoryToDBSync := False;
     finally
       INI.Free;
     end;
@@ -446,6 +458,8 @@ begin
       AlphaBlendEnable := False;
       AlphaBlendEnableValue := 255;
       GlobalSkypeSupport := False;
+      Global_RunningSkypeOnStartup := False;
+      Global_AutoRunHistoryToDBSync := False;
       DefaultLanguage := 'English';
       // Сохраняем настройки
       INI.WriteString('Main', 'DBType', DBType);
@@ -474,6 +488,8 @@ begin
       INI.WriteString('Main', 'KeyPasswdSave', BoolToIntStr(KeyPasswdSave));
       INI.WriteInteger('Main', 'MaxErrLogSize', MaxErrLogSize);
       INI.WriteString('Main', 'SkypeSupport', BoolToIntStr(GlobalSkypeSupport));
+      INI.WriteString('Main', 'RunningSkypeOnStartup', BoolToIntStr(Global_RunningSkypeOnStartup));
+      INI.WriteString('Main', 'AutoRunHistoryToDBSync', BoolToIntStr(Global_AutoRunHistoryToDBSync));
       INI.WriteString('Fonts', 'FontInTitle', '183|-11|Verdana|0|96|8|Y|N|N|N|');
       INI.WriteString('Fonts', 'FontOutTitle', '8404992|-11|Verdana|0|96|8|Y|N|N|N|');
       INI.WriteString('Fonts', 'FontInBody', '-16777208|-11|Verdana|0|96|8|N|N|N|N|');
@@ -786,7 +802,7 @@ var
   EncryptMsg, WinName: String;
 begin
   EncryptMsg := EncryptStr(Msg);
-  WinName := 'HistoryToDBViewer for ' + IMClientType;
+  WinName := 'HistoryToDBViewer for ' + IMClientType + ' (' + MyAccount + ')';
   // Ищем окно HistoryToDBViewer и посылаем ему команду
   HToDB := FindWindow(nil, pChar(WinName));
   if HToDB <> 0 then

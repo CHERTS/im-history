@@ -176,6 +176,8 @@ type
     EDBReconnectCount: TEdit;
     LDBReconnectInterval: TLabel;
     EDBReconnectInterval: TEdit;
+    CBAutoStartup: TCheckBox;
+    CBRunSkype: TCheckBox;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
@@ -227,6 +229,7 @@ type
     procedure CBLangChange(Sender: TObject);
     procedure FindLangFile;
     function DBParamCheck: Boolean;
+    procedure CBSkypeSupportEnableClick(Sender: TObject);
   private
     { Private declarations }
     SHeaderFontInTitle    : TFont;
@@ -506,6 +509,18 @@ begin
   CBExPrivateChatName.Checked := ExPrivateChatName;
   // Skype
   CBSkypeSupportEnable.Checked := GlobalSkypeSupport;
+  CBAutoStartup.Checked := Global_AutoRunHistoryToDBSync;
+  CBRunSkype.Checked := Global_RunningSkypeOnStartup;
+  if GlobalSkypeSupport then
+  begin
+    CBAutoStartup.Enabled := True;
+    CBRunSkype.Enabled := True;
+  end
+  else
+  begin
+    CBAutoStartup.Enabled := False;
+    CBRunSkype.Enabled := False;
+  end;
   // Заполняем список языков
   FindLangFile;
 end;
@@ -716,6 +731,8 @@ begin
     SyncWhenExit := CBSyncWhenExit.Checked;
     DefaultLanguage := MainForm.IMCoreLanguage;
     GlobalSkypeSupport := CBSkypeSupportEnable.Checked;
+    Global_AutoRunHistoryToDBSync := CBAutoStartup.Checked;
+    Global_RunningSkypeOnStartup := CBRunSkype.Checked;
     // Настройки отступов и шрифтов
     MainForm.FHeaderFontInTitle.Assign(SHeaderFontInTitle);
     MainForm.FHeaderFontOutTitle.Assign(SHeaderFontOutTitle);
@@ -790,6 +807,8 @@ begin
         INI.WriteInteger('Main', 'MaxErrLogSize', MaxErrLogSize);
         INI.WriteString('Main', 'DefaultLanguage', DefaultLanguage);
         INI.WriteString('Main', 'SkypeSupport', BoolToIntStr(GlobalSkypeSupport));
+        INI.WriteString('Main', 'RunningSkypeOnStartup', BoolToIntStr(Global_RunningSkypeOnStartup));
+        INI.WriteString('Main', 'AutoRunHistoryToDBSync', BoolToIntStr(Global_AutoRunHistoryToDBSync));
         INI.WriteString('Fonts', 'FontInTitle', FontToStr(MainForm.FHeaderFontInTitle));
         INI.WriteString('Fonts', 'FontOutTitle', FontToStr(MainForm.FHeaderFontOutTitle));
         INI.WriteString('Fonts', 'FontInBody', FontToStr(MainForm.FHeaderFontInBody));
@@ -804,6 +823,20 @@ begin
         INI.WriteString('HotKey', 'ExSearchNextHotKey', ExSearchNextHotKey);
       finally
         INI.Free;
+      end;
+      // Авторан HistoryToDBSync
+      if Global_AutoRunHistoryToDBSync then
+      begin
+        if not CheckCurrentUserAutorun('HistoryToDBSync for ' + IMClientType + ' (' + MyAccount + ')') then
+        begin
+          if FileExists(PluginPath+'HistoryToDBSync.exe') then
+            AddCurrentUserAutorun('HistoryToDBSync for ' + IMClientType + ' (' + MyAccount + ')', '"'+PluginPath+'HistoryToDBSync.exe" "'+PluginPath+'" "'+ProfilePath+'"');
+        end;
+      end
+      else
+      begin
+        if CheckCurrentUserAutorun('HistoryToDBSync for ' + IMClientType + ' (' + MyAccount + ')') then
+          DeleteCurrentUserAutorun('HistoryToDBSync for ' + IMClientType + ' (' + MyAccount + ')');
       end;
       // Активируем новые настройки
       MainForm.LoadDBSettings;
@@ -1669,6 +1702,24 @@ begin
   end;
 end;
 
+procedure TSettingsForm.CBSkypeSupportEnableClick(Sender: TObject);
+begin
+  if CBSkypeSupportEnable.Checked then
+  begin
+    CBAutoStartup.Enabled := True;
+    CBAutoStartup.Checked := Global_AutoRunHistoryToDBSync;
+    CBRunSkype.Enabled := True;
+    CBRunSkype.Checked := Global_RunningSkypeOnStartup;
+  end
+  else
+  begin
+    CBAutoStartup.Checked := False;
+    CBAutoStartup.Enabled := False;
+    CBRunSkype.Checked := False;
+    CBRunSkype.Enabled := False;
+  end;
+end;
+
 procedure TSettingsForm.CBSyncIntervalChange(Sender: TObject);
 begin
   if (CBSyncInterval.ItemIndex = 4) or (CBSyncInterval.ItemIndex = -1) then
@@ -2054,6 +2105,8 @@ begin
   CBAutoScroll.Caption := GetLangStr('AutoScrollText');
   LDBReconnectCount.Caption := GetLangStr('DBReconnectCount');
   LDBReconnectInterval.Caption := GetLangStr('DBReconnectInterval');
+  CBAutoStartup.Caption := GetLangStr('AutoRunHistoryToDBSync');
+  CBRunSkype.Caption := GetLangStr('RunningSkypeOnStartup');
   ERR_SAVE_TO_DB_CONNECT_ERR := GetLangStr('ERR_SAVE_TO_DB_CONNECT_ERR');
   ERR_SAVE_TO_DB_SERVICE_MODE := GetLangStr('ERR_SAVE_TO_DB_SERVICE_MODE');
   ERR_TEMP_SAVE_TO_DB_SERVICE_MODE := GetLangStr('ERR_TEMP_SAVE_TO_DB_SERVICE_MODE');

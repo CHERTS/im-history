@@ -3307,7 +3307,7 @@ end;
 procedure TMainForm.LoadLanguageStrings;
 begin
   if IMClientType <> 'Unknown' then
-    Caption := ProgramsName + ' for ' + IMClientType
+    Caption := ProgramsName + ' for ' + IMClientType + ' (' + MyAccount + ')'
   else
     Caption := ProgramsName;
   GBMain.Caption := GetLangStr('ImportGBMain');

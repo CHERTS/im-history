@@ -49,17 +49,20 @@ var
 
 // Обработчик нажатия кнопки плагина в окне чата левой клавишей мыши
 procedure OnPluginLeftButtonClick(Handle: Integer);
+var
+  WinName: String;
 begin
   Global_AccountUIN := RQ_GetChatUIN();
   Global_AccountName := RQ_GetDisplayedName(Global_AccountUIN);
-  if SearchMainWindow('HistoryToDBViewer for RnQ') then
+  WinName := 'HistoryToDBViewer for RnQ ('+MyAccount+')';
+  if SearchMainWindow(pWideChar(WinName)) then
   begin
     // Формат команды:
     //   для истории контакта:
     //     008|0|UserID|UserName|ProtocolType
     //   для истории чата:
     //     008|2|ChatName
-    OnSendMessageToAllComponent('008|0|'+IntToStr(Global_AccountUIN)+'|'+Global_AccountName+'|0');
+    OnSendMessageToOneComponent(WinName, '008|0|'+IntToStr(Global_AccountUIN)+'|'+Global_AccountName+'|0');
   end
   else
   begin
@@ -73,25 +76,31 @@ end;
 { Показываем окно Настроек плагина }
 procedure OnClickSettings;
 var
-  HToDB: HWND;
+  WinName: String;
 begin
   // Ищем окно HistoryToDBViewer
-  HToDB := FindWindow(nil,'HistoryToDBViewer');
-  if HToDB = 0 then // Если HistoryToDBViewer не запущен, то запускаем
+  WinName := 'HistoryToDBViewer';
+  if not SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBViewer не найден, то ищем другое окно
   begin
-    if FileExists(PluginPath + '\HistoryToDBViewer.exe') then
+    WinName := 'HistoryToDBViewer for RnQ ('+MyAccount+')';
+    if not SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBViewer не запущен, то запускаем
     begin
-      // Отправлен запрос на показ настроек
-      //StopWatch;
-      WriteCustomINI(ProfilePath, 'SettingsFormRequestSend', '1');
-      //StartWatch(ProfilePath, FILE_NOTIFY_CHANGE_LAST_WRITE, true, @ProfileDirChangeCallBack);
-      ShellExecute(0, 'open', PWideChar(PluginPath + '\HistoryToDBViewer.exe'), PWideChar('"'+PluginPath+'\" "'+ProfilePath+'" 4'), nil, SW_SHOWNORMAL);
+      if FileExists(PluginPath + 'HistoryToDBViewer.exe') then
+      begin
+        // Отправлен запрос на показ настроек
+        StopWatch;
+        WriteCustomINI(ProfilePath, 'SettingsFormRequestSend', '1');
+        StartWatch(ProfilePath, FILE_NOTIFY_CHANGE_LAST_WRITE, False, @ProfileDirChangeCallBack);
+        ShellExecute(0, 'open', PWideChar(PluginPath + 'HistoryToDBViewer.exe'), PWideChar(' "'+PluginPath+'" "'+ProfilePath+'" 4'), nil, SW_SHOWNORMAL);
+      end
+      else
+        MsgInf(PluginName, Format(GetLangStr('ERR_NO_FOUND_VIEWER'), [PluginPath + 'HistoryToDBViewer.exe']));
     end
-    else
-      MsgInf(GetLangStr('InfoCaption'), Format(GetLangStr('ERR_NO_FOUND_VIEWER'), [PluginPath + '\HistoryToDBViewer.exe']));
+    else // Иначе посылаем запрос
+      OnSendMessageToOneComponent(WinName, '005');
   end
   else // Иначе посылаем запрос на показ настроек
-    OnSendMessageToAllComponent('005');
+    OnSendMessageToOneComponent(WinName, '005');
 end;
 
 
@@ -121,7 +130,7 @@ var
   I: Integer;
 begin
   case ItemID of
-    1: OnSendMessageToAllComponent('002');
+    1: OnSendMessageToOneComponent('HistoryToDBSync for RnQ ('+MyAccount+')', '002');
     3:
     begin
       if FileExists(ProfilePath+ProtoListName) then
@@ -136,9 +145,9 @@ begin
        WriteInLog(ProfilePath, WideFormat('%s;%s;%s;%d', [IntToStr(List[I]), RQ_GetDisplayedName(List[I]), 'Default', 0]), 3);
       end;
     end;
-    4: OnSendMessageToAllComponent('0050');
-    5: OnSendMessageToAllComponent('0051');
-    6: if FileExists(ProfilePath+ContactListName) then OnSendMessageToAllComponent('007');
+    4: OnSendMessageToOneComponent('HistoryToDBSync for RnQ ('+MyAccount+')', '0050');
+    5: OnSendMessageToOneComponent('HistoryToDBSync for RnQ ('+MyAccount+')', '0051');
+    6: if FileExists(ProfilePath+ContactListName) then OnSendMessageToOneComponent('HistoryToDBSync for RnQ ('+MyAccount+')', '007');
     8: OnClickSettings;
     10: AboutForm.Show;
   end;
@@ -263,7 +272,7 @@ begin
   end;
   // Посылаем запрос на синхронизацию
   if SyncMethod = 0 then
-    OnSendMessageToAllComponent('002');
+    OnSendMessageToOneComponent('HistoryToDBSync for RnQ ('+MyAccount+')', '002');
   if SyncMethod = 2 then
   begin
     if (SyncInterval > 4) and (SyncInterval < 8) then
@@ -271,17 +280,17 @@ begin
       Inc(MessageCount);
       if (SyncInterval = 5) and (MessageCount = 10) then
       begin
-        OnSendMessageToAllComponent('002');
+        OnSendMessageToOneComponent('HistoryToDBSync for RnQ ('+MyAccount+')', '002');
         MessageCount := 0;
       end;
       if (SyncInterval = 6) and (MessageCount = 20) then
       begin
-        OnSendMessageToAllComponent('002');
+        OnSendMessageToOneComponent('HistoryToDBSync for RnQ ('+MyAccount+')', '002');
         MessageCount := 0;
       end;
       if (SyncInterval = 7) and (MessageCount = 30) then
       begin
-        OnSendMessageToAllComponent('002');
+        OnSendMessageToOneComponent('HistoryToDBSync for RnQ ('+MyAccount+')', '002');
         MessageCount := 0;
       end;
     end;
@@ -290,7 +299,7 @@ begin
       Inc(MessageCount);
       if MessageCount = SyncMessageCount then
       begin
-        OnSendMessageToAllComponent('002');
+        OnSendMessageToOneComponent('HistoryToDBSync for RnQ ('+MyAccount+')', '002');
         MessageCount := 0;
       end;
     end;
@@ -329,7 +338,7 @@ end;
 
 function pluginFun(Data: Pointer): Pointer; stdcall;
 var
-  WinName: String;
+  UpdTmpPath, WinName: String;
 begin
   Result := nil;
   if (Data=nil) or (_int_at(Data)=0) then exit;
@@ -342,6 +351,7 @@ begin
           // Определяем пути
           ProfilePath := RQ_GetUserPath();
           PluginPath := RQ_GetAndrqPath + 'plugins\';
+          MyAccount := IntToStr(RQ_GetCurrentUser());
           // Копируем дефолтный файл конфигурации юзеру в профиль
           if FileExists(PluginPath + DefININame) then
           begin
@@ -368,6 +378,8 @@ begin
               AboutForm := TAboutForm.create(nil);
             // Инициализация шифрования
             EncryptInit;
+            // Записываем наше имя, потом оно используется для заголовка программ
+            WriteCustomINI(ProfilePath, 'MyAccount', MyAccount);
             // Запрос на закрытие всех компонентов плагина если они были открыты
             OnSendMessageToAllComponent('003');
             // Загружаем настройки локализации
@@ -411,14 +423,49 @@ begin
               AppendMenu(PopupMenu, MF_SEPARATOR, 9, '-');
               AppendMenu(PopupMenu, MF_STRING, 10, PWideChar(GetLangStr('AboutButton')));
             end;
-            // Обновление утилиты HistoryToDBUpdater.exe
+            // Обновление утилиты HistoryToDBUpdater.exe из временной папки
+            UpdTmpPath := GetUserTempPath + 'IMHistory\';
+            if FileExists(UpdTmpPath + 'HistoryToDBUpdater.exe') then
+            begin
+              // Ищем окно HistoryToDBUpdater
+              WinName := 'HistoryToDBUpdater';
+              if not SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBUpdater не найден, то ищем другое окно
+              begin
+                WinName := 'HistoryToDBUpdater for RnQ ('+MyAccount+')';
+                if SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBUpdater запущен, то закрываем его
+                  OnSendMessageToOneComponent(WinName, '009');
+              end
+              else // Иначе посылаем запрос
+                OnSendMessageToOneComponent(WinName, '009');
+              // Удаляем старую утилиту
+              if DeleteFile(PluginPath + 'HistoryToDBUpdater.exe') then
+              begin
+                if CopyFileEx(PChar(UpdTmpPath + 'HistoryToDBUpdater.exe'), PChar(PluginPath + 'HistoryToDBUpdater.exe'), nil, nil, nil, COPY_FILE_FAIL_IF_EXISTS) then
+                begin
+                  DeleteFile(UpdTmpPath + 'HistoryToDBUpdater.exe');
+                  if CoreLanguage = 'Russian' then
+                    MsgInf(PluginName, Format('Утилита обновления %s успешно обновлена.', ['HistoryToDBUpdater.exe']))
+                  else
+                    MsgInf(PluginName, Format('Update utility %s successfully updated.', ['HistoryToDBUpdater.exe']));
+                end;
+              end
+              else
+              begin
+                DeleteFile(UpdTmpPath + 'HistoryToDBUpdater.exe');
+                if CoreLanguage = 'Russian' then
+                  MsgDie(PluginName, Format('Ошибка обновления утилиты %s', [PluginPath + 'HistoryToDBUpdater.exe']))
+                else
+                  MsgDie(PluginName, Format('Error update utility %s', [PluginPath + 'HistoryToDBUpdater.exe']));
+              end;
+            end;
+            // Обновление утилиты HistoryToDBUpdater.exe из папки плагина
             if FileExists(PluginPath + 'HistoryToDBUpdater.upd') then
             begin
               // Ищем окно HistoryToDBUpdater
               WinName := 'HistoryToDBUpdater';
               if not SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBUpdater не найден, то ищем другое окно
               begin
-                WinName := 'HistoryToDBUpdater for RnQ';
+                WinName := 'HistoryToDBUpdater for RnQ ('+MyAccount+')';
                 if SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBUpdater запущен, то закрываем его
                   OnSendMessageToOneComponent(WinName, '009');
               end

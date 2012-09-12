@@ -517,7 +517,7 @@ begin
   WinName := 'HistoryToDBViewer';
   if not SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBViewer не найден, то ищем другое окно
   begin
-    WinName := 'HistoryToDBViewer for ' + IMClientType;
+    WinName := 'HistoryToDBViewer for ' + IMClientType + ' (' + MyAccount + ')';
     if not SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBViewer не запущен, то запускаем
     begin
       if FileExists(PluginPath + 'HistoryToDBViewer.exe') then
@@ -541,7 +541,7 @@ begin
   WinName := 'HistoryToDBViewer';
   if not SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBViewer не найден, то ищем другое окно
   begin
-    WinName := 'HistoryToDBViewer for ' + IMClientType;
+    WinName := 'HistoryToDBViewer for ' + IMClientType + ' (' + MyAccount + ')';
     if not SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBViewer не запущен, то запускаем
     begin
       if FileExists(PluginPath + 'HistoryToDBViewer.exe') then
@@ -1092,7 +1092,7 @@ begin
   WinName := 'HistoryToDBUpdater';
   if not SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBUpdater не найден, то ищем другое окно
   begin
-    WinName := 'HistoryToDBUpdater for ' + IMClientType;
+    WinName := 'HistoryToDBUpdater for ' + IMClientType + ' (' + MyAccount + ')';
     if not SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBUpdater не запущен, то запускаем
     begin
       if FileExists(PluginPath + 'HistoryToDBUpdater.exe') then
@@ -1450,7 +1450,7 @@ begin
     end;
     // 003 - Выход из программы
     // Выход если не запущена синхронизация или перерасчет MD5
-    if ControlStr = '003' then
+    if (ControlStr = '003') and (not Global_AutoRunHistoryToDBSync) then
     begin
       if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура OnControlReq: Управляющее сообщение ' + ControlStr + ' - выполняем выход из программы.', 2);
       if SyncHistoryStartedEnabled or CheckMD5HashStartedEnabled or UpdateContactListStartedEnabled then
@@ -3325,6 +3325,16 @@ begin
     Skype := TSkype.Create(Self);
     SkypeInit := True;
     if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Выполнено TSkype.Create', 4);
+    if Global_RunningSkypeOnStartup then
+    begin
+      if not Skype.Client.IsRunning then
+      begin
+        LSkypeStatus.Caption := GetLangStr('HistoryToDBSyncSkypeRun');
+        LSkypeStatus.Hint := 'HistoryToDBSyncSkypeRun';
+        if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Пытаемся запустить Skype...', 4);
+        Skype.Client.Start(True, True);
+      end;
+    end;
   except
     on e :
       Exception do
@@ -3448,7 +3458,7 @@ var
   Cnt: Integer;
   ChatName, SkypeMsgStr: WideString;
   Date_Str: String;
-  aChatName, aNickName, aProtoAcc, aMsgText, MD5String: WideString;
+  aChatName, aNickName, aProtoAcc, aMsgText, MD5String, DialogPartnerFullName: WideString;
   aMsgType, SkypeSearchID, SkypeChatListRowCount: Integer;
   aIsPrivate, ChatNameChange: Boolean;
 begin
@@ -3459,11 +3469,17 @@ begin
     begin
       {if pMessage.Chat.Members.Count <= 2 then}
         ChatName := Skype.User[pMessage.Chat.DialogPartner].FullName;
+        if ChatName = '' then
+          ChatName := pMessage.Chat.DialogPartner;
       {else
         ChatName :=  'Групповой чат';}
     end
     else
+    begin
       ChatName :=  pMessage.Chat.Topic;
+      if ChatName = '' then
+        ChatName := pMessage.Chat.DialogPartner;
+    end;
 
     SkypeSearchID := SkypeChatList.Cols[0].IndexOf(pMessage.Chat.Name);
     if SkypeSearchID <> -1 then // Нашли! SkypeSearchID - строка
@@ -3551,8 +3567,13 @@ begin
     begin
       if pMessage.Chat.Members.Count <= 2 then
       begin
-        if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Отправлено для ' + Skype.User[pMessage.Chat.DialogPartner].FullName + ' (' + pMessage.Chat.DialogPartner + ') (' + FormatDateTime('dd.mm.yy hh:mm:ss', pMessage.Timestamp) + ')', 4);
-        aNickName := WideStringToUTF8(PrepareString(pWideChar(Skype.User[pMessage.Chat.DialogPartner].FullName + ' (' + pMessage.Chat.DialogPartner + ')')));
+        DialogPartnerFullName := Skype.User[pMessage.Chat.DialogPartner].FullName;
+        if DialogPartnerFullName = '' then
+          DialogPartnerFullName := Skype.User[pMessage.Chat.DialogPartner].DisplayName;
+        if DialogPartnerFullName = '' then
+          DialogPartnerFullName := pMessage.Chat.DialogPartner;
+        if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Отправлено для ' + DialogPartnerFullName + ' (' + pMessage.Chat.DialogPartner + ') (' + FormatDateTime('dd.mm.yy hh:mm:ss', pMessage.Timestamp) + ')', 4);
+        aNickName := WideStringToUTF8(PrepareString(pWideChar(DialogPartnerFullName + ' (' + pMessage.Chat.DialogPartner + ')')));
         aIsPrivate := True;
       end
       else
@@ -3803,7 +3824,7 @@ end;
 procedure TMainSyncForm.LoadLanguageStrings;
 begin
   if IMClientType <> 'Unknown' then
-    Caption := ProgramsName + ' for ' + IMClientType
+    Caption := ProgramsName + ' for ' + IMClientType + ' (' + MyAccount + ')'
   else
     Caption := ProgramsName;
   HistoryToDBSyncTray.Hint := Caption;

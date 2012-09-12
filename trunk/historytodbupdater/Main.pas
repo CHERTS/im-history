@@ -110,6 +110,7 @@ type
     IMSizeCorrect: Boolean;
     INISavePath: String;
     SavePath: String;
+    SystemLang: String;
     DropboxProcessInfo: TProcessInfoArray;
     QIPProcessInfo: TProcessInfoArray;
     RnQProcessInfo: TProcessInfoArray;
@@ -165,7 +166,7 @@ begin
       INI.WriteString('Proxy', 'ProxyPort', EProxyPort.Text);
       INI.WriteString('Proxy', 'ProxyAuth', BoolToIntStr(CBProxyAuth.Checked));
       INI.WriteString('Proxy', 'ProxyUser', EProxyUser.Text);
-      INI.WriteString('Proxy', 'ProxyUserPagsswd', EncryptStr(EProxyUserPasswd.Text));
+      INI.WriteString('Proxy', 'ProxyUserPasswd', EncryptStr(EProxyUserPasswd.Text));
     finally
       INI.Free;
     end;
@@ -183,8 +184,13 @@ begin
   IMMD5Correct := False;
   IMSizeCorrect := False;
   CurrentUpdateStep := 0;
+  // Определяем системный язык
+  if MatchStrings(GetSysLang, 'Русский*') or MatchStrings(GetSysLang, 'Russian*') then
+    SystemLang := 'Russian'
+  else
+    SystemLang := 'English';
   // Подсказка по параметрам запуска
-  if GetSysLang = 'Русский' then
+  if SystemLang = 'Russian' then
   begin
     CmdHelpStr := 'Параметры запуска ' + ProgramsName + ' v' + ProgramsVer + ':' + #13 +
     '--------------------------------------------------------------' + #13#13 +
@@ -227,18 +233,13 @@ begin
     if ParamCount >= 1 then
       FLanguage := DefaultLanguage
     else
-    begin
-      if GetSysLang = 'Русский' then
-        FLanguage := 'Russian'
-      else
-        FLanguage := 'English';
-    end;
+      FLanguage := SystemLang;
     LangDoc := NewXMLDocument();
     if not DirectoryExists(PluginPath + dirLangs) then
       CreateDir(PluginPath + dirLangs);
     if not FileExists(PluginPath + dirLangs + defaultLangFile) then
     begin
-      if GetSysLang = 'Русский' then
+      if SystemLang = 'Russian' then
         CmdHelpStr := 'Файл локализации ' + PluginPath + dirLangs + defaultLangFile + ' не найден.'
       else
         CmdHelpStr := 'The localization file ' + PluginPath + dirLangs + defaultLangFile + ' is not found.';
@@ -392,7 +393,7 @@ begin
     // Ищем программы синхронизации типа Dropbox
     {if IsProcessRun('Dropbox.exe') then
     begin
-      if GetSysLang = 'Русский' then
+      if SystemLang = 'Russian' then
         MsgString := 'В памяти найдена программа Dropbox.' + #13 +
         'Если Вы используете её для синхронизации IM-клиента, то для корректного обновления' + #13 +
         'всех компонентов плагина необходимо её закрыть.' + #13 +
@@ -407,11 +408,11 @@ begin
       end;
     end;}
     // Ищем запущенные компоненты плагина и закрываем их
-    if not EndTask('HistoryToDBSync.exe', 'HistoryToDBSync for ' + IMClientType) then
+    if not EndTask('HistoryToDBSync.exe', 'HistoryToDBSync for ' + IMClientType + ' (' + MyAccount + ')') then
       Inc(AllProcessEndErr);
-    if not EndTask('HistoryToDBViewer.exe', 'HistoryToDBViewer for ' + IMClientType) then
+    if not EndTask('HistoryToDBViewer.exe', 'HistoryToDBViewer for ' + IMClientType + ' (' + MyAccount + ')') then
       Inc(AllProcessEndErr);
-    if not EndTask('HistoryToDBImport.exe', 'HistoryToDBImport for ' + IMClientType) then
+    if not EndTask('HistoryToDBImport.exe', 'HistoryToDBImport for ' + IMClientType + ' (' + MyAccount + ')') then
       Inc(AllProcessEndErr);
     // Если все процессы убиты, то обновляемся
     if AllProcessEndErr = 0 then
@@ -429,8 +430,16 @@ begin
       end;
       if IMClientType = 'RnQ' then
       begin
-        RnQProcessInfo := EndProcess('rnq.exe', 0, True);
-        LogMemo.Lines.Add(Format(GetLangStr('EndProcess'), ['rnq.exe']));
+        if IsProcessRun('rnq.exe') then
+        begin
+          RnQProcessInfo := EndProcess('rnq.exe', 0, True);
+          LogMemo.Lines.Add(Format(GetLangStr('EndProcess'), ['rnq.exe']));
+        end;
+        if IsProcessRun('R&Q.exe') then
+        begin
+          RnQProcessInfo := EndProcess('R&Q.exe', 0, True);
+          LogMemo.Lines.Add(Format(GetLangStr('EndProcess'), ['R&Q.exe']));
+        end;
       end;
       if IMClientType = 'Skype' then
       begin
@@ -457,13 +466,13 @@ begin
     IMDownloader1.Proxy := EProxyAddress.Text + ':' + EProxyPort.Text;
     if CBProxyAuth.Checked then
     begin
-      IMDownloader1.AuthUserName := EProxyUser.Text;
-      IMDownloader1.AuthPassword := EProxyUserPasswd.Text;
+      IMDownloader1.ProxyAuthUserName := EProxyUser.Text;
+      IMDownloader1.ProxyAuthPassword := EProxyUserPasswd.Text;
     end
     else
     begin
-      IMDownloader1.AuthUserName := '';
-      IMDownloader1.AuthPassword := '';
+      IMDownloader1.ProxyAuthUserName := '';
+      IMDownloader1.ProxyAuthPassword := '';
     end;
   end
   else
@@ -680,7 +689,10 @@ begin
       if IMClientType = 'Miranda' then
         RunIMClient('miranda32.exe', MirandaProcessInfo);
       if IMClientType = 'RnQ' then
+      begin
+        RunIMClient('R&Q.exe', RnQProcessInfo);
         RunIMClient('rnq.exe', RnQProcessInfo);
+      end;
       if IMClientType = 'Skype' then
         RunIMClient('skype.exe', SkypeProcessInfo);
       // Запуск Dropbox
@@ -698,6 +710,10 @@ begin
       if (UpdateURL <> '') and (CurrStep <= MaxStep) then
       begin
         LogMemo.Lines.Add(GetLangStr('FileToUpdate') + ' = ' + UpdateURL);
+        if MatchStrings(UpdateURL, '*file=Russian') or MatchStrings(UpdateURL, '*file=English') then
+          IMDownloader1.DirPath := PluginPath + dirLangs
+        else
+          IMDownloader1.DirPath := PluginPath;
         IMDownloader1.URL := UpdateURL;
         IMDownloader1.DownLoad;
       end
@@ -1131,7 +1147,7 @@ end;
 procedure TMainForm.LoadLanguageStrings;
 begin
   if IMClientType <> 'Unknown' then
-    Caption := ProgramsName + ' for ' + IMClientType
+    Caption := ProgramsName + ' for ' + IMClientType + ' (' + MyAccount + ')'
   else
     Caption := ProgramsName;
   if ButtonUpdate.Hint = 'UpdateButton' then
@@ -1320,7 +1336,7 @@ var
 begin
   for i := Low(IMProcessArray) to High(IMProcessArray) do
   begin
-    if IMClientName = IMProcessArray[i].ProcessName then
+    if LowerCase(IMClientName) = LowerCase(IMProcessArray[i].ProcessName) then
     begin
       if FileExists(IMProcessArray[i].ProcessPath) then
       begin

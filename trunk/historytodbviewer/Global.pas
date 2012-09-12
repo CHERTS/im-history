@@ -16,7 +16,7 @@ uses
   Windows, Messages, Forms, Classes, SysUtils, IniFiles,
   DCPcrypt2, DCPblockciphers, DCPsha1, DCPdes, DCPmd5,
   TypInfo, XMLIntf, XMLDoc, ShlObj, ActiveX, Graphics,
-  Types, ZClasses, ZDbcIntfs;
+  Types, Registry, ZClasses, ZDbcIntfs;
 
 type
   TWinVersion = (wvUnknown,wv95,wv98,wvME,wvNT3,wvNT4,wvW2K,wvXP,wv2003,wvVista,wv7,wv2008);
@@ -83,10 +83,11 @@ var
   ReconnectInterval, ReconnectCount: Integer;
   PluginPath, ProfilePath: WideString;
   Global_MainForm_Showing, Global_SettingsForm_Showing, Global_KeyPasswdForm_Showing, GlobalHotKeyEnable: Boolean;
+  Global_AutoRunHistoryToDBSync, Global_RunningSkypeOnStartup: Boolean;
   IMEditorParagraphTitleSpaceBefore, IMEditorParagraphTitleSpaceAfter, IMEditorParagraphMessagesSpaceBefore, IMEditorParagraphMessagesSpaceAfter: Integer;
   SyncHotKey, SyncHotKeyDBSync, ExSearchHotKey, ExSearchNextHotKey: String;
   EncryptionKeyID, EncryptionKey: String;
-  EncryptKeyID: String;
+  EncryptKeyID, MyAccount: String;
   KeyPasswdSaveOnlySession, KeyPasswdSave: Boolean;
   // Ўифрование
   Cipher: TDCP_3des;
@@ -122,6 +123,12 @@ function GetMyFileSize(const Path: String): Integer;
 function GetUserFromWindows: String;
 function DetectWinVersion: TWinVersion;
 function DetectWinVersionStr: String;
+function CheckAllUserAutorun(AppTitle: String): Boolean;
+function CheckCurrentUserAutorun(AppTitle: String): Boolean;
+procedure AddAllUserAutorun(AppTitle, AppExe: String);
+procedure AddCurrentUserAutorun(AppTitle, AppExe: String);
+procedure DeleteAllUserAutorun(AppTitle: String);
+procedure DeleteCurrentUserAutorun(AppTitle: String);
 procedure EncryptInit;
 procedure EncryptFree;
 procedure WriteInLog(LogPath: String; TextString: String; LogType: Integer);
@@ -417,29 +424,32 @@ begin
         DBPasswd := DecryptStr(DBPasswd);
       SyncMethod := INI.ReadInteger('Main', 'SyncMethod', 0);
       SyncInterval := INI.ReadInteger('Main', 'SyncInterval', 0);
+
       Temp := INI.ReadString('Main', 'SyncWhenExit', '0');
       if Temp = '1' then SyncWhenExit := True
       else SyncWhenExit := False;
+
       NumLastHistoryMsg := INI.ReadInteger('Main', 'NumLastHistoryMsg', 6);
 
       Temp := INI.ReadString('Main', 'WriteErrLog', '0');
-      if Temp = '1' then WriteErrLog := true
-      else WriteErrLog := false;
+      if Temp = '1' then WriteErrLog := True
+      else WriteErrLog := False;
 
       Temp := INI.ReadString('Main', 'ShowAnimation', '1');
-      if Temp = '1' then AniEvents := true
-      else AniEvents := false;
+      if Temp = '1' then AniEvents := True
+      else AniEvents := False;
 
       Temp := INI.ReadString('Main', 'BlockSpamMsg', '0');
       if Temp = '1' then BlockSpamMsg := True
       else BlockSpamMsg := False;
 
       Temp := INI.ReadString('Main', 'EnableHistoryEncryption', '0');
-      if Temp = '1' then EnableHistoryEncryption := true
-      else EnableHistoryEncryption := false;
+      if Temp = '1' then EnableHistoryEncryption := True
+      else EnableHistoryEncryption := False;
 
       DefaultLanguage := INI.ReadString('Main', 'DefaultLanguage', 'English');
       IMClientType := INI.ReadString('Main', 'IMClientType', 'Unknown');
+      MyAccount := INI.ReadString('Main', 'MyAccount', DBUserName);
 
       Temp := INI.ReadString('Main', 'HideHistorySyncIcon', '0');
       if Temp = '1' then HideSyncIcon := true
@@ -518,6 +528,14 @@ begin
       Temp := INI.ReadString('Main', 'SkypeSupport', '0');
       if Temp = '1' then GlobalSkypeSupport := True
       else GlobalSkypeSupport := False;
+
+      Temp := INI.ReadString('Main', 'RunningSkypeOnStartup', '0');
+      if Temp = '1' then Global_RunningSkypeOnStartup := True
+      else Global_RunningSkypeOnStartup := False;
+
+      Temp := INI.ReadString('Main', 'AutoRunHistoryToDBSync', '0');
+      if Temp = '1' then Global_AutoRunHistoryToDBSync := True
+      else Global_AutoRunHistoryToDBSync := False;
     finally
       INI.Free;
     end;
@@ -554,6 +572,8 @@ begin
       BlockSpamMsg := False;
       EnableDebug := False;
       GlobalSkypeSupport := False;
+      Global_RunningSkypeOnStartup := False;
+      Global_AutoRunHistoryToDBSync := False;
       DefaultLanguage := 'English';
       Temp := '183|-11|Verdana|0|96|8|Y|N|N|N|';
       StrToFont(Temp, MainForm.FHeaderFontInTitle);
@@ -606,6 +626,8 @@ begin
       INI.WriteString('Main', 'KeyPasswdSave', BoolToIntStr(KeyPasswdSave));
       INI.WriteInteger('Main', 'MaxErrLogSize', MaxErrLogSize);
       INI.WriteString('Main', 'SkypeSupport', BoolToIntStr(GlobalSkypeSupport));
+      INI.WriteString('Main', 'RunningSkypeOnStartup', BoolToIntStr(Global_RunningSkypeOnStartup));
+      INI.WriteString('Main', 'AutoRunHistoryToDBSync', BoolToIntStr(Global_AutoRunHistoryToDBSync));
       INI.WriteString('Main', 'AlphaBlend', BoolToIntStr(AlphaBlendEnable));
       INI.WriteInteger('Main', 'AlphaBlendValue', AlphaBlendEnableValue);
       INI.WriteString('Fonts', 'FontInTitle', '183|-11|Verdana|0|96|8|Y|N|N|N|');
@@ -708,7 +730,7 @@ begin
   // »щем окно HistoryToDBSync и посылаем ему команду
   if IMClientType <> 'Unknown' then
   begin
-    AppNameStr := 'HistoryToDBSync for ' + IMClientType;
+    AppNameStr := 'HistoryToDBSync for ' + IMClientType + ' (' + MyAccount + ')';
     HToDB := FindWindow(nil, PWideChar(AppNameStr));
   end
   else
@@ -1217,6 +1239,112 @@ const
     'Windows Server 2008');
 begin
   Result := VersStr[DetectWinVersion];
+end;
+
+procedure AddAllUserAutorun(AppTitle, AppExe: String);
+var
+  Reg: TRegistry;
+begin
+  Reg := TRegistry.Create();
+  try
+    Reg.RootKey := HKEY_LOCAL_MACHINE;
+    if Reg.OpenKey('Software\Microsoft\Windows\CurrentVersion\Run', True) then
+    begin
+      Reg.WriteString(AppTitle, AppExe);
+      Reg.CloseKey();
+    end;
+  finally
+    Reg.Free;
+  end;
+end;
+
+procedure AddCurrentUserAutorun(AppTitle, AppExe: String);
+var
+  Reg: TRegistry;
+begin
+  Reg := TRegistry.Create();
+  try
+    Reg.RootKey := HKEY_CURRENT_USER;
+    if Reg.OpenKey('Software\Microsoft\Windows\CurrentVersion\Run', True) then
+    begin
+      Reg.WriteString(AppTitle, AppExe);
+      Reg.CloseKey();
+    end;
+  finally
+    Reg.Free;
+  end;
+end;
+
+procedure DeleteAllUserAutorun(AppTitle: String);
+var
+  Reg: TRegistry;
+begin
+  Reg := TRegistry.Create();
+  try
+    Reg.RootKey := HKEY_LOCAL_MACHINE;
+    if Reg.OpenKey('Software\Microsoft\Windows\CurrentVersion\Run', True) then
+    begin
+      Reg.DeleteValue(AppTitle);
+      Reg.CloseKey();
+    end;
+  finally
+    Reg.Free;
+  end;
+end;
+
+procedure DeleteCurrentUserAutorun(AppTitle: String);
+var
+  Reg: TRegistry;
+begin
+  Reg := TRegistry.Create();
+  try
+    Reg.RootKey := HKEY_CURRENT_USER;
+    if Reg.OpenKey('Software\Microsoft\Windows\CurrentVersion\Run', True) then
+    begin
+      Reg.DeleteValue(AppTitle);
+      Reg.CloseKey();
+    end;
+  finally
+    Reg.Free;
+  end;
+end;
+
+function CheckAllUserAutorun(AppTitle: String): Boolean;
+var
+  Reg: TRegistry;
+begin
+  Result := False;
+  Reg := TRegistry.Create();
+  try
+    Reg.RootKey := HKEY_LOCAL_MACHINE;
+    if Reg.OpenKey('Software\Microsoft\Windows\CurrentVersion\Run', True) then
+    begin
+      if Reg.ValueExists(AppTitle) then
+        Result := True;
+      Reg.CloseKey();
+    end;
+  finally
+    Reg.Free;
+  end;
+end;
+
+function CheckCurrentUserAutorun(AppTitle: String): Boolean;
+var
+  Reg: TRegistry;
+begin
+  Result := False;
+  Reg := TRegistry.Create();
+  try
+    Reg.RootKey := HKEY_CURRENT_USER;
+    if Reg.OpenKey('Software\Microsoft\Windows\CurrentVersion\Run', True) then
+    begin
+      if Reg.ValueExists(AppTitle) then
+        Result := True;
+      Reg.CloseKey();
+    end;
+  finally
+    Reg.Free;
+  end;
 end;
 
 begin

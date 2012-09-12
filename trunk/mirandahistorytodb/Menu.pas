@@ -120,7 +120,7 @@ end;
 function MainMenuSync(wParam: wParam; lParam: lParam; lParam1: integer): integer; cdecl;
 begin
   Result := 0;
-  OnSendMessageToAllComponent('002');
+  OnSendMessageToOneComponent('HistoryToDBSync for ' + htdIMClientName + ' ('+MyAccount+')', '002');
 end;
 
 { Экспорт истории }
@@ -184,14 +184,14 @@ end;
 function MainMenuCheckMD5Hash(wParam: wParam; lParam: lParam; lParam1: integer): integer; cdecl;
 begin
   Result := 0;
-  OnSendMessageToAllComponent('0050');
+  OnSendMessageToOneComponent('HistoryToDBSync for ' + htdIMClientName + ' ('+MyAccount+')', '0050');
 end;
 
 { Запустить перерасчет MD5-хешей и удаления дубликатов }
 function MainMenuCheckAndDeleteMD5Hash(wParam: wParam; lParam: lParam; lParam1: integer): integer; cdecl;
 begin
   Result := 0;
-  OnSendMessageToAllComponent('0051');
+  OnSendMessageToOneComponent('HistoryToDBSync for ' + htdIMClientName + ' ('+MyAccount+')', '0051');
 end;
 
 { Запрос на обновление контакт листа }
@@ -199,7 +199,7 @@ function MainMenuUpdateContactList(wParam: wParam; lParam: lParam; lParam1: inte
 begin
   Result := 0;
   if FileExists(ProfilePath+ContactListName) then
-    OnSendMessageToAllComponent('007')
+    OnSendMessageToOneComponent('HistoryToDBSync for ' + htdIMClientName + ' ('+MyAccount+')', '007')
   else
     MsgInf(htdPluginShortName, Format(GetLangStr('SendUpdateContactListErr'), [ContactListName]));
 end;
@@ -213,7 +213,7 @@ begin
   WinName := 'HistoryToDBUpdater';
   if not SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBUpdater не найден, то ищем другое окно
   begin
-    WinName := 'HistoryToDBUpdater for QIP';
+    WinName := 'HistoryToDBUpdater for ' + htdIMClientName + ' ('+MyAccount+')';
     if not SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBUpdater не запущен, то запускаем
     begin
       if FileExists(PluginPath + 'HistoryToDBUpdater.exe') then
@@ -234,26 +234,32 @@ end;
 { Показываем окно Настроек плагина }
 function MainMenuSettings(wParam: wParam; lParam: lParam; lParam1: integer): integer; cdecl;
 var
-  HToDB: HWND;
+  WinName: String;
 begin
   Result := 0;
   // Ищем окно HistoryToDBViewer
-  HToDB := FindWindow(nil, 'HistoryToDBViewer for ' + htdIMClientName);
-  if HToDB = 0 then // Если HistoryToDBViewer не запущен, то запускаем
+  WinName := 'HistoryToDBViewer';
+  if not SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBViewer не найден, то ищем другое окно
   begin
-    if FileExists(PluginPath + 'HistoryToDBViewer.exe') then
+    WinName := 'HistoryToDBViewer for ' + htdIMClientName + ' ('+MyAccount+')';
+    if not SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBViewer не запущен, то запускаем
     begin
-      // Отправлен запрос на показ настроек
-      StopWatch;
-      WriteCustomINI(ProfilePath, 'SettingsFormRequestSend', '1');
-      StartWatch(ProfilePath, FILE_NOTIFY_CHANGE_LAST_WRITE, False, @ProfileDirChangeCallBack);
-      ShellExecute(0, 'open', PWideChar(PluginPath + 'HistoryToDBViewer.exe'), PWideChar(' "'+PluginPath+'" "'+ProfilePath+'" 4'), nil, SW_SHOWNORMAL);
+      if FileExists(PluginPath + 'HistoryToDBViewer.exe') then
+      begin
+        // Отправлен запрос на показ настроек
+        StopWatch;
+        WriteCustomINI(ProfilePath, 'SettingsFormRequestSend', '1');
+        StartWatch(ProfilePath, FILE_NOTIFY_CHANGE_LAST_WRITE, False, @ProfileDirChangeCallBack);
+        ShellExecute(0, 'open', PWideChar(PluginPath + 'HistoryToDBViewer.exe'), PWideChar(' "'+PluginPath+'" "'+ProfilePath+'" 4'), nil, SW_SHOWNORMAL);
+      end
+      else
+        MsgInf(htdPluginShortName, Format(GetLangStr('ERR_NO_FOUND_VIEWER'), [PluginPath + 'HistoryToDBViewer.exe']));
     end
-    else
-      MsgInf(htdPluginShortName, Format(GetLangStr('ERR_NO_FOUND_VIEWER'), [PluginPath + 'HistoryToDBViewer.exe']));
+    else // Иначе посылаем запрос
+      OnSendMessageToOneComponent(WinName, '005');
   end
   else // Иначе посылаем запрос на показ настроек
-    OnSendMessageToAllComponent('005');
+    OnSendMessageToOneComponent(WinName, '005');
 end;
 
 { Показываем окно О плагине }

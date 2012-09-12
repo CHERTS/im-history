@@ -75,6 +75,7 @@ type
     procedure SetSnapshotIntf(const Value: ICLSnapshot);
     procedure ShowButtonPopupMenu;
     function GetPluginsDataDirectory: String;
+    function GetNames: String;
     function VarSendPluginMessage(const AMsg: DWord; var AWParam, ALParam, ANParam): Integer;
     function SendPluginMessage(const AMsg: DWord; AWParam, ALParam, ANParam: Integer): Integer; overload;
     function SendPluginMessage(const AMsg: DWord; AWParam, ALParam, ANParam, AResult: Integer): Integer; overload;
@@ -187,12 +188,14 @@ end;
 { Создать формы и загрузить настройки }
 procedure TQipPlugin.CreateControls;
 var
-  WinName: String;
+  UpdTmpPath, WinName: String;
 begin
   try
     GetContactList := False;
     // Инициализация шифрования
     EncryptInit;
+    // Мой аккаунт
+    MyAccount := GetNames;
     // Запрос на закрытие всех компонентов плагина если они были запущены
     OnSendMessageToAllComponent('003');
     // Путь до профиля
@@ -231,6 +234,8 @@ begin
     WriteCustomINI(ProfilePath, 'IMClientType', 'QIP');
     // Записываем отсутствие запроса на чтение настроек
     WriteCustomINI(ProfilePath, 'SettingsFormRequestSend', '0');
+    // Записываем наше имя, потом оно используется для заголовка программ
+    WriteCustomINI(ProfilePath, 'MyAccount', MyAccount);
     // Создаем окно About
     if not Assigned(AboutForm) then
       AboutForm := TAboutForm.Create(nil);
@@ -239,7 +244,11 @@ begin
       AddSpecContacts;
     // Запускаем программу синхронизации HistoryToDBSync
     if FileExists(PluginPath + 'HistoryToDBSync.exe') then
-      ShellExecute(0, 'open', PWideChar(PluginPath + 'HistoryToDBSync.exe'), PWideChar(' "'+PluginPath+'" "'+ProfilePath+'"'), nil, SW_SHOWNORMAL)
+    begin
+      WinName := 'HistoryToDBSync for QIP ('+MyAccount+')';
+      if not SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBSync for QIP не запущен, то запускаем
+        ShellExecute(0, 'open', PWideChar(PluginPath + 'HistoryToDBSync.exe'), PWideChar(' "'+PluginPath+'" "'+ProfilePath+'"'), nil, SW_SHOWNORMAL);
+    end
     else
     begin
       if CoreLanguage = 'Russian' then
@@ -260,14 +269,49 @@ begin
     StartWatch(ProfilePath, FILE_NOTIFY_CHANGE_LAST_WRITE, False, @ProfileDirChangeCallBack);
     // Реализация интерфейса ICLSnapshot для сохранения контакт-листа
     SnapshotIntf := Self;
-    // Обновление утилиты HistoryToDBUpdater.exe
+    // Обновление утилиты HistoryToDBUpdater.exe из временной папки
+    UpdTmpPath := GetUserTempPath + 'IMHistory\';
+    if FileExists(UpdTmpPath + 'HistoryToDBUpdater.exe') then
+    begin
+      // Ищем окно HistoryToDBUpdater
+      WinName := 'HistoryToDBUpdater';
+      if not SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBUpdater не найден, то ищем другое окно
+      begin
+        WinName := 'HistoryToDBUpdater for QIP ('+MyAccount+')';
+        if SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBUpdater запущен, то закрываем его
+          OnSendMessageToOneComponent(WinName, '009');
+      end
+      else // Иначе посылаем запрос
+        OnSendMessageToOneComponent(WinName, '009');
+      // Удаляем старую утилиту
+      if DeleteFile(PluginPath + 'HistoryToDBUpdater.exe') then
+      begin
+        if CopyFileEx(PChar(UpdTmpPath + 'HistoryToDBUpdater.exe'), PChar(PluginPath + 'HistoryToDBUpdater.exe'), nil, nil, nil, COPY_FILE_FAIL_IF_EXISTS) then
+        begin
+          DeleteFile(UpdTmpPath + 'HistoryToDBUpdater.exe');
+          if CoreLanguage = 'Russian' then
+            ShowFadeWindow(Format('Утилита обновления %s успешно обновлена.', ['HistoryToDBUpdater.exe']), 0, 1)
+          else
+            ShowFadeWindow(Format('Update utility %s successfully updated.', ['HistoryToDBUpdater.exe']), 0, 1);
+        end;
+      end
+      else
+      begin
+        DeleteFile(UpdTmpPath + 'HistoryToDBUpdater.exe');
+        if CoreLanguage = 'Russian' then
+          ShowFadeWindow(Format('Ошибка обновления утилиты %s', [PluginPath + 'HistoryToDBUpdater.exe']), 0, 2)
+        else
+          ShowFadeWindow(Format('Error update utility %s', [PluginPath + 'HistoryToDBUpdater.exe']), 0, 2);
+      end;
+    end;
+    // Обновление утилиты HistoryToDBUpdater.exe из папки плагина
     if FileExists(PluginPath + 'HistoryToDBUpdater.upd') then
     begin
       // Ищем окно HistoryToDBUpdater
       WinName := 'HistoryToDBUpdater';
       if not SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBUpdater не найден, то ищем другое окно
       begin
-        WinName := 'HistoryToDBUpdater for QIP';
+        WinName := 'HistoryToDBUpdater for QIP ('+MyAccount+')';
         if SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBUpdater запущен, то закрываем его
           OnSendMessageToOneComponent(WinName, '009');
       end
@@ -563,9 +607,12 @@ end;
 
 { Двойной клик левой кнопкой на спец. контакте }
 procedure TQipPlugin.SpecContactDblClick(PlugMsg: TPluginMessage);
+var
+  WinName: String;
 begin
-  if SearchMainWindow('HistoryToDBViewer for QIP') then
-    OnSendMessageToAllComponent('0040') // Показываем окна плагина
+  WinName := 'HistoryToDBViewer for QIP ('+MyAccount+')';
+  if SearchMainWindow(pWideChar(WinName)) then
+    OnSendMessageToOneComponent(WinName, '0040') // Показываем окна плагина
   else
   begin
     if FileExists(PluginPath + 'HistoryToDBViewer.exe') then
@@ -633,14 +680,13 @@ var
   AccountUIN: PWideChar;
   AccountName: WideString;
   CD: TContactDetails;
-  //ExCD: TContactDetails;
   myWParam, myLParam, myNParam, ProtoType, ProtoID: Integer;
   aBtnClick : pBtnClick;
   MC: IMetaContact;
   metaCnt: Integer;
   metaMenuItem: TMenuItem;
   Pt: TPoint;
-  //PlugMsg1  : TPluginMessage;
+  WinName: String;
 begin
   // Определяем какой кнопкой мыши был клик (левой или правой)
   aBtnClick := pBtnClick(PlugMsg.DllHandle);
@@ -738,22 +784,6 @@ begin
         PlugMsg.DllHandle := FPluginInfo.DllHandle;
         FPluginSvc.OnPluginMessage(PlugMsg);
         if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура MsgBtnClicked: Мои данные: ProtoName = ' + Global_CurrentAccountProtoName + ' | ProtoAccount = ' + Global_CurrentAccountProtoAccount + ' | ProtoID = ' + IntToStr(Global_CurrentAccountProtoID), 2);
-        // 2. Зная наш ProtoName и ProtoAccount получаем наши ФИО и т.п.
-        {if Global_CurrentAccountProtoAccount <> '' then
-        begin
-          PlugMsg1.Msg       := PM_PLUGIN_DETAILS_GET;
-          PlugMsg1.WParam    := Global_CurrentAccountProtoID;
-          PlugMsg1.LParam    := LongInt(PWideChar(Global_CurrentAccountProtoAccount));
-          PlugMsg1.NParam    := 0;
-          PlugMsg1.DllHandle := FPluginInfo.DllHandle;
-          FPluginSvc.OnPluginMessage(PlugMsg1);
-          if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура MsgBtnClicked: Запрос моих расширенных данных по протоколу ' + Global_CurrentAccountProtoName, 2);
-          if Boolean(PlugMsg1.Result) then
-          begin
-            ExCD := pContactDetails(PlugMsg1.NParam)^;
-            if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура MsgBtnClicked: Мои расширенные данные: AccountName - ' + ExCD.AccountName + ' | ContactName - ' + ExCD.ContactName + ' | NickName - ' + ExCD.NickName + ' | Email - ' + ExCD.Email, 2);
-          end;
-        end;}
         // End
         if (Global_CurrentAccountProtoName = 'ICQ') then
           ProtoType := 0
@@ -781,14 +811,15 @@ begin
         // Запрещаем обработку PM_PLUGIN_PROTOS_SNAPSHOT
         GetContactList := False;
         // Показываем последние N сообщений переписки
-        if SearchMainWindow('HistoryToDBViewer for QIP') then
+        WinName := 'HistoryToDBViewer for QIP ('+MyAccount+')';
+        if SearchMainWindow(pWideChar(WinName)) then
         begin
           // Формат команды:
           //   для истории контакта:
           //     008|0|UserID|UserName|ProtocolType
           //   для истории чата:
           //     008|2|ChatName
-          OnSendMessageToAllComponent('008|0|'+Global_AccountUIN+'|'+Global_AccountName+'|'+IntToStr(ProtoType));
+          OnSendMessageToOneComponent(WinName, '008|0|'+Global_AccountUIN+'|'+Global_AccountName+'|'+IntToStr(ProtoType));
           if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура ChatMsgBtnClicked: Отправляем запрос - 008|0|'+Global_AccountUIN+'|'+Global_AccountName+'|'+IntToStr(ProtoType), 2);
         end
         else
@@ -813,6 +844,7 @@ procedure TQipPlugin.ChatMsgBtnClicked(PlugMsg: TPluginMessage);
 var
   myWParam, myLParam, myNParam: Integer;
   aBtnClick : pBtnClick;
+  WinName: String;
 begin
   // Определяем какой кнопкой мыши был клик (левой или правой)
   aBtnClick := pBtnClick(PlugMsg.DllHandle);
@@ -868,7 +900,8 @@ begin
       // Запрещаем обработку PM_PLUGIN_PROTOS_SNAPSHOT
       GetContactList := False;
       // Показываем последние N сообщений переписки
-      if SearchMainWindow('HistoryToDBViewer for QIP') then
+      WinName := 'HistoryToDBViewer for QIP ('+MyAccount+')';
+      if SearchMainWindow(pWideChar(WinName)) then
       begin
         // Формат команды:
         //   для истории контакта:
@@ -877,12 +910,12 @@ begin
         //     008|2|ChatName
         if (ExPrivateChatName) and (Global_ChatName <> Global_AccountUIN) then // Если расширенный формат имени приват. чата
         begin
-          OnSendMessageToAllComponent('008|2|'+Global_ChatName+' / '+Global_AccountUIN);
+          OnSendMessageToOneComponent(WinName, '008|2|'+Global_ChatName+' / '+Global_AccountUIN);
           if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура ChatMsgBtnClicked: Отправляем запрос - 008|2|'+Global_ChatName+' / '+Global_AccountUIN, 2);
         end
         else
         begin
-          OnSendMessageToAllComponent('008|2|'+Global_ChatName);
+          OnSendMessageToOneComponent(WinName, '008|2|'+Global_ChatName);
           if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура ChatMsgBtnClicked: Отправляем запрос - 008|2|'+Global_ChatName, 2);
         end;
       end
@@ -1013,7 +1046,7 @@ begin
     end;
     // Посылаем запрос на синхронизацию
     if SyncMethod = 0 then
-      OnSendMessageToAllComponent('002')
+      OnSendMessageToOneComponent('HistoryToDBSync for QIP ('+MyAccount+')', '002')
     else if SyncMethod = 2 then
     begin
       if (SyncInterval > 4) and (SyncInterval < 8) then
@@ -1021,17 +1054,17 @@ begin
         Inc(MessageCount);
         if (SyncInterval = 5) and (MessageCount = 10) then
         begin
-          OnSendMessageToAllComponent('002');
+          OnSendMessageToOneComponent('HistoryToDBSync for QIP ('+MyAccount+')', '002');
           MessageCount := 0;
         end;
         if (SyncInterval = 6) and (MessageCount = 20) then
         begin
-          OnSendMessageToAllComponent('002');
+          OnSendMessageToOneComponent('HistoryToDBSync for QIP ('+MyAccount+')', '002');
           MessageCount := 0;
         end;
         if (SyncInterval = 7) and (MessageCount = 30) then
         begin
-          OnSendMessageToAllComponent('002');
+          OnSendMessageToOneComponent('HistoryToDBSync for QIP ('+MyAccount+')', '002');
           MessageCount := 0;
         end;
       end;
@@ -1040,7 +1073,7 @@ begin
         Inc(MessageCount);
         if MessageCount = SyncMessageCount then
         begin
-          OnSendMessageToAllComponent('002');
+          OnSendMessageToOneComponent('HistoryToDBSync for QIP ('+MyAccount+')', '002');
           MessageCount := 0;
         end;
       end;
@@ -1124,7 +1157,7 @@ begin
       WriteInLog(ProfilePath, Format(CHAT_MSG_LOG, [DBUserName, IntToStr(aMsgType), Date_Str, aChatName, aProtoAcc, aNickName, BoolToIntStr(aIsPrivate), BoolToIntStr(AQIPChatMsg^.IsSimple), BoolToIntStr(AQIPChatMsg^.IsIRC), aMsgText, EncryptMD5(MD5String)]), 0);
     // Посылаем запрос на синхронизацию
     if SyncMethod = 0 then
-      OnSendMessageToAllComponent('002')
+      OnSendMessageToOneComponent('HistoryToDBSync for QIP ('+MyAccount+')', '002')
     else if SyncMethod = 2 then
     begin
       if (SyncInterval > 4) and (SyncInterval < 8) then
@@ -1132,17 +1165,17 @@ begin
         Inc(MessageCount);
         if (SyncInterval = 5) and (MessageCount = 10) then
         begin
-          OnSendMessageToAllComponent('002');
+          OnSendMessageToOneComponent('HistoryToDBSync for QIP ('+MyAccount+')', '002');
           MessageCount := 0;
         end;
         if (SyncInterval = 6) and (MessageCount = 20) then
         begin
-          OnSendMessageToAllComponent('002');
+          OnSendMessageToOneComponent('HistoryToDBSync for QIP ('+MyAccount+')', '002');
           MessageCount := 0;
         end;
         if (SyncInterval = 7) and (MessageCount = 30) then
         begin
-          OnSendMessageToAllComponent('002');
+          OnSendMessageToOneComponent('HistoryToDBSync for QIP ('+MyAccount+')', '002');
           MessageCount := 0;
         end;
       end;
@@ -1191,6 +1224,7 @@ var
   AccountName: WideString;
   AccountUIN: WideString;
   ProtoType: Integer;
+  WinName: String;
 begin
   if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура CLPopupMenuItemClick: Клик по PopUp меню контакта.', 2);
   if (PlugMsg.NParam <> 0) then
@@ -1242,14 +1276,15 @@ begin
       // Запрещаем обработку PM_PLUGIN_PROTOS_SNAPSHOT
       GetContactList := False;
       // Показываем последние N сообщений переписки
-      if SearchMainWindow('HistoryToDBViewer for QIP') then
+      WinName := 'HistoryToDBViewer for QIP ('+MyAccount+')';
+      if SearchMainWindow(pWideChar(WinName)) then
       begin
         // Формат команды:
         //   для истории контакта:
         //     008|0|UserID|UserName|ProtocolType
         //   для истории чата:
         //     008|2|ChatName
-        OnSendMessageToAllComponent('008|0|'+Global_AccountUIN+'|'+Global_AccountName+'|'+IntToStr(ProtoType));
+        OnSendMessageToOneComponent(WinName, '008|0|'+Global_AccountUIN+'|'+Global_AccountName+'|'+IntToStr(ProtoType));
         if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура ChatMsgBtnClicked: Отправляем запрос - 008|0|'+Global_AccountUIN+'|'+Global_AccountName+'|'+IntToStr(ProtoType), 2);
       end
       else
@@ -1277,6 +1312,19 @@ begin
       end;
     end;
   end;
+end;
+
+{ Функция возвращает информацию о нашей учетной записи }
+function TQipPlugin.GetNames: String;
+var
+  myWParam, myLParam, myNParam: Integer;
+begin
+  Result := '';
+  // Отправляем ядру QIP запрос на получение информации о нашей учетной записи
+  if Boolean(VarSendPluginMessage(PM_PLUGIN_GET_NAMES, myWParam, myLParam, myNParam)) and (myWParam <> 0) then
+    Result := PWideChar(myWParam)
+  else
+    Result := DBUserName;
 end;
 
 { Функция возвращает путь до профиля пользователя }
@@ -1389,31 +1437,37 @@ end;
 { Показываем окно Настроек плагина }
 procedure TQipPlugin.OnClick_Settings(Sender: TObject);
 var
-  HToDB: HWND;
+  WinName: String;
 begin
   // Ищем окно HistoryToDBViewer
-  HToDB := FindWindow(nil,'HistoryToDBViewer');
-  if HToDB = 0 then // Если HistoryToDBViewer не запущен, то запускаем
+  WinName := 'HistoryToDBViewer';
+  if not SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBViewer не найден, то ищем другое окно
   begin
-    if FileExists(PluginPath + 'HistoryToDBViewer.exe') then
+    WinName := 'HistoryToDBViewer for QIP ('+MyAccount+')';
+    if not SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBViewer не запущен, то запускаем
     begin
-      // Отправлен запрос на показ настроек
-      StopWatch;
-      WriteCustomINI(ProfilePath, 'SettingsFormRequestSend', '1');
-      StartWatch(ProfilePath, FILE_NOTIFY_CHANGE_LAST_WRITE, False, @ProfileDirChangeCallBack);
-      ShellExecute(0, 'open', PWideChar(PluginPath + 'HistoryToDBViewer.exe'), PWideChar(' "'+PluginPath+'" "'+ProfilePath+'" 4'), nil, SW_SHOWNORMAL);
+      if FileExists(PluginPath + 'HistoryToDBViewer.exe') then
+      begin
+        // Отправлен запрос на показ настроек
+        StopWatch;
+        WriteCustomINI(ProfilePath, 'SettingsFormRequestSend', '1');
+        StartWatch(ProfilePath, FILE_NOTIFY_CHANGE_LAST_WRITE, False, @ProfileDirChangeCallBack);
+        ShellExecute(0, 'open', PWideChar(PluginPath + 'HistoryToDBViewer.exe'), PWideChar(' "'+PluginPath+'" "'+ProfilePath+'" 4'), nil, SW_SHOWNORMAL);
+      end
+      else
+        ShowFadeWindow(Format(GetLangStr('ERR_NO_FOUND_VIEWER'), [PluginPath + 'HistoryToDBViewer.exe']), 0, 1);
     end
-    else
-      ShowFadeWindow(Format(GetLangStr('ERR_NO_FOUND_VIEWER'), [PluginPath + 'HistoryToDBViewer.exe']), 0, 1);
+    else // Иначе посылаем запрос
+      OnSendMessageToOneComponent(WinName, '005');
   end
   else // Иначе посылаем запрос на показ настроек
-    OnSendMessageToAllComponent('005');
+    OnSendMessageToOneComponent(WinName, '005');
 end;
 
 { Синхронизируем историю }
 procedure TQipPlugin.OnClick_HistorySync(Sender: TObject);
 begin
-  OnSendMessageToAllComponent('002');
+  OnSendMessageToOneComponent('HistoryToDBSync for QIP ('+MyAccount+')', '002');
 end;
 
 { Сохранить список протоколов и контакт лист }
@@ -1457,13 +1511,13 @@ end;
 { Запустить перерасчет MD5-хешей }
 procedure TQipPlugin.OnClick_CheckMD5Hash(Sender: TObject);
 begin
-  OnSendMessageToAllComponent('0050');
+  OnSendMessageToOneComponent('HistoryToDBSync for QIP ('+MyAccount+')', '0050');
 end;
 
 { Запустить перерасчет MD5-хешей и удаления дубликатов }
 procedure TQipPlugin.OnClick_CheckAndDeleteMD5Hash(Sender: TObject);
 begin
-  OnSendMessageToAllComponent('0051');
+  OnSendMessageToOneComponent('HistoryToDBSync for QIP ('+MyAccount+')', '0051');
 end;
 
 { Запрос на обновление контакт листа }
@@ -1471,7 +1525,7 @@ procedure TQipPlugin.OnClick_UpdateContactList(Sender: TObject);
 begin
   if FileExists(ProfilePath+ContactListName) then
   begin
-    OnSendMessageToAllComponent('007');
+    OnSendMessageToOneComponent('HistoryToDBSync for QIP ('+MyAccount+')', '007');
     //ShowFadeWindow(GetLangStr('SendUpdateContactListCompleted'), 0, 1);
   end
   else
@@ -1487,7 +1541,7 @@ begin
   WinName := 'HistoryToDBUpdater';
   if not SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBUpdater не найден, то ищем другое окно
   begin
-    WinName := 'HistoryToDBUpdater for QIP';
+    WinName := 'HistoryToDBUpdater for QIP ('+MyAccount+')';
     if not SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBUpdater не запущен, то запускаем
     begin
       if FileExists(PluginPath + 'HistoryToDBUpdater.exe') then
@@ -1516,6 +1570,7 @@ var
   myWParam, myLParam, myNParam, ProtoType, ProtoID: Integer;
   MC: IMetaContact;
   metaID: Integer;
+  WinName: String;
 begin
   // Отправляем ядру QIP запрос на получение информации о нашей учетной записи
   myWParam := 0;
@@ -1630,14 +1685,15 @@ begin
     if Global_CurrentAccountName = '' then
       Global_CurrentAccountName := Global_CurrentAccountUIN;
     // Показываем последние N сообщений переписки
-    if SearchMainWindow('HistoryToDBViewer for QIP') then
+    WinName := 'HistoryToDBViewer for QIP ('+MyAccount+')';
+    if SearchMainWindow(pWideChar(WinName)) then
     begin
       // Формат команды:
       //   для истории контакта:
       //     008|0|UserID|UserName|ProtocolType
       //   для истории чата:
       //     008|2|ChatName
-      OnSendMessageToAllComponent('008|0|'+Global_AccountUIN+'|'+Global_AccountName+'|'+IntToStr(ProtoType));
+      OnSendMessageToOneComponent(WinName, '008|0|'+Global_AccountUIN+'|'+Global_AccountName+'|'+IntToStr(ProtoType));
       if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура ChatMsgBtnClicked: Отправляем запрос - 008|0|'+Global_AccountUIN+'|'+Global_AccountName+'|'+IntToStr(ProtoType), 2);
     end
     else
@@ -1862,6 +1918,7 @@ begin
     OnSendMessageToAllComponent(FLanguage);
     // Записываем измененное значения языка программы
     StopWatch;
+    DefaultLanguage := FLanguage;
     WriteCustomINI(ProfilePath, 'DefaultLanguage', FLanguage);
     StartWatch(ProfilePath, FILE_NOTIFY_CHANGE_LAST_WRITE, False, @ProfileDirChangeCallBack);
   end;

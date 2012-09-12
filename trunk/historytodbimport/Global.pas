@@ -55,7 +55,7 @@ const
                     'Providence за активное тестирование плагина и новые идеи.' + #13#10 +
                     'Cy6 за помощь в реализации импорта истории RnQ.';
   ThankYouText_Eng = 'Anna Nikiforova for active testing of plug-in.' + #13#10 +
-                    'Kiril Uksusov (UksusoFF) for active testing of plug-in and new ideas.' + #13#10 +
+                    'Kirill Uksusov (UksusoFF) for active testing of plug-in and new ideas.' + #13#10 +
                     'Igor Guryanov for active testing of plug-in.' + #13#10 +
                     'Vyacheslav S. (HDHMETRO) for active testing of plug-in.' + #13#10 +
                     'Providence for active testing of plug-in and new ideas.' + #13#10 +
@@ -74,7 +74,7 @@ var
   PluginPath, ProfilePath: WideString;
   Global_MainForm_Showing, GlobalHotKeyEnable: Boolean;
   IMEditorParagraphTitleSpaceBefore, IMEditorParagraphTitleSpaceAfter, IMEditorParagraphMessagesSpaceBefore, IMEditorParagraphMessagesSpaceAfter: Integer;
-  SyncHotKey, SyncHotKeyDBSync, ExSearchHotKey, ExSearchNextHotKey: String;
+  SyncHotKey, SyncHotKeyDBSync, ExSearchHotKey, ExSearchNextHotKey, MyAccount: String;
   KeyPasswdSaveOnlySession, KeyPasswdSave: Boolean;
   // Ўифрование
   Cipher: TDCP_3des;
@@ -478,6 +478,7 @@ begin
 
       DefaultLanguage := INI.ReadString('Main', 'DefaultLanguage', 'Russian');
       IMClientType := INI.ReadString('Main', 'IMClientType', 'Unknown');
+      MyAccount := INI.ReadString('Main', 'MyAccount', DBUserName);
 
       Temp := INI.ReadString('Main', 'HideHistorySyncIcon', '0');
       if Temp = '1' then HideSyncIcon := true
@@ -727,7 +728,7 @@ begin
   // »щем окно HistoryToDBSync и посылаем ему команду
   if IMClientType <> 'Unknown' then
   begin
-    AppNameStr := 'HistoryToDBSync for ' + IMClientType;
+    AppNameStr := 'HistoryToDBSync for ' + IMClientType + ' (' + MyAccount + ')';
     HToDB := FindWindow(nil, PWideChar(AppNameStr));
   end
   else

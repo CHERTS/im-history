@@ -61,6 +61,7 @@ var
   // Прокси
   IMUseProxy, IMProxyAuth: Boolean;
   IMProxyAddress, IMProxyPort, IMProxyUser, IMProxyUserPagsswd: String;
+  DBUserName, MyAccount: String;
   // Шифрование
   Cipher: TDCP_3des;
   Digest: Array[0..19] of Byte;
@@ -310,8 +311,10 @@ begin
       INI := TIniFile.Create(Path);
 
       DBType := INI.ReadString('Main', 'DBType', 'Unknown');
+      DBUserName := INI.ReadString('Main', 'DBUserName', 'username');
       DefaultLanguage := INI.ReadString('Main', 'DefaultLanguage', 'English');
       IMClientType := INI.ReadString('Main', 'IMClientType', 'Unknown');
+      MyAccount := INI.ReadString('Main', 'MyAccount', DBUserName);
 
       Temp := INI.ReadString('Main', 'WriteErrLog', '0');
       if Temp = '1' then WriteErrLog := True
@@ -340,7 +343,7 @@ begin
       else IMProxyAuth := False;
 
       IMProxyUser := INI.ReadString('Proxy', 'ProxyUser', '');
-      IMProxyUserPagsswd := INI.ReadString('Proxy', 'ProxyUserPagsswd', '');
+      IMProxyUserPagsswd := INI.ReadString('Proxy', 'ProxyUserPasswd', '');
       if IMProxyUserPagsswd <> '' then
         IMProxyUserPagsswd := DecryptStr(IMProxyUserPagsswd);
     finally
@@ -380,7 +383,7 @@ begin
       INI.WriteString('Proxy', 'ProxyPort', IMProxyPort);
       INI.WriteString('Proxy', 'ProxyAuth', BoolToIntStr(IMProxyAuth));
       INI.WriteString('Proxy', 'ProxyUser', IMProxyUser);
-      INI.WriteString('Proxy', 'ProxyUserPagsswd', IMProxyUserPagsswd);
+      INI.WriteString('Proxy', 'ProxyUserPasswd', IMProxyUserPagsswd);
     finally
       INI.Free;
     end;
@@ -522,7 +525,7 @@ function GetSysLang: AnsiString;
 var
   WinLanguage: Array [0..50] of Char;
 begin
-  //Result :=   Lo(GetSystemDefaultUILanguage);
+  //Result := Lo(GetSystemDefaultUILanguage);
   VerLanguageName(GetSystemDefaultLangID, WinLanguage, 50);
   Result := StrPas(WinLanguage);
 end;

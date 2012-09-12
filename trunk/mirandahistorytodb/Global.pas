@@ -112,7 +112,7 @@ var
   Glogal_History_Type: Integer;
   //Global_ChatName: WideString;
   Global_AboutForm_Showing: Boolean;
-  DllPath, DllName, ProfilePath: String;
+  DllPath, DllName, ProfilePath, MyAccount: String;
   MessageCount: Integer;
   // Для мультиязыковой поддержки
   CoreLanguage: String;
@@ -154,11 +154,9 @@ function WideStringToString(const ws: WideString; codePage: Word): AnsiString;
 function AnsiToWideString(const S: AnsiString; CodePage: Cardinal; InLength: Integer = -1): WideString;
 function WideToAnsiString(const WS: WideString; CodePage: Cardinal; InLength: Integer = -1): AnsiString;
 function Utf8ToWideChar(Dest: PWideChar; MaxDestChars: Integer; Source: PAnsiChar; SourceBytes: Integer; CodePage: Cardinal = CP_ACP): Integer;
-{function StrToByte(const Value: String): TByteArr;
-function ByteToString(const Value: TByteArr): String;
-function OneByteToString(const Value: Byte): String;}
 function StrContactProtoToInt(Proto: AnsiString): Integer;
 function UnixToLocalTime(tUnix :Longint): TDateTime;
+function GetUserTempPath: WideString;
 procedure IMDelay(Value: Cardinal);
 procedure EncryptInit;
 procedure EncryptFree;
@@ -628,6 +626,7 @@ end;
   003  - Закрыть все компоненты плагина
   0040 - Показать все окна плагина (Режим AntiBoss)
   0041 - Скрыть все окна плагина (Режим AntiBoss)
+  005  - Показать окно настроек
   0050 - Запустить перерасчет MD5-хешей
   0051 - Запустить перерасчет MD5-хешей и удаления дубликатов
   0060 - Запущен импорт истории
@@ -645,11 +644,12 @@ procedure OnSendMessageToAllComponent(Msg: String);
 var
   HToDB: HWND;
   copyDataStruct : TCopyDataStruct;
-  EncryptMsg: String;
+  EncryptMsg, WinName: String;
 begin
   EncryptMsg := EncryptStr(Msg);
   // Ищем окно HistoryToDBViewer и посылаем ему команду
-  HToDB := FindWindow(nil,'HistoryToDBViewer for ' + htdIMClientName);
+  WinName := 'HistoryToDBViewer for ' + htdIMClientName + ' ('+MyAccount+')';
+  HToDB := FindWindow(nil, pWideChar(WinName));
   if HToDB <> 0 then
   begin
     copyDataStruct.dwData := Integer(cdtString);
@@ -658,7 +658,8 @@ begin
     SendMessage(HToDB, WM_COPYDATA, 0, Integer(@copyDataStruct));
   end;
   // Ищем окно HistoryToDBSync и посылаем ему команду
-  HToDB := FindWindow(nil,'HistoryToDBSync for ' + htdIMClientName);
+  WinName := 'HistoryToDBSync for ' + htdIMClientName + ' ('+MyAccount+')';
+  HToDB := FindWindow(nil, pWideChar(WinName));
   if HToDB <> 0 then
   begin
     copyDataStruct.dwData := Integer(cdtString);
@@ -667,7 +668,8 @@ begin
     SendMessage(HToDB, WM_COPYDATA, 0, Integer(@copyDataStruct));
   end;
   // Ищем окно HistoryToDBImport и посылаем ему команду
-  HToDB := FindWindow(nil,'HistoryToDBImport for ' + htdIMClientName);
+  WinName := 'HistoryToDBImport for ' + htdIMClientName + ' ('+MyAccount+')';
+  HToDB := FindWindow(nil, pWideChar(WinName));
   if HToDB <> 0 then
   begin
     copyDataStruct.dwData := Integer(cdtString);
@@ -676,7 +678,8 @@ begin
     SendMessage(HToDB, WM_COPYDATA, 0, Integer(@copyDataStruct));
   end;
   // Ищем окно HistoryToDBUpdater и посылаем ему команду
-  HToDB := FindWindow(nil,'HistoryToDBUpdater for ' + htdIMClientName);
+  WinName := 'HistoryToDBUpdater for ' + htdIMClientName + ' ('+MyAccount+')';
+  HToDB := FindWindow(nil, pWideChar(WinName));
   if HToDB <> 0 then
   begin
     copyDataStruct.dwData := Integer(cdtString);
@@ -1005,35 +1008,6 @@ begin
   end;
 end;
 
-{function StrToByte(const Value: String): TByteArr;
-var
-    I: integer;
-begin
-    SetLength(Result, Length(Value));
-    for I := 0 to Length(Value) - 1 do
-        Result[I] := ord(Value[I + 1]) - 48;
-end;
-
-function ByteToString(const Value: TByteArr): String;
-var
-    I: integer;
-    S : String;
-    Letra: char;
-begin
-    S := '';
-    for I := Length(Value)-1 Downto 0 do
-    begin
-        letra := Chr(Value[I] + 48);
-        S := letra + S;
-    end;
-    Result := S;
-end;
-
-function OneByteToString(const Value: Byte): String;
-begin
-    Result := Chr(Value + 48);
-end;}
-
 function StrContactProtoToInt(Proto: AnsiString): Integer;
 var
   ProtoType: Integer;
@@ -1221,6 +1195,19 @@ begin
         'CoreLanguage: ' + CoreLanguage);
     end;
   end;
+end;
+
+{ Функция возвращает путь до пользовательской временной папки }
+function GetUserTempPath: WideString;
+var
+  UserPath: WideString;
+begin
+  Result := '';
+  SetLength(UserPath, MAX_PATH);
+  GetTempPath(MAX_PATH, PChar(UserPath));
+  GetLongPathName(PChar(UserPath), PChar(UserPath), MAX_PATH);
+  SetLength(UserPath, StrLen(PChar(UserPath)));
+  Result := UserPath;
 end;
 
 begin
