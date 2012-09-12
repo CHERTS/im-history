@@ -75,7 +75,7 @@ var
   DBType, DBAddress, DBSchema, DBPort, DBName, DBUserName, DBPasswd, DefaultLanguage: String;
   Global_AccountUIN, Global_CurrentAccountUIN: Integer;
   Global_AccountName, Global_CurrentAccountName: WideString;
-  ProfilePath: String;
+  ProfilePath, MyAccount: String;
   Global_AboutForm_Showing: Boolean;
   Global_SettingsForm_Showing: Boolean;
   // ƒл€ мульти€зыковой поддержки
@@ -99,6 +99,7 @@ function ReadCustomINI(INIPath, CustomParams, DefaultParamsStr: String): String;
 function EncryptMD5(Str: String): String;
 function EncryptStr(const Str: String): String;
 function SearchMainWindow(MainWindowName: pWideChar): Boolean;
+function GetUserTempPath: WideString;
 procedure EncryptInit;
 procedure EncryptFree;
 procedure OnSendMessageToAllComponent(Msg: String);
@@ -403,11 +404,12 @@ procedure OnSendMessageToAllComponent(Msg: String);
 var
   HToDB: HWND;
   copyDataStruct : TCopyDataStruct;
-  EncryptMsg: String;
+  EncryptMsg, WinName: String;
 begin
   EncryptMsg := EncryptStr(Msg);
   // »щем окно HistoryToDBViewer и посылаем ему команду
-  HToDB := FindWindow(nil,'HistoryToDBViewer for RnQ');
+  WinName := 'HistoryToDBViewer for RnQ ('+MyAccount+')';
+  HToDB := FindWindow(nil, pWideChar(WinName));
   if HToDB <> 0 then
   begin
     copyDataStruct.dwData := Integer(cdtString);
@@ -416,7 +418,8 @@ begin
     SendMessage(HToDB, WM_COPYDATA, 0, Integer(@copyDataStruct));
   end;
   // »щем окно HistoryToDBSync и посылаем ему команду
-  HToDB := FindWindow(nil,'HistoryToDBSync for RnQ');
+  WinName := 'HistoryToDBSync for RnQ ('+MyAccount+')';
+  HToDB := FindWindow(nil, pWideChar(WinName));
   if HToDB <> 0 then
   begin
     copyDataStruct.dwData := Integer(cdtString);
@@ -425,7 +428,18 @@ begin
     SendMessage(HToDB, WM_COPYDATA, 0, Integer(@copyDataStruct));
   end;
   // »щем окно HistoryToDBImport и посылаем ему команду
-  HToDB := FindWindow(nil,'HistoryToDBImport for RnQ');
+  WinName := 'HistoryToDBImport for RnQ ('+MyAccount+')';
+  HToDB := FindWindow(nil, pWideChar(WinName));
+  if HToDB <> 0 then
+  begin
+    copyDataStruct.dwData := Integer(cdtString);
+    copyDataStruct.cbData := 2*Length(EncryptMsg);
+    copyDataStruct.lpData := PChar(EncryptMsg);
+    SendMessage(HToDB, WM_COPYDATA, 0, Integer(@copyDataStruct));
+  end;
+  // »щем окно HistoryToDBUpdater и посылаем ему команду
+  WinName := 'HistoryToDBUpdater for RnQ ('+MyAccount+')';
+  HToDB := FindWindow(nil, pWideChar(WinName));
   if HToDB <> 0 then
   begin
     copyDataStruct.dwData := Integer(cdtString);
@@ -607,6 +621,19 @@ begin
     //Application.ProcessMessages;
     N := GetTickCount;
   until (N - F >= (Value mod 10)) or (N < F);
+end;
+
+{ ‘ункци€ возвращает путь до пользовательской временной папки }
+function GetUserTempPath: WideString;
+var
+  UserPath: WideString;
+begin
+  Result := '';
+  SetLength(UserPath, MAX_PATH);
+  GetTempPath(MAX_PATH, PChar(UserPath));
+  GetLongPathName(PChar(UserPath), PChar(UserPath), MAX_PATH);
+  SetLength(UserPath, StrLen(PChar(UserPath)));
+  Result := UserPath;
 end;
 
 begin

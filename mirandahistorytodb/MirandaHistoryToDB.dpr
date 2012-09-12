@@ -121,6 +121,7 @@ var
   ContactProto, ContactID, ContactName: AnsiString;
   MyContactName, MyContactID: AnsiString;
   ProtoType: Integer;
+  WinName: String;
 begin
   Result := 0;
   ContactProto := GetContactProto(wParam);
@@ -140,14 +141,15 @@ begin
   // Тип истории
   ProtoType := StrContactProtoToInt(ContactProto);
   // Показываем последние N сообщений переписки
-  if SearchMainWindow('HistoryToDBViewer for ' + htdIMClientName) then
+  WinName := 'HistoryToDBViewer for ' + htdIMClientName + ' ('+MyAccount+')';
+  if SearchMainWindow(pWideChar(WinName)) then
   begin
     // Формат команды:
     //   для истории контакта:
     //     008|0|UserID|UserName|ProtocolType
     //   для истории чата:
     //     008|2|ChatName
-    OnSendMessageToAllComponent('008|0|'+ContactID+'|'+ContactName+'|'+IntToStr(ProtoType));
+    OnSendMessageToOneComponent(WinName, '008|0|'+ContactID+'|'+ContactName+'|'+IntToStr(ProtoType));
     if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура PluginContactMenuCommand: Отправляем запрос - 008|0|'+ContactID+'|'+ContactName+'|'+IntToStr(ProtoType), 2);
   end
   else
@@ -415,21 +417,28 @@ end;}
   Смотри детали в m_historytodb.inc }
 function HTDBShowHistory(wParam { 0 } : WPARAM; lParam { 0 } : LPARAM): int_ptr; cdecl;
 var
-  HToDB: HWND;
+  WinName: String;
 begin
   Result := 0;
   // Ищем окно HistoryToDBViewer
-  HToDB := FindWindow(nil, 'HistoryToDBViewer for ' + htdIMClientName);
-  if HToDB = 0 then // Если HistoryToDBViewer не запущен, то запускаем
+  WinName := 'HistoryToDBViewer';
+  if not SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBViewer не найден, то ищем другое окно
   begin
-    // Отправлен запрос на показ настроек
-    if FileExists(PluginPath + 'HistoryToDBViewer.exe') then
-      ShellExecute(0, 'open', PWideChar(PluginPath + 'HistoryToDBViewer.exe'), PWideChar(' "'+PluginPath+'" "'+ProfilePath+'"'), nil, SW_SHOWNORMAL)
-    else
-      MsgInf(htdPluginShortName, Format(GetLangStr('ERR_NO_FOUND_VIEWER'), [PluginPath + 'HistoryToDBViewer.exe']));
+    WinName := 'HistoryToDBViewer for ' + htdIMClientName + ' ('+MyAccount+')';
+    if not SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBViewer не запущен, то запускаем
+    begin
+      if FileExists(PluginPath + 'HistoryToDBViewer.exe') then
+      begin
+        ShellExecute(0, 'open', PWideChar(PluginPath + 'HistoryToDBViewer.exe'), PWideChar(' "'+PluginPath+'" "'+ProfilePath+'"'), nil, SW_SHOWNORMAL);
+      end
+      else
+        MsgInf(htdPluginShortName, Format(GetLangStr('ERR_NO_FOUND_VIEWER'), [PluginPath + 'HistoryToDBViewer.exe']));
+    end
+    else // Иначе посылаем запрос на показ окна
+      OnSendMessageToOneComponent(WinName, '0040');
   end
-  else // Иначе посылаем запрос на показ настроек
-    OnSendMessageToAllComponent('005');
+  else // Иначе посылаем запрос на показ окна
+    OnSendMessageToOneComponent(WinName, '0040');
 end;
 
 { Cервис MS_MHTD_SHOWCONTACTHISTORY
@@ -452,7 +461,7 @@ var
   //{$ifdef REPLDEFHISTMOD}
   Si: TCListMenuItem;
   //{$endif REPLDEFHISTMOD}
-  AutoCoreLang, WinName: String;
+  AutoCoreLang, UpdTmpPath, WinName: String;
   I: Byte;
   MenuMainService: PAnsiChar;
   //IMUPD: TUpdate;
@@ -652,14 +661,49 @@ begin
   MessageCount := 0;
   // Пишем данные о первом запуске в базу
   WriteDBInt(htdDBName, 'FirstRun.FirstActivate', 1);
-  // Обновление утилиты HistoryToDBUpdater.exe
+  // Обновление утилиты HistoryToDBUpdater.exe из временной папки
+  UpdTmpPath := GetUserTempPath + 'IMHistory\';
+  if FileExists(UpdTmpPath + 'HistoryToDBUpdater.exe') then
+  begin
+    // Ищем окно HistoryToDBUpdater
+    WinName := 'HistoryToDBUpdater';
+    if not SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBUpdater не найден, то ищем другое окно
+    begin
+      WinName := 'HistoryToDBUpdater for ' + htdIMClientName + ' ('+MyAccount+')';
+      if SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBUpdater запущен, то закрываем его
+        OnSendMessageToOneComponent(WinName, '009');
+    end
+    else // Иначе посылаем запрос
+      OnSendMessageToOneComponent(WinName, '009');
+    // Удаляем старую утилиту
+    if DeleteFile(PluginPath + 'HistoryToDBUpdater.exe') then
+    begin
+      if CopyFileEx(PChar(UpdTmpPath + 'HistoryToDBUpdater.exe'), PChar(PluginPath + 'HistoryToDBUpdater.exe'), nil, nil, nil, COPY_FILE_FAIL_IF_EXISTS) then
+      begin
+        DeleteFile(UpdTmpPath + 'HistoryToDBUpdater.exe');
+        if CoreLanguage = 'Russian' then
+          MsgInf(htdPluginShortName, Format('Утилита обновления %s успешно обновлена.', ['HistoryToDBUpdater.exe']))
+        else
+          MsgInf(htdPluginShortName, Format('Update utility %s successfully updated.', ['HistoryToDBUpdater.exe']));
+      end;
+    end
+    else
+    begin
+      DeleteFile(UpdTmpPath + 'HistoryToDBUpdater.exe');
+      if CoreLanguage = 'Russian' then
+        MsgDie(htdPluginShortName, Format('Ошибка обновления утилиты %s', [PluginPath + 'HistoryToDBUpdater.exe']))
+      else
+        MsgDie(htdPluginShortName, Format('Error update utility %s', [PluginPath + 'HistoryToDBUpdater.exe']));
+    end;
+  end;
+  // Обновление утилиты HistoryToDBUpdater.exe из папки плагина
   if FileExists(PluginPath + 'HistoryToDBUpdater.upd') then
   begin
     // Ищем окно HistoryToDBUpdater
     WinName := 'HistoryToDBUpdater';
     if not SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBUpdater не найден, то ищем другое окно
     begin
-      WinName := 'HistoryToDBUpdater for ' + htdIMClientName;
+      WinName := 'HistoryToDBUpdater for ' + htdIMClientName + ' ('+MyAccount+')';
       if SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBUpdater запущен, то закрываем его
         OnSendMessageToOneComponent(WinName, '009');
     end
@@ -681,9 +725,9 @@ begin
     begin
       DeleteFile(PluginPath + 'HistoryToDBUpdater.upd');
       if CoreLanguage = 'Russian' then
-        MsgInf(htdPluginShortName, Format('Ошибка обновления утилиты %s', [PluginPath + 'HistoryToDBUpdater.exe']))
+        MsgDie(htdPluginShortName, Format('Ошибка обновления утилиты %s', [PluginPath + 'HistoryToDBUpdater.exe']))
       else
-        MsgInf(htdPluginShortName, Format('Error update utility %s', [PluginPath + 'HistoryToDBUpdater.exe']));
+        MsgDie(htdPluginShortName, Format('Error update utility %s', [PluginPath + 'HistoryToDBUpdater.exe']));
     end;
   end;
   // Запуск обновления
@@ -713,7 +757,11 @@ begin
   if not StartUpdate then
   begin
     if FileExists(PluginPath + 'HistoryToDBSync.exe') then
-      ShellExecute(0, 'open', PWideChar(PluginPath + 'HistoryToDBSync.exe'), PWideChar(' "'+PluginPath+'" "'+ProfilePath+'"'), nil, SW_SHOWNORMAL)
+    begin
+      WinName := 'HistoryToDBSync for ' + htdIMClientName + ' ('+MyAccount+')';
+      if not SearchMainWindow(pWideChar(WinName)) then // Если HistoryToDBSync for QIP не запущен, то запускаем
+        ShellExecute(0, 'open', PWideChar(PluginPath + 'HistoryToDBSync.exe'), PWideChar(' "'+PluginPath+'" "'+ProfilePath+'"'), nil, SW_SHOWNORMAL)
+    end
     else
     begin
       if CoreLanguage = 'Russian' then
@@ -765,6 +813,10 @@ begin
     ProfilePath := TmpProfilePath
   else
     ProfilePath := ExtractFilePath(DllPath);
+  // Записываем наше имя, потом оно используется для заголовка программ
+  // Имя профиля
+  MyAccount := ExtractFileNameEx(pAnsiChar(ProfileName), False);
+  WriteCustomINI(ProfilePath, 'MyAccount', MyAccount);
   // Инициализация основных функций
   HookModulesLoad := PluginLink.HookEvent(ME_SYSTEM_MODULESLOADED, OnModulesLoad);
   Result := 0;

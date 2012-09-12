@@ -135,7 +135,7 @@ begin
   LVersionNum.Left := LVersion.Left + 1 + LVersion.Width;
   LLicenseType.Left := LLicense.Left + 1 + LLicense.Width;
   // Благодарности
-  if CoreLanguage = 'Russian' then
+  if DefaultLanguage = 'Russian' then
     ThankYou.Caption := ThankYouText_Rus
   else
     ThankYou.Caption := ThankYouText_Eng;
