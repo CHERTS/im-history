@@ -83,7 +83,7 @@ var
   ReconnectInterval, ReconnectCount: Integer;
   PluginPath, ProfilePath: WideString;
   Global_MainForm_Showing, Global_SettingsForm_Showing, Global_KeyPasswdForm_Showing, GlobalHotKeyEnable: Boolean;
-  Global_AutoRunHistoryToDBSync, Global_RunningSkypeOnStartup: Boolean;
+  Global_AutoRunHistoryToDBSync, Global_RunningSkypeOnStartup, Global_ExitSkypeOnEnd: Boolean;
   IMEditorParagraphTitleSpaceBefore, IMEditorParagraphTitleSpaceAfter, IMEditorParagraphMessagesSpaceBefore, IMEditorParagraphMessagesSpaceAfter: Integer;
   SyncHotKey, SyncHotKeyDBSync, ExSearchHotKey, ExSearchNextHotKey: String;
   EncryptionKeyID, EncryptionKey: String;
@@ -533,6 +533,10 @@ begin
       if Temp = '1' then Global_RunningSkypeOnStartup := True
       else Global_RunningSkypeOnStartup := False;
 
+      Temp := INI.ReadString('Main', 'ExitSkypeOnEnd', '0');
+      if Temp = '1' then Global_ExitSkypeOnEnd := True
+      else Global_ExitSkypeOnEnd := False;
+
       Temp := INI.ReadString('Main', 'AutoRunHistoryToDBSync', '0');
       if Temp = '1' then Global_AutoRunHistoryToDBSync := True
       else Global_AutoRunHistoryToDBSync := False;
@@ -573,6 +577,7 @@ begin
       EnableDebug := False;
       GlobalSkypeSupport := False;
       Global_RunningSkypeOnStartup := False;
+      Global_ExitSkypeOnEnd := False;
       Global_AutoRunHistoryToDBSync := False;
       DefaultLanguage := 'English';
       Temp := '183|-11|Verdana|0|96|8|Y|N|N|N|';
@@ -627,6 +632,7 @@ begin
       INI.WriteInteger('Main', 'MaxErrLogSize', MaxErrLogSize);
       INI.WriteString('Main', 'SkypeSupport', BoolToIntStr(GlobalSkypeSupport));
       INI.WriteString('Main', 'RunningSkypeOnStartup', BoolToIntStr(Global_RunningSkypeOnStartup));
+      INI.WriteString('Main', 'ExitSkypeOnEnd', BoolToIntStr(Global_ExitSkypeOnEnd));
       INI.WriteString('Main', 'AutoRunHistoryToDBSync', BoolToIntStr(Global_AutoRunHistoryToDBSync));
       INI.WriteString('Main', 'AlphaBlend', BoolToIntStr(AlphaBlendEnable));
       INI.WriteInteger('Main', 'AlphaBlendValue', AlphaBlendEnableValue);

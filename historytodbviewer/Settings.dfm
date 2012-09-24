@@ -4,7 +4,7 @@ object SettingsForm: TSettingsForm
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
   Caption = #1053#1072#1089#1090#1088#1086#1081#1082#1080
-  ClientHeight = 381
+  ClientHeight = 391
   ClientWidth = 797
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -61,22 +61,24 @@ object SettingsForm: TSettingsForm
     Left = 167
     Top = 6
     Width = 622
-    Height = 336
+    Height = 346
     ActivePage = SyncTabSheet
     TabOrder = 1
     object MainTabSheet: TTabSheet
       Caption = #1041#1072#1079#1072' '#1076#1072#1085#1085#1099#1093
+      ExplicitHeight = 308
       DesignSize = (
         614
-        308)
+        318)
       object DBGroupBox: TGroupBox
         Left = 3
         Top = 1
         Width = 608
-        Height = 304
+        Height = 314
         Anchors = [akLeft, akTop, akRight, akBottom]
         Caption = ' '#1041#1072#1079#1072' '#1076#1072#1085#1085#1099#1093' '
         TabOrder = 0
+        ExplicitHeight = 304
         object LDBType: TLabel
           Left = 16
           Top = 50
@@ -240,9 +242,10 @@ object SettingsForm: TSettingsForm
     object SyncTabSheet: TTabSheet
       Caption = #1057#1080#1085#1093#1088#1086#1085#1080#1079#1072#1094#1080#1103
       ImageIndex = 1
+      ExplicitHeight = 308
       DesignSize = (
         614
-        308)
+        318)
       object SyncGroupBox: TGroupBox
         Left = 3
         Top = 1
@@ -351,7 +354,7 @@ object SettingsForm: TSettingsForm
         Left = 3
         Top = 173
         Width = 608
-        Height = 124
+        Height = 142
         Anchors = [akLeft, akTop, akRight]
         Caption = ' '#1044#1086#1087#1086#1083#1085#1080#1090#1077#1083#1100#1085#1086' '
         TabOrder = 2
@@ -390,11 +393,21 @@ object SettingsForm: TSettingsForm
           Enabled = False
           TabOrder = 3
         end
+        object CBExitSkype: TCheckBox
+          Left = 16
+          Top = 116
+          Width = 393
+          Height = 17
+          Caption = #1042#1099#1093#1086#1076#1080#1090#1100' '#1080#1079' Skype '#1087#1088#1080' '#1079#1072#1082#1088#1099#1090#1080#1080' HistoryToDBSync'
+          Enabled = False
+          TabOrder = 4
+        end
       end
     end
     object InterfaceTabSheet: TTabSheet
       Caption = #1048#1085#1090#1077#1088#1092#1077#1081#1089
       ImageIndex = 9
+      ExplicitHeight = 308
       object GBAlphaBlend: TGroupBox
         Left = 3
         Top = 3
@@ -455,17 +468,19 @@ object SettingsForm: TSettingsForm
     object InformTabSheet: TTabSheet
       Caption = #1057#1086#1073#1099#1090#1080#1103
       ImageIndex = 2
+      ExplicitHeight = 308
       DesignSize = (
         614
-        308)
+        318)
       object EventsGroupBox: TGroupBox
         Left = 3
         Top = 1
         Width = 608
-        Height = 302
+        Height = 312
         Anchors = [akLeft, akTop, akRight, akBottom]
         Caption = ' '#1057#1086#1073#1099#1090#1080#1103' '
         TabOrder = 0
+        ExplicitHeight = 302
         object LNumLastHistoryMsg: TLabel
           Left = 85
           Top = 189
@@ -580,9 +595,10 @@ object SettingsForm: TSettingsForm
     object FontsTabSheet: TTabSheet
       Caption = #1064#1088#1080#1092#1090#1099' '#1080' '#1076#1088'.'
       ImageIndex = 4
+      ExplicitHeight = 308
       DesignSize = (
         614
-        308)
+        318)
       object GBMessageFonts: TGroupBox
         Left = 3
         Top = 1
@@ -969,21 +985,23 @@ object SettingsForm: TSettingsForm
     object HotKeyTabSheet: TTabSheet
       Caption = #1043#1086#1088#1103#1095#1080#1077' '#1082#1083#1072#1074#1080#1096#1080
       ImageIndex = 6
+      ExplicitHeight = 308
       DesignSize = (
         614
-        308)
+        318)
       object GBHotKey: TGroupBox
         Left = 3
         Top = 32
         Width = 608
-        Height = 273
+        Height = 283
         Anchors = [akLeft, akTop, akRight, akBottom]
         Caption = ' '#1043#1086#1088#1103#1095#1080#1077' '#1082#1083#1072#1074#1080#1096#1080' '
         TabOrder = 0
         Visible = False
+        ExplicitHeight = 273
         DesignSize = (
           608
-          273)
+          283)
         object HotKetStringGrid: TStringGrid
           Left = 16
           Top = 24
@@ -1047,9 +1065,10 @@ object SettingsForm: TSettingsForm
     object EncryptionTabSheet: TTabSheet
       Caption = #1064#1080#1092#1088#1086#1074#1072#1085#1080#1077' '#1080#1089#1090#1086#1088#1080#1080
       ImageIndex = 1
+      ExplicitHeight = 308
       DesignSize = (
         614
-        308)
+        318)
       object GBKeys: TGroupBox
         Left = 3
         Top = 33
@@ -1165,6 +1184,7 @@ object SettingsForm: TSettingsForm
     object AboutTabSheet: TTabSheet
       Caption = #1054' '#1087#1088#1086#1075#1088#1072#1084#1084#1077
       ImageIndex = 5
+      ExplicitHeight = 308
       object LProgramName: TLabel
         Left = 96
         Top = 16
@@ -1283,17 +1303,19 @@ object SettingsForm: TSettingsForm
     object EncryptKeyCreateTabSheet: TTabSheet
       Caption = #1057#1086#1079#1076#1072#1085#1080#1077' '#1082#1083#1102#1095#1072' '#1096#1080#1092#1088#1086#1074#1072#1085#1080#1103
       ImageIndex = 7
+      ExplicitHeight = 308
       DesignSize = (
         614
-        308)
+        318)
       object GBKeyProp: TGroupBox
         Left = 3
         Top = 0
         Width = 352
-        Height = 305
+        Height = 315
         Anchors = [akLeft, akTop, akRight, akBottom]
         Caption = ' '#1057#1086#1079#1076#1072#1085#1080#1077' '#1082#1083#1102#1095#1072' '#1096#1080#1092#1088#1086#1074#1072#1085#1080#1103' '
         TabOrder = 0
+        ExplicitHeight = 305
         object LKeyStatusTitle: TLabel
           Left = 16
           Top = 24
@@ -1412,17 +1434,19 @@ object SettingsForm: TSettingsForm
     object KeyPasswordChangeTabSheet: TTabSheet
       Caption = #1057#1084#1077#1085#1072' '#1087#1072#1088#1086#1083#1103' '#1082#1083#1102#1095#1072
       ImageIndex = 8
+      ExplicitHeight = 308
       DesignSize = (
         614
-        308)
+        318)
       object GBKeyPasswordChange: TGroupBox
         Left = 3
         Top = 0
         Width = 608
-        Height = 305
+        Height = 315
         Anchors = [akLeft, akTop, akRight, akBottom]
         Caption = ' '#1057#1084#1077#1085#1072' '#1087#1072#1088#1086#1083#1103' '#1082#1083#1102#1095#1072' '#1096#1080#1092#1088#1086#1074#1072#1085#1080#1103' '
         TabOrder = 0
+        ExplicitHeight = 305
         object LCurrentPassword: TLabel
           Left = 16
           Top = 24
@@ -1484,7 +1508,7 @@ object SettingsForm: TSettingsForm
   end
   object SaveButton: TButton
     Left = 528
-    Top = 348
+    Top = 358
     Width = 155
     Height = 25
     Caption = #1057#1086#1093#1088#1072#1085#1080#1090#1100' '#1085#1072#1089#1090#1088#1086#1081#1082#1080
@@ -1495,7 +1519,7 @@ object SettingsForm: TSettingsForm
   end
   object CloseButton: TButton
     Left = 689
-    Top = 348
+    Top = 358
     Width = 100
     Height = 25
     Caption = #1047#1072#1082#1088#1099#1090#1100
@@ -1508,7 +1532,7 @@ object SettingsForm: TSettingsForm
     Left = 8
     Top = 8
     Width = 153
-    Height = 334
+    Height = 344
     BevelKind = bkTile
     BorderStyle = bsNone
     ButtonOptions = [gboFullSize, gboGroupStyle, gboShowCaptions]

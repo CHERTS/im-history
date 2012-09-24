@@ -16,7 +16,8 @@ uses
   Global in 'Global.pas',
   About in 'About.pas' {AboutForm},
   Log in 'Log.pas' {LogForm},
-  KeyPasswd in 'KeyPasswd.pas' {KeyPasswdForm};
+  KeyPasswd in 'KeyPasswd.pas' {KeyPasswdForm},
+  MapStream in 'MapStream.pas';
 
 {$R *.res}
 

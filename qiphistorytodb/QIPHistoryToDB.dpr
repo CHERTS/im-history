@@ -17,7 +17,8 @@ uses
   u_plugin_msg in 'SDK\u_plugin_msg.pas',
   Global in 'Global.pas',
   About in 'About.pas' {AboutForm},
-  FSMonitor in 'FSMonitor.pas';
+  FSMonitor in 'FSMonitor.pas',
+  MapStream in 'MapStream.pas';
 
 //Создаём экспортируемую функцию в DLL
 function CreateInfiumPLUGIN(PluginService: IQIPPluginService): IQIPPlugin; stdcall;
