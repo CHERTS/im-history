@@ -29,7 +29,8 @@ uses
   About in 'About.pas',
   MsgExport in 'MsgExport.pas' {ExportForm},
   Global in 'Global.pas',
-  FSMonitor in 'FSMonitor.pas';
+  FSMonitor in 'FSMonitor.pas',
+  MapStream in 'MapStream.pas';
 
 // use it to make plugin unicode-aware
 {$DEFINE UNICODE}
@@ -241,6 +242,8 @@ var
   I: Integer;
   Msg_RcvrNick, Msg_RcvrAcc, Msg_SenderNick, Msg_SenderAcc, Msg_Text, MD5String: WideString;
   Date_Str, MsgStatus: String;
+  InsertSQLData, EncInsertSQLData, WinName: String;
+  ASize: Integer;
 begin
   Result := 0;
   ZeroMemory(@DBEventInfo, SizeOf(DBEventInfo));
@@ -326,9 +329,9 @@ begin
       // Лог отладки
       if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Функция OnEventAdded: ' + 'Contact ID: ' + ContactID + ' | Contact Name: ' + ContactName + ' | Proto: ' + ContactProto + ' | My Contact ID: ' + MyContactID + ' | My Contact Name: ' + MyContactName + ' | Contact Proto = ' + ContactProto + ' | MsgStatus = ' + MsgStatus + ' | DateTime = ' + FormatDateTime('DD.MM.YYYY HH:MM:SS', UnixToLocalTime(DBEventInfo.timestamp)) + ' | Message = ' + Msg_Text, 2);
       if (MatchStrings(DBType, 'oracle*')) then // Если Oracle, то пишем SQL-лог в формате CHAT_MSG_LOG_ORACLE
-        WriteInLog(ProfilePath, Format(CHAT_MSG_LOG_ORACLE, [DBUserName, MsgStatus, 'to_date('''+Date_Str+''', ''dd.mm.yyyy hh24:mi:ss'')', Msg_RcvrNick, 'Skype', Msg_RcvrNick+' ('+Msg_RcvrAcc+')', BoolToIntStr(True), BoolToIntStr(False), BoolToIntStr(False), Msg_Text, EncryptMD5(MD5String)]), 0)
+        InsertSQLData := Format(CHAT_MSG_LOG_ORACLE, [DBUserName, MsgStatus, 'to_date('''+Date_Str+''', ''dd.mm.yyyy hh24:mi:ss'')', Msg_RcvrNick, 'Skype', Msg_RcvrNick+' ('+Msg_RcvrAcc+')', BoolToIntStr(True), BoolToIntStr(False), BoolToIntStr(False), Msg_Text, EncryptMD5(MD5String)])
       else
-        WriteInLog(ProfilePath, Format(CHAT_MSG_LOG, [DBUserName, MsgStatus, Date_Str, Msg_RcvrNick, 'Skype', Msg_RcvrNick+' ('+Msg_RcvrAcc+')', BoolToIntStr(True), BoolToIntStr(False), BoolToIntStr(False), Msg_Text, EncryptMD5(MD5String)]), 0);
+        InsertSQLData := Format(CHAT_MSG_LOG, [DBUserName, MsgStatus, Date_Str, Msg_RcvrNick, 'Skype', Msg_RcvrNick+' ('+Msg_RcvrAcc+')', BoolToIntStr(True), BoolToIntStr(False), BoolToIntStr(False), Msg_Text, EncryptMD5(MD5String)]);
     end
     else
     begin
@@ -340,14 +343,34 @@ begin
       // Лог отладки
       if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Функция OnEventAdded: ' + 'Contact ID: ' + ContactID + ' | Contact Name: ' + ContactName + ' | Proto: ' + ContactProto + ' | My Contact ID: ' + MyContactID + ' | My Contact Name: ' + MyContactName + ' | Contact Proto = ' + ContactProto + ' | MsgStatus = ' + MsgStatus + ' | DateTime = ' + FormatDateTime('DD.MM.YYYY HH:MM:SS', UnixToLocalTime(DBEventInfo.timestamp)) + ' | Message = ' + Msg_Text, 2);
       if (MatchStrings(DBType, 'oracle*')) then // Если Oracle, то пишем SQL-лог в формате MSG_LOG_ORACLE
-        WriteInLog(ProfilePath, Format(MSG_LOG_ORACLE, [DBUserName, IntToStr(ProtoType), Msg_SenderNick, Msg_SenderAcc, Msg_RcvrNick, Msg_RcvrAcc, MsgStatus, 'to_date('''+Date_Str+''', ''dd.mm.yyyy hh24:mi:ss'')', Msg_Text, EncryptMD5(MD5String)]), 0)
+        InsertSQLData := Format(MSG_LOG_ORACLE, [DBUserName, IntToStr(ProtoType), Msg_SenderNick, Msg_SenderAcc, Msg_RcvrNick, Msg_RcvrAcc, MsgStatus, 'to_date('''+Date_Str+''', ''dd.mm.yyyy hh24:mi:ss'')', Msg_Text, EncryptMD5(MD5String)])
       else
-        WriteInLog(ProfilePath, Format(MSG_LOG, [DBUserName, IntToStr(ProtoType), Msg_SenderNick, Msg_SenderAcc, Msg_RcvrNick, Msg_RcvrAcc, MsgStatus, Date_Str, Msg_Text, EncryptMD5(MD5String)]), 0);
+        InsertSQLData := Format(MSG_LOG, [DBUserName, IntToStr(ProtoType), Msg_SenderNick, Msg_SenderAcc, Msg_RcvrNick, Msg_RcvrAcc, MsgStatus, Date_Str, Msg_Text, EncryptMD5(MD5String)]);
     end;
-    // Посылаем запрос на синхронизацию
+    // Посылаем сообщение через MMF для Автоматического режима синхронизации
     if SyncMethod = 0 then
-      OnSendMessageToAllComponent('002')
-    else if SyncMethod = 2 then
+    begin
+      WinName := 'HistoryToDBSync for ' + htdIMClientName + ' ('+MyAccount+')';
+      if SearchMainWindow(pWideChar(WinName)) then
+      begin
+        EncInsertSQLData := EncryptStr(InsertSQLData);
+        ASize := 2*Length(EncInsertSQLData);
+        with FMap do
+        begin
+          Clear;
+          WriteBuffer(@ASize,Sizeof(Integer));
+          WriteBuffer(PChar(EncInsertSQLData),ASize);
+        end;
+        // Отправляем сигнал, что сообщение в памяти
+        OnSendMessageToOneComponent('HistoryToDBSync for ' + htdIMClientName + ' ('+MyAccount+')', '010');
+      end
+      else
+        WriteInLog(ProfilePath, InsertSQLData, 0);
+    end
+    else // Для режима синхронизации по расписанию и ручного пишем сообщения в SQL-файл
+      WriteInLog(ProfilePath, InsertSQLData, 0);
+    // Если режим по расписанию
+    if SyncMethod = 2 then
     begin
       if (SyncInterval > 4) and (SyncInterval < 8) then
       begin
@@ -655,6 +678,9 @@ begin
   FILE_NOTIFY_CHANGE_SECURITY         = $00000100;//Изменение прав доступа
   }
   StartWatch(ProfilePath, FILE_NOTIFY_CHANGE_LAST_WRITE, False, @ProfileDirChangeCallBack);
+  // MMF
+  if SyncMethod = 0 then
+    FMap := TMapStream.CreateEx('HistoryToDB for ' + htdIMClientName + ' ('+MyAccount+')',MAXDWORD,2000);
   // Плагин загружен
   PluginStatus := True;
   // Кол. сообщений
@@ -868,6 +894,9 @@ begin
     OnSendMessageToAllComponent('003');
     // Очистка ключей шифрования
     EncryptFree;
+    // MMF
+    if Assigned(FMap) then
+      FMap.Free;
     // Откл. языковой поддержки
     LangDoc.Active := False;
   end;

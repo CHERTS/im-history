@@ -1,3 +1,13 @@
+{ ############################################################################ }
+{ #                                                                          # }
+{ #  Miranda HistoryToDB Plugin v2.4                                         # }
+{ #                                                                          # }
+{ #  License: GPLv3                                                          # }
+{ #                                                                          # }
+{ #  Author: Grigorev Michael (icq: 161867489, email: sleuthhound@gmail.com) # }
+{ #                                                                          # }
+{ ############################################################################ }
+
 unit MsgExport;
 
 interface
