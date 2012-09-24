@@ -14,7 +14,7 @@ interface
 
 uses
   Windows, SysUtils, IniFiles,  DCPcrypt2, DCPblockciphers, DCPsha1, DCPdes, DCPmd5,
-  Messages, XMLIntf, XMLDoc, FSMonitor;
+  Messages, XMLIntf, XMLDoc, FSMonitor, MapStream;
 
 type
   TCopyDataType = (cdtString = 0, cdtImage = 1, cdtRecord = 2);
@@ -42,8 +42,6 @@ const
   dirLangs = 'langs\';
   defaultLangFile = 'English.xml';
   // Отладка
-  EnableDebug = False;
-  DebugLogPath = 'C:\';
   DebugLogName = 'HistoryToDBDebug.log';
   // Благодарности
   ThankYouText_Rus = 'Анна Никифорова за активное тестирование плагина.' + #13#10 +
@@ -78,6 +76,7 @@ var
   ProfilePath, MyAccount: String;
   Global_AboutForm_Showing: Boolean;
   Global_SettingsForm_Showing: Boolean;
+  EnableDebug, EnableCallBackDebug: Boolean;
   // Для мультиязыковой поддержки
   CoreLanguage: String;
   SettingsFormHandle: HWND;
@@ -88,6 +87,8 @@ var
   Cipher: TDCP_3des;
   Digest: Array[0..19] of Byte;
   Hash: TDCP_sha1;
+  // MMF
+  FMap: TMapStream;
 
 function BoolToIntStr(b: Boolean): String;
 function IsNumber(const S: String): Boolean;
@@ -270,30 +271,37 @@ begin
    NumLastHistoryMsg := INI.ReadInteger('Main', 'NumLastHistoryMsg', 6);
 
    Temp := INI.ReadString('Main', 'WriteErrLog', '1');
-   if Temp = '1' then WriteErrLog := true
-   else WriteErrLog := false;
+   if Temp = '1' then WriteErrLog := True
+   else WriteErrLog := False;
 
    Temp := INI.ReadString('Main', 'ShowAnimation', '1');
-   if Temp = '1' then AniEvents := true
-   else AniEvents := false;
+   if Temp = '1' then AniEvents := True
+   else AniEvents := False;
 
    Temp := INI.ReadString('Main', 'EnableHistoryEncryption', '0');
-   if Temp = '1' then EnableHistoryEncryption := true
-   else EnableHistoryEncryption := false;
+   if Temp = '1' then EnableHistoryEncryption := True
+   else EnableHistoryEncryption := False;
 
    DefaultLanguage := INI.ReadString('Main', 'DefaultLanguage', 'Russian');
 
    Temp := INI.ReadString('Main', 'HideHistorySyncIcon', '0');
-   if Temp = '1' then HideSyncIcon := true
-   else HideSyncIcon := false;
+   if Temp = '1' then HideSyncIcon := True
+   else HideSyncIcon := False;
 
    SyncTimeCount := INI.ReadInteger('Main', 'SyncTimeCount', 40);
    SyncMessageCount := INI.ReadInteger('Main', 'SyncMessageCount', 50);
 
    Temp := INI.ReadString('Main', 'ShowPluginButton', '1');
-   if Temp = '1' then ShowPluginButton := true
-   else ShowPluginButton := false;
+   if Temp = '1' then ShowPluginButton := True
+   else ShowPluginButton := False;
 
+   Temp := INI.ReadString('Main', 'EnableDebug', '0');
+   if Temp = '1' then EnableDebug := True
+   else EnableDebug := False;
+
+   Temp := INI.ReadString('Main', 'EnableCallBackDebug', '0');
+   if Temp = '1' then EnableCallBackDebug := True
+   else EnableCallBackDebug := False;
   end
  else
   begin
@@ -561,13 +569,30 @@ var
   SettingsFormRequest: String;
 begin
   SettingsFormRequest := ReadCustomINI(ProfilePath, 'SettingsFormRequestSend', '0');
-  if EnableDebug then WriteInLog(DebugLogPath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура ProfileDirChangeCallBack: Параметр SettingsFormRequestSend = ' + SettingsFormRequest, 2);
-  if EnableDebug then WriteInLog(DebugLogPath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура ProfileDirChangeCallBack: FAction = ' + IntToStr(pInfo.FAction) + ' | FOldFileName = ' + pInfo.FOldFileName + ' | FNewFileName = ' + pInfo.FNewFileName, 2);
+  if EnableCallBackDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура ProfileDirChangeCallBack: Параметр SettingsFormRequestSend = ' + SettingsFormRequest, 2);
+  if EnableCallBackDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура ProfileDirChangeCallBack: FAction = ' + IntToStr(pInfo.FAction) + ' | FOldFileName = ' + pInfo.FOldFileName + ' | FNewFileName = ' + pInfo.FNewFileName, 2);
   if (pInfo.FAction = 3) and (pInfo.FNewFileName = 'HistoryToDB.ini') and (SettingsFormRequest = '0') then
   begin
-    if EnableDebug then WriteInLog(DebugLogPath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура ProfileDirChangeCallBack: Настройки HistoryToDB.ini перечитаны', 2);
+    if EnableCallBackDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура ProfileDirChangeCallBack: Настройки HistoryToDB.ini перечитаны.', 2);
     IMDelay(500);
     LoadINI(ProfilePath, true);
+    // MMF
+    if SyncMethod = 0 then
+    begin
+      if not Assigned(FMap) then
+      begin
+        if EnableCallBackDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура ProfileDirChangeCallBack: Создаем TMapStream', 2);
+        FMap := TMapStream.CreateEx('HistoryToDB for QIP ('+MyAccount+')',MAXDWORD,2000);
+      end;
+    end
+    else
+    begin
+      if Assigned(FMap) then
+      begin
+        FMap.Free;
+        FMap := nil;
+      end;
+    end;
   end;
 end;
 

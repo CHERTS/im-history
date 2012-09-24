@@ -33,7 +33,8 @@ uses
   About in 'About.pas' {AboutForm},
   FSMonitor in 'FSMonitor.pas',
   plugin,
-  pluginutil;
+  pluginutil,
+  MapStream in 'MapStream.pas';
 
 var
   userPath, andrqPath: AnsiString;
@@ -229,6 +230,8 @@ var
   Current_UIN_Name, Msg_RcvrNick, Msg_Text, MD5String: AnsiString;
   Msg_DateTime: TDateTime;
   Date_Str: String;
+  InsertSQLData, EncInsertSQLData, WinName: String;
+  ASize: Integer;
 begin
   if Status = 0 then
   begin
@@ -290,13 +293,33 @@ begin
       Date_Str := FormatDateTime('YYYY-MM-DD HH:MM:SS', Msg_DateTime);
     MD5String := IntToStr(Msg_RcvrAcc) + FormatDateTime('YYYY-MM-DD HH:MM:SS', Msg_DateTime) + Msg_Text;
     if (DBType = 'oracle') or (DBType = 'oracle-9i') then
-      WriteInLog(ProfilePath, Format(MSG_LOG_ORACLE, [DBUserName, '0', Current_UIN_Name, IntToStr(Global_CurrentAccountUIN), Msg_RcvrNick, IntToStr(Msg_RcvrAcc), '1', 'to_date('''+Date_Str+''', ''dd.mm.yyyy hh24:mi:ss'')', Msg_Text, EncryptMD5(MD5String)]), LogType)
+      InsertSQLData := Format(MSG_LOG_ORACLE, [DBUserName, '0', Current_UIN_Name, IntToStr(Global_CurrentAccountUIN), Msg_RcvrNick, IntToStr(Msg_RcvrAcc), '1', 'to_date('''+Date_Str+''', ''dd.mm.yyyy hh24:mi:ss'')', Msg_Text, EncryptMD5(MD5String)])
     else
-      WriteInLog(ProfilePath, Format(MSG_LOG, [DBUserName, '0', Current_UIN_Name, IntToStr(Global_CurrentAccountUIN), Msg_RcvrNick, IntToStr(Msg_RcvrAcc), '1', Date_Str, Msg_Text, EncryptMD5(MD5String)]), LogType);
+      InsertSQLData := Format(MSG_LOG, [DBUserName, '0', Current_UIN_Name, IntToStr(Global_CurrentAccountUIN), Msg_RcvrNick, IntToStr(Msg_RcvrAcc), '1', Date_Str, Msg_Text, EncryptMD5(MD5String)]);
   end;
-  // Посылаем запрос на синхронизацию
+  // Посылаем сообщение через MMF для Автоматического режима синхронизации
   if SyncMethod = 0 then
-    OnSendMessageToOneComponent('HistoryToDBSync for RnQ ('+MyAccount+')', '002');
+  begin
+    WinName := 'HistoryToDBSync for RnQ ('+MyAccount+')';
+    if SearchMainWindow(pWideChar(WinName)) then
+    begin
+      EncInsertSQLData := EncryptStr(InsertSQLData);
+      ASize := 2*Length(EncInsertSQLData);
+      with FMap do
+      begin
+        Clear;
+        WriteBuffer(@ASize,Sizeof(Integer));
+        WriteBuffer(PChar(EncInsertSQLData),ASize);
+      end;
+      // Отправляем сигнал, что сообщение в пямяти
+      OnSendMessageToOneComponent('HistoryToDBSync for RnQ ('+MyAccount+')', '010');
+    end
+    else
+      WriteInLog(ProfilePath, InsertSQLData, LogType);
+  end
+  else // Для режима синхронизации по расписанию и ручного пишем сообщения в SQL-файл
+    WriteInLog(ProfilePath, InsertSQLData, 0);
+  // Если режим по расписанию
   if SyncMethod = 2 then
   begin
     if (SyncInterval > 4) and (SyncInterval < 8) then
@@ -423,6 +446,9 @@ begin
             FILE_NOTIFY_CHANGE_SECURITY         = $00000100;//Изменение прав доступа
             }
             StartWatch(ProfilePath, FILE_NOTIFY_CHANGE_LAST_WRITE, False, @ProfileDirChangeCallBack);
+            // MMF
+            if SyncMethod = 0 then
+              FMap := TMapStream.CreateEx('HistoryToDB for RnQ ('+MyAccount+')',MAXDWORD,2000);
             // Запускаем программу синхронизации HistoryToDBSync
             if FileExists(PluginPath + '\HistoryToDBSync.exe') then
               ShellExecute(0, 'open', PWideChar(PluginPath + '\HistoryToDBSync.exe'), PWideChar('"'+PluginPath+'\" "'+ProfilePath+'"'), nil, SW_SHOWNORMAL)
@@ -546,6 +572,10 @@ begin
               OnSendMessageToAllComponent('003');
               // Очистка ключей шифрования
               EncryptFree;
+              // MMF
+              if Assigned(FMap) then
+                FMap.Free;
+              // Откл. языковой поддержки
               LangDoc.Active := False;
             end;
           except
