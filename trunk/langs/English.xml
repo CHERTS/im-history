@@ -233,6 +233,7 @@
   <AutoScrollText>Auto scrolling messages</AutoScrollText>
   <AutoRunHistoryToDBSync>HistoryToDBSync run at Windows startup</AutoRunHistoryToDBSync>
   <RunningSkypeOnStartup>Launch Skype at startup HistoryToDBSync</RunningSkypeOnStartup>
+  <ExitSkypeOnEnd>Close Skype on exit HistoryToDBSync</ExitSkypeOnEnd>
 
   <AboutButton>About</AboutButton>
   <AboutFormCaption>About</AboutFormCaption>

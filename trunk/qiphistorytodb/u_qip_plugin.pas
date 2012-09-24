@@ -14,7 +14,7 @@ interface
 
 uses Windows, SysUtils, StrUtils, ExtCtrls, Graphics, Menus,
     u_plugin_info, u_plugin_msg, u_common, JclStringConversions, WideStrUtils,
-    XMLIntf, XMLDoc, ShellApi, Global, FSMonitor, About;
+    XMLIntf, XMLDoc, ShellApi, Messages, Global, FSMonitor, About, MapStream;
 
 var
   PluginStatus: Boolean = False;
@@ -42,7 +42,7 @@ type
     MessageCount    : Integer;
     FSnapshotIntf   : ICLSnapshot;
     AddProtoInFile  : Boolean;
-    MenuItem: Array[0..50] of TPluginMenuItem;
+    MenuItem:       Array[0..50] of TPluginMenuItem;
     procedure LoadSuccess;
     procedure CreateControls;
     procedure LoadPluginOptions;
@@ -338,6 +338,9 @@ begin
           ShowFadeWindow(Format('Error update utility %s', [PluginPath + 'HistoryToDBUpdater.exe']), 0, 2);
       end;
     end;
+    // MMF
+    if SyncMethod = 0 then
+      FMap := TMapStream.CreateEx('HistoryToDB for QIP ('+MyAccount+')',MAXDWORD,2000);
     // Плагин загружен
     PluginStatus := True;
     // Кол. сообщений
@@ -379,6 +382,10 @@ begin
       OnSendMessageToAllComponent('003');
       // Очистка ключей шифрования
       EncryptFree;
+      // MMF
+      //if SyncMethod = 0 then
+      if Assigned(FMap) then
+        FMap.Free;
       // Откл. языковой поддержки
       LangDoc.Active := False;
     except
@@ -952,6 +959,8 @@ var
   Msg_Text_WriteFile: PWideChar;
   Date_Str: String;
   BlockWriteMsg: Boolean;
+  InsertSQLData, EncInsertSQLData, WinName: String;
+  I, ASize: Integer;
 begin
   AQIPMsg := pQipMsgPlugin(PMSG.WParam);
   // Debug
@@ -1020,34 +1029,50 @@ begin
     Msg_SenderAcc := PrepareString(AQIPMsg^.SenderAcc);
     Msg_SenderNick := WideStringToUTF8(Msg_SenderNick);
     Msg_SenderAcc := WideStringToUTF8(Msg_SenderAcc);
+    if (DBType = 'oracle') or (DBType = 'oracle-9i') then
+      Date_Str := FormatDateTime('DD.MM.YYYY HH:MM:SS', UnixToDateTime(AQIPMsg^.MsgTime))
+    else
+      Date_Str := FormatDateTime('YYYY-MM-DD HH:MM:SS', UnixToDateTime(AQIPMsg^.MsgTime));
     if MsgStatus = 0 then
     begin
       MD5String := Msg_RcvrAcc + FormatDateTime('YYYY-MM-DD HH:MM:SS', UnixToDateTime(AQIPMsg^.MsgTime)) + Msg_Text;
-      if (DBType = 'oracle') or (DBType = 'oracle-9i') then
-        Date_Str := FormatDateTime('DD.MM.YYYY HH:MM:SS', UnixToDateTime(AQIPMsg^.MsgTime))
-      else
-        Date_Str := FormatDateTime('YYYY-MM-DD HH:MM:SS', UnixToDateTime(AQIPMsg^.MsgTime));
       if (MatchStrings(DBType, 'oracle*')) then // Если Oracle, то пишем SQL-лог в формате MSG_LOG_ORACLE
-        WriteInLog(ProfilePath, Format(MSG_LOG_ORACLE, [DBUserName, IntToStr(ProtoType), Msg_SenderNick, Msg_SenderAcc, Msg_RcvrNick, Msg_RcvrAcc, '0', 'to_date('''+Date_Str+''', ''dd.mm.yyyy hh24:mi:ss'')', Msg_Text, EncryptMD5(MD5String)]), 0)
+        InsertSQLData := Format(MSG_LOG_ORACLE, [DBUserName, IntToStr(ProtoType), Msg_SenderNick, Msg_SenderAcc, Msg_RcvrNick, Msg_RcvrAcc, '0', 'to_date('''+Date_Str+''', ''dd.mm.yyyy hh24:mi:ss'')', Msg_Text, EncryptMD5(MD5String)])
       else
-        WriteInLog(ProfilePath, Format(MSG_LOG, [DBUserName, IntToStr(ProtoType), Msg_SenderNick, Msg_SenderAcc, Msg_RcvrNick, Msg_RcvrAcc, '0', Date_Str, Msg_Text, EncryptMD5(MD5String)]), 0);
+        InsertSQLData := Format(MSG_LOG, [DBUserName, IntToStr(ProtoType), Msg_SenderNick, Msg_SenderAcc, Msg_RcvrNick, Msg_RcvrAcc, '0', Date_Str, Msg_Text, EncryptMD5(MD5String)]);
     end
     else
     begin
       MD5String := Msg_SenderAcc + FormatDateTime('YYYY-MM-DD HH:MM:SS', UnixToDateTime(AQIPMsg^.MsgTime)) + Msg_Text;
-      if (DBType = 'oracle') or (DBType = 'oracle-9i') then
-        Date_Str := FormatDateTime('DD.MM.YYYY HH:MM:SS', UnixToDateTime(AQIPMsg^.MsgTime))
-      else
-        Date_Str := FormatDateTime('YYYY-MM-DD HH:MM:SS', UnixToDateTime(AQIPMsg^.MsgTime));
       if (MatchStrings(DBType, 'oracle*')) then // Если Oracle, то пишем SQL-лог в формате MSG_LOG_ORACLE
-        WriteInLog(ProfilePath, Format(MSG_LOG_ORACLE, [DBUserName, IntToStr(ProtoType), Msg_RcvrNick, Msg_RcvrAcc, Msg_SenderNick, Msg_SenderAcc, '1', 'to_date('''+Date_Str+''', ''dd.mm.yyyy hh24:mi:ss'')', Msg_Text, EncryptMD5(MD5String)]), 0)
+        InsertSQLData := Format(MSG_LOG_ORACLE, [DBUserName, IntToStr(ProtoType), Msg_RcvrNick, Msg_RcvrAcc, Msg_SenderNick, Msg_SenderAcc, '1', 'to_date('''+Date_Str+''', ''dd.mm.yyyy hh24:mi:ss'')', Msg_Text, EncryptMD5(MD5String)])
       else
-        WriteInLog(ProfilePath, Format(MSG_LOG, [DBUserName, IntToStr(ProtoType), Msg_RcvrNick, Msg_RcvrAcc, Msg_SenderNick, Msg_SenderAcc, '1', FormatDateTime('YYYY-MM-DD HH:MM:SS', UnixToDateTime(AQIPMsg^.MsgTime)), Msg_Text, EncryptMD5(MD5String)]), 0);
+        InsertSQLData := Format(MSG_LOG, [DBUserName, IntToStr(ProtoType), Msg_RcvrNick, Msg_RcvrAcc, Msg_SenderNick, Msg_SenderAcc, '1', FormatDateTime('YYYY-MM-DD HH:MM:SS', UnixToDateTime(AQIPMsg^.MsgTime)), Msg_Text, EncryptMD5(MD5String)]);
     end;
-    // Посылаем запрос на синхронизацию
+    // Посылаем сообщение через MMF для Автоматического режима синхронизации
     if SyncMethod = 0 then
-      OnSendMessageToOneComponent('HistoryToDBSync for QIP ('+MyAccount+')', '002')
-    else if SyncMethod = 2 then
+    begin
+      WinName := 'HistoryToDBSync for QIP ('+MyAccount+')';
+      if SearchMainWindow(pWideChar(WinName)) then
+      begin
+        EncInsertSQLData := EncryptStr(InsertSQLData);
+        ASize := 2*Length(EncInsertSQLData);
+        with FMap do
+        begin
+          Clear;
+          WriteBuffer(@ASize,Sizeof(Integer));
+          WriteBuffer(PChar(EncInsertSQLData),ASize);
+        end;
+        // Отправляем сигнал, что сообщение в пямяти
+        OnSendMessageToOneComponent('HistoryToDBSync for QIP ('+MyAccount+')', '010');
+      end
+      else
+        WriteInLog(ProfilePath, InsertSQLData, 0);
+    end
+    else // Для режима синхронизации по расписанию и ручного пишем сообщения в SQL-файл
+      WriteInLog(ProfilePath, InsertSQLData, 0);
+    // Если режим по расписанию
+    if SyncMethod = 2 then
     begin
       if (SyncInterval > 4) and (SyncInterval < 8) then
       begin
@@ -1089,6 +1114,8 @@ var
   aChatName, aNickName, aProtoAcc, aMsgText, MD5String: WideString;
   aMsgType: Integer;
   aIsPrivate: Boolean;
+  InsertSQLData, EncInsertSQLData, WinName: String;
+  I, ASize: Integer;
 begin
   AQIPChatMsg := pChatTextInfo(PMSG.NParam);
   { Принимаем только определенные типы чат-сообщений
@@ -1152,13 +1179,33 @@ begin
     else
       Date_Str := FormatDateTime('YYYY-MM-DD HH:MM:SS', UnixToDateTime(AQIPChatMsg^.MsgTime));
     if (MatchStrings(DBType, 'oracle*')) then // Если Oracle, то пишем SQL-лог в формате CHAT_MSG_LOG_ORACLE
-      WriteInLog(ProfilePath, Format(CHAT_MSG_LOG_ORACLE, [DBUserName, IntToStr(aMsgType), 'to_date('''+Date_Str+''', ''dd.mm.yyyy hh24:mi:ss'')', aChatName, aProtoAcc, aNickName, BoolToIntStr(aIsPrivate), BoolToIntStr(AQIPChatMsg^.IsSimple), BoolToIntStr(AQIPChatMsg^.IsIRC), aMsgText, EncryptMD5(MD5String)]), 0)
+      InsertSQLData := Format(CHAT_MSG_LOG_ORACLE, [DBUserName, IntToStr(aMsgType), 'to_date('''+Date_Str+''', ''dd.mm.yyyy hh24:mi:ss'')', aChatName, aProtoAcc, aNickName, BoolToIntStr(aIsPrivate), BoolToIntStr(AQIPChatMsg^.IsSimple), BoolToIntStr(AQIPChatMsg^.IsIRC), aMsgText, EncryptMD5(MD5String)])
     else
-      WriteInLog(ProfilePath, Format(CHAT_MSG_LOG, [DBUserName, IntToStr(aMsgType), Date_Str, aChatName, aProtoAcc, aNickName, BoolToIntStr(aIsPrivate), BoolToIntStr(AQIPChatMsg^.IsSimple), BoolToIntStr(AQIPChatMsg^.IsIRC), aMsgText, EncryptMD5(MD5String)]), 0);
-    // Посылаем запрос на синхронизацию
+      InsertSQLData := Format(CHAT_MSG_LOG, [DBUserName, IntToStr(aMsgType), Date_Str, aChatName, aProtoAcc, aNickName, BoolToIntStr(aIsPrivate), BoolToIntStr(AQIPChatMsg^.IsSimple), BoolToIntStr(AQIPChatMsg^.IsIRC), aMsgText, EncryptMD5(MD5String)]);
+    // Посылаем сообщение через MMF для Автоматического режима синхронизации
     if SyncMethod = 0 then
-      OnSendMessageToOneComponent('HistoryToDBSync for QIP ('+MyAccount+')', '002')
-    else if SyncMethod = 2 then
+    begin
+      WinName := 'HistoryToDBSync for QIP ('+MyAccount+')';
+      if SearchMainWindow(pWideChar(WinName)) then
+      begin
+        EncInsertSQLData := EncryptStr(InsertSQLData);
+        ASize := 2*Length(EncInsertSQLData);
+        with FMap do
+        begin
+          Clear;
+          WriteBuffer(@ASize,Sizeof(Integer));
+          WriteBuffer(PChar(EncInsertSQLData),ASize);
+        end;
+        // Отправляем сигнал, что сообщение в пямяти
+        OnSendMessageToOneComponent('HistoryToDBSync for QIP ('+MyAccount+')', '010');
+      end
+      else
+        WriteInLog(ProfilePath, InsertSQLData, 0);
+    end
+    else // Для режима синхронизации по расписанию и ручного пишем сообщения в SQL-файл
+      WriteInLog(ProfilePath, InsertSQLData, 0);
+    // Если режим по расписанию
+    if SyncMethod = 2 then
     begin
       if (SyncInterval > 4) and (SyncInterval < 8) then
       begin

@@ -810,6 +810,20 @@ begin
           LogMemo.Lines.Add(Format(GetLangStr('UpdateFileDone'), [SR.Name]));
         end;
       end;
+      if MatchStrings(SR.Name, '*.txt') then
+      begin
+        LStatus.Caption := Format(GetLangStr('UpdateFile'), [SR.Name]);
+        LStatus.Hint := 'UpdateFile';
+        LStatus.Repaint;
+        LogMemo.Lines.Add(Format(GetLangStr('UpdateFile'), [SR.Name]));
+        if FileExists(PluginPath + SR.Name) then
+          DeleteFile(PluginPath + SR.Name);
+        if CopyFileEx(PChar(SavePath + SR.Name), PChar(PluginPath + SR.Name), nil, nil, nil, COPY_FILE_FAIL_IF_EXISTS) then
+        begin
+          DeleteFile(SavePath + SR.Name);
+          LogMemo.Lines.Add(Format(GetLangStr('UpdateFileDone'), [SR.Name]));
+        end;
+      end;
     until FindNext(SR) <> 0;
     FindClose(SR);
   end;

@@ -7059,4 +7059,11 @@
       0000000000000000000000000000000000000000000000000000000000000000
       000000000000}
   end
+  object JvThreadTimerAutoSync: TJvThreadTimer
+    Interval = 5000
+    KeepAlive = True
+    OnTimer = JvThreadTimerAutoSyncTimer
+    Left = 256
+    Top = 176
+  end
 end

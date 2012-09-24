@@ -234,6 +234,7 @@
   <AutoScrollText>Автоскроллинг сообщений</AutoScrollText>
   <AutoRunHistoryToDBSync>Запускать HistoryToDBSync при загрузке Windows</AutoRunHistoryToDBSync>
   <RunningSkypeOnStartup>Запускать Skype при запуске HistoryToDBSync</RunningSkypeOnStartup>
+  <ExitSkypeOnEnd>Выходить из Skype при закрытии HistoryToDBSync</ExitSkypeOnEnd>
 
   <AboutButton>О плагине</AboutButton>
   <AboutFormCaption>О плагине</AboutFormCaption>

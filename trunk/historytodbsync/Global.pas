@@ -88,7 +88,7 @@ var
   Global_ChatName: WideString;
   PluginPath, ProfilePath: WideString;
   Global_MainForm_Showing, Global_LogForm_Showing, Global_AboutForm_Showing, Global_KeyPasswdForm_Showing: Boolean;
-  Global_AutoRunHistoryToDBSync, Global_RunningSkypeOnStartup: Boolean;
+  Global_AutoRunHistoryToDBSync, Global_RunningSkypeOnStartup, Global_ExitSkypeOnEnd: Boolean;
   EncryptionKey, EncryptionKeyID, SyncHotKey, MyAccount: String;
   KeyPasswdSaveOnlySession, KeyPasswdSave: Boolean;
   // Шифрование
@@ -419,6 +419,10 @@ begin
       if Temp = '1' then Global_RunningSkypeOnStartup := True
       else Global_RunningSkypeOnStartup := False;
 
+      Temp := INI.ReadString('Main', 'ExitSkypeOnEnd', '0');
+      if Temp = '1' then Global_ExitSkypeOnEnd := True
+      else Global_ExitSkypeOnEnd := False;
+
       Temp := INI.ReadString('Main', 'AutoRunHistoryToDBSync', '0');
       if Temp = '1' then Global_AutoRunHistoryToDBSync := True
       else Global_AutoRunHistoryToDBSync := False;
@@ -459,6 +463,7 @@ begin
       AlphaBlendEnableValue := 255;
       GlobalSkypeSupport := False;
       Global_RunningSkypeOnStartup := False;
+      Global_ExitSkypeOnEnd := False;
       Global_AutoRunHistoryToDBSync := False;
       DefaultLanguage := 'English';
       // Сохраняем настройки
@@ -489,6 +494,7 @@ begin
       INI.WriteInteger('Main', 'MaxErrLogSize', MaxErrLogSize);
       INI.WriteString('Main', 'SkypeSupport', BoolToIntStr(GlobalSkypeSupport));
       INI.WriteString('Main', 'RunningSkypeOnStartup', BoolToIntStr(Global_RunningSkypeOnStartup));
+      INI.WriteString('Main', 'ExitSkypeOnEnd', BoolToIntStr(Global_ExitSkypeOnEnd));
       INI.WriteString('Main', 'AutoRunHistoryToDBSync', BoolToIntStr(Global_AutoRunHistoryToDBSync));
       INI.WriteString('Fonts', 'FontInTitle', '183|-11|Verdana|0|96|8|Y|N|N|N|');
       INI.WriteString('Fonts', 'FontOutTitle', '8404992|-11|Verdana|0|96|8|Y|N|N|N|');

@@ -21,7 +21,7 @@ uses
   ImgList, ComCtrls, ExtCtrls, DB, ZSqlProcessor, JvComponentBase, JvThread,
   JvAppStorage, JvAppIniStorage, JvFormPlacement, ZDbcIntfs, JvAppHotKey, JclStringConversions,
   DCPcrypt2, DCPblockciphers, DCPdes, DCPsha1, DCPbase64, RegExpr, Grids,
-  ZSqlMonitor, JvThreadTimer, JvDesktopAlert, ShellApi;
+  ZSqlMonitor, JvThreadTimer, JvDesktopAlert, ShellApi, MapStream;
 
 type
   TMainSyncForm = class(TForm)
@@ -94,6 +94,7 @@ type
     PopupImage: TImage;
     ImageList_Main: TImageList;
     CheckUpdate: TMenuItem;
+    JvThreadTimerAutoSync: TJvThreadTimer;
     procedure IMExcept(Sender: TObject; E: Exception);
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -156,12 +157,14 @@ type
     procedure DisableButton;
     procedure EnableSkype;
     procedure DisableSkype;
+    procedure ReadMappedText;
     function ReConnectDB: Boolean;
     function GetEncryptionKey(KeyPwd: String; var EncryptKey, EncryptKeyID: String): Integer;
     function ParseSQLAndEncrypt(SQLStr, EncryptKeyID, EncryptKey: String; var EncryptMsgCount: Integer): WideString;
     function CheckServiceMode: Boolean;
     function GetCurrentEncryptionKeyID(var ActiveKeyID: String): Integer;
     function CheckQueryRecNo(TotalRecNo, CurRecNo: Integer): Boolean;
+    procedure JvThreadTimerAutoSyncTimer(Sender: TObject);
   private
     { Private declarations }
     Skype: TSkype;
@@ -170,6 +173,7 @@ type
     SessionEnding: Boolean;
     FLanguage : WideString;
     FCount: Integer;
+    FMap: TMapStream;
     procedure LoadLanguageStrings;
     procedure msgBoxShow(var Msg: TMessage); message WM_MSGBOX;
     procedure OnControlReq(var Msg : TWMCopyData); message WM_COPYDATA;
@@ -391,6 +395,9 @@ begin
     end;
     // Обрабатываем все исключения сами
     Forms.Application.OnException := IMExcept;
+    // MMF
+    if SyncMethod = 0 then
+      FMap := TMapStream.CreateEx('HistoryToDB for ' + IMClientType + ' (' + MyAccount + ')',MAXDWORD,2000);
     // Программа запущена
     RunAppDone := True;
     // Запуск обновления БД
@@ -442,12 +449,24 @@ procedure TMainSyncForm.FormDestroy(Sender: TObject);
 begin
   if RunAppDone then
   begin
+    // Выход из Skype
+    if Global_ExitSkypeOnEnd then
+    begin
+      if Assigned(Skype) then
+      begin
+        if Skype.Client.IsRunning then
+          Skype.Client.Shutdown;
+      end;
+    end;
     // Отключаем Skype
     DisableSkype;
     // Освобождаем ресурсы
     EncryptFree;
     // Разрегистрация гор. клавиш
     UnRegisterHotKeys;
+    // MMF
+    if Assigned(FMap) then
+      FMap.Free;
     // Завершаем потоки
     if not SyncThread.Terminated then
       SyncThread.Terminate;
@@ -1408,6 +1427,7 @@ begin
     // 001 - Перечитать настройки из файла HistoryToDB.ini
     if ControlStr = '001' then
     begin
+      if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура OnControlReq: Управляющее сообщение ' + ControlStr + ' - перечитываем настройки.', 2);
       // Читаем настройки
       LoadINI(ProfilePath, True);
       HistoryToDBSyncTray.IconVisible := not HideSyncIcon;
@@ -1421,6 +1441,23 @@ begin
       // Запуск синхронизации по времени только если нет др. задач
       if (not SyncHistoryStartedEnabled) and (not CheckMD5HashStartedEnabled) and (not UpdateContactListStartedEnabled) then
         RunTimeSync;
+      // MMF
+      if SyncMethod = 0 then
+      begin
+        if not Assigned(FMap) then
+        begin
+          if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура OnControlReq: Создаем TMapStream', 2);
+          FMap := TMapStream.CreateEx('HistoryToDB for ' + IMClientType + ' (' + MyAccount + ')',MAXDWORD,2000);
+        end;
+      end
+      else
+      begin
+        if Assigned(FMap) then
+        begin
+          FMap.Free;
+          FMap := nil;
+        end;
+      end;
       // Поддержка Skype
       if GlobalSkypeSupportOnRun <> GlobalSkypeSupport then
       begin
@@ -1497,10 +1534,18 @@ begin
     // 007  - Запустить обновление списка контактов
     if (ControlStr = '007') and (not SyncHistoryStartedEnabled) and (not CheckMD5HashStartedEnabled) and (not UpdateContactListStartedEnabled) then
       StartUpdateContactList;
+    // 009 - Экстренное завершение работы
     if ControlStr = '009' then
     begin
       if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура OnControlReq: Управляющее сообщение ' + ControlStr + ' - выполняем принудительный выход из программы.', 2);
       HistoryExitClick(Self);
+    end;
+    // 010 - Сигнал о наличии в памяти сообщения от плагина
+    if ControlStr = '010' then
+    begin
+      JvThreadTimerAutoSync.Enabled := False;
+      ReadMappedText;
+      JvThreadTimerAutoSync.Enabled := True;
     end;
   end;
 end;
@@ -3357,6 +3402,14 @@ begin
   JvThreadTimerSkype.Enabled := True;
 end;
 
+{ Сработка таймера для автоматического режима синхронизации }
+procedure TMainSyncForm.JvThreadTimerAutoSyncTimer(Sender: TObject);
+begin
+  JvThreadTimerAutoSync.Enabled := False;
+  if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура JvThreadTimerAutoSyncTimer: Выполняем синхронизацию истории в режиме авто.', 2);
+  SyncButtonClick(Self);
+end;
+
 procedure TMainSyncForm.JvThreadTimerSkypeTimer(Sender: TObject);
 begin
   // Запускаем Skype только если запуск HistoryToDBSync идет с 3 параметром = 0
@@ -3947,6 +4000,29 @@ begin
   LOAD_TEMP_MSG_SCREEN := GetLangStr('LOAD_TEMP_MSG_SCREEN');
   LOAD_TEMP_MSG_NOLOGFILE := GetLangStr('LOAD_TEMP_MSG_NOLOGFILE');
   LOAD_TEMP_MSG_NOMSGFILE := GetLangStr('LOAD_TEMP_MSG_NOMSGFILE');
+end;
+
+{ Получение сообщения из памяти }
+procedure TMainSyncForm.ReadMappedText;
+var
+  ASize: Integer;
+  Msg: PChar;
+begin
+  with FMap do
+  begin
+    Position := 0;
+    ReadBuffer(@ASize,Sizeof(Integer));
+    Inc(ASize);
+    Msg := AllocMem(ASize);
+    Msg[ASize] := #0;
+    Dec(ASize);
+    try
+      ReadBuffer(Msg, ASize);
+      WriteInLog(ProfilePath, DecryptStr(Msg), 0);
+    finally
+      ReAllocMem(Msg, 0);
+    end;
+  end;
 end;
 
 end.

@@ -14,7 +14,7 @@ interface
 
 uses
   Windows, SysUtils, IniFiles, Messages, XMLIntf, XMLDoc,
-  FSMonitor, DCPcrypt2, DCPblockciphers, DCPsha1, DCPdes, DCPmd5;
+  FSMonitor, DCPcrypt2, DCPblockciphers, DCPsha1, DCPdes, DCPmd5, MapStream;
 
 type
   TCopyDataType = (cdtString = 0, cdtImage = 1, cdtRecord = 2);
@@ -114,6 +114,8 @@ var
   ContactListLogOpened: Boolean;
   TFProtoListLog: TextFile;
   ProtoListLogOpened: Boolean;
+  // MMF
+  FMap: TMapStream;
 
 function BoolToIntStr(Bool: Boolean): String;
 function UnixToDateTime(USec: Longint): TDateTime;
@@ -566,6 +568,7 @@ end;
            для истории чата:
              008|2|ChatName
   009 - Экстренно закрыть все компоненты плагина.
+  010 - Строка SQL-insert передана в память
 }
 procedure OnSendMessageToAllComponent(Msg: String);
 var
@@ -732,9 +735,26 @@ begin
   if EnableCallBackDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура ProfileDirChangeCallBack: FAction = ' + IntToStr(pInfo.FAction) + ' | FOldFileName = ' + pInfo.FOldFileName + ' | FNewFileName = ' + pInfo.FNewFileName, 2);
   if (pInfo.FAction = 3) and (pInfo.FNewFileName = 'HistoryToDB.ini') and (SettingsFormRequest = '0') then
   begin
-    if EnableCallBackDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура ProfileDirChangeCallBack: Настройки HistoryToDB.ini перечитаны', 2);
+    if EnableCallBackDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура ProfileDirChangeCallBack: Настройки HistoryToDB.ini перечитаны.', 2);
     IMDelay(500);
     LoadINI(ProfilePath);
+    // MMF
+    if SyncMethod = 0 then
+    begin
+      if not Assigned(FMap) then
+      begin
+        if EnableCallBackDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура ProfileDirChangeCallBack: Создаем TMapStream', 2);
+        FMap := TMapStream.CreateEx('HistoryToDB for QIP ('+MyAccount+')',MAXDWORD,2000);
+      end;
+    end
+    else
+    begin
+      if Assigned(FMap) then
+      begin
+        FMap.Free;
+        FMap := nil;
+      end;
+    end;
   end;
 end;
 

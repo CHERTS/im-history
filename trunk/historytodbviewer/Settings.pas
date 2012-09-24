@@ -178,6 +178,7 @@ type
     EDBReconnectInterval: TEdit;
     CBAutoStartup: TCheckBox;
     CBRunSkype: TCheckBox;
+    CBExitSkype: TCheckBox;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
@@ -511,15 +512,18 @@ begin
   CBSkypeSupportEnable.Checked := GlobalSkypeSupport;
   CBAutoStartup.Checked := Global_AutoRunHistoryToDBSync;
   CBRunSkype.Checked := Global_RunningSkypeOnStartup;
+  CBExitSkype.Checked := Global_ExitSkypeOnEnd;
   if GlobalSkypeSupport then
   begin
     CBAutoStartup.Enabled := True;
     CBRunSkype.Enabled := True;
+    CBExitSkype.Enabled := True;
   end
   else
   begin
     CBAutoStartup.Enabled := False;
     CBRunSkype.Enabled := False;
+    CBExitSkype.Enabled := False;
   end;
   // Заполняем список языков
   FindLangFile;
@@ -733,6 +737,7 @@ begin
     GlobalSkypeSupport := CBSkypeSupportEnable.Checked;
     Global_AutoRunHistoryToDBSync := CBAutoStartup.Checked;
     Global_RunningSkypeOnStartup := CBRunSkype.Checked;
+    Global_ExitSkypeOnEnd := CBExitSkype.Checked;
     // Настройки отступов и шрифтов
     MainForm.FHeaderFontInTitle.Assign(SHeaderFontInTitle);
     MainForm.FHeaderFontOutTitle.Assign(SHeaderFontOutTitle);
@@ -808,6 +813,7 @@ begin
         INI.WriteString('Main', 'DefaultLanguage', DefaultLanguage);
         INI.WriteString('Main', 'SkypeSupport', BoolToIntStr(GlobalSkypeSupport));
         INI.WriteString('Main', 'RunningSkypeOnStartup', BoolToIntStr(Global_RunningSkypeOnStartup));
+        INI.WriteString('Main', 'ExitSkypeOnEnd', BoolToIntStr(Global_ExitSkypeOnEnd));
         INI.WriteString('Main', 'AutoRunHistoryToDBSync', BoolToIntStr(Global_AutoRunHistoryToDBSync));
         INI.WriteString('Fonts', 'FontInTitle', FontToStr(MainForm.FHeaderFontInTitle));
         INI.WriteString('Fonts', 'FontOutTitle', FontToStr(MainForm.FHeaderFontOutTitle));
@@ -1710,6 +1716,8 @@ begin
     CBAutoStartup.Checked := Global_AutoRunHistoryToDBSync;
     CBRunSkype.Enabled := True;
     CBRunSkype.Checked := Global_RunningSkypeOnStartup;
+    CBExitSkype.Enabled := True;
+    CBExitSkype.Checked := Global_ExitSkypeOnEnd;
   end
   else
   begin
@@ -1717,6 +1725,8 @@ begin
     CBAutoStartup.Enabled := False;
     CBRunSkype.Checked := False;
     CBRunSkype.Enabled := False;
+    CBExitSkype.Checked := False;
+    CBExitSkype.Enabled := False;
   end;
 end;
 
@@ -2107,6 +2117,7 @@ begin
   LDBReconnectInterval.Caption := GetLangStr('DBReconnectInterval');
   CBAutoStartup.Caption := GetLangStr('AutoRunHistoryToDBSync');
   CBRunSkype.Caption := GetLangStr('RunningSkypeOnStartup');
+  CBExitSkype.Caption := GetLangStr('ExitSkypeOnEnd');
   ERR_SAVE_TO_DB_CONNECT_ERR := GetLangStr('ERR_SAVE_TO_DB_CONNECT_ERR');
   ERR_SAVE_TO_DB_SERVICE_MODE := GetLangStr('ERR_SAVE_TO_DB_SERVICE_MODE');
   ERR_TEMP_SAVE_TO_DB_SERVICE_MODE := GetLangStr('ERR_TEMP_SAVE_TO_DB_SERVICE_MODE');
