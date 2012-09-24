@@ -14,7 +14,7 @@ interface
 
 uses
   Windows, SysUtils, IniFiles, Messages, XMLIntf, XMLDoc,
-  FSMonitor, DCPcrypt2, DCPblockciphers, DCPsha1, DCPdes, DCPmd5, ActiveX;
+  FSMonitor, DCPcrypt2, DCPblockciphers, DCPsha1, DCPdes, DCPmd5, ActiveX, MapStream;
 
 type
   TCopyDataType = (cdtString = 0, cdtImage = 1, cdtRecord = 2);
@@ -138,6 +138,8 @@ var
   TFImportLog: TextFile;
   ImportLogOpened: Boolean;
   ExportFormDestroy: Boolean;
+  // MMF
+  FMap: TMapStream;
 
 function BoolToIntStr(Bool: Boolean): String;
 function UnixToDateTime(USec: Longint): TDateTime;
@@ -639,6 +641,7 @@ end;
            для истории чата:
              008|2|ChatName
   009 - Экстренно закрыть все компоненты плагина.
+  010 - Строка SQL-insert передана в память
 }
 procedure OnSendMessageToAllComponent(Msg: String);
 var
@@ -830,6 +833,23 @@ begin
     CoUninitialize();
     // Перестраиваем меню
     RebuildMainMenu;
+    // MMF
+    if SyncMethod = 0 then
+    begin
+      if not Assigned(FMap) then
+      begin
+        if EnableCallBackDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура ProfileDirChangeCallBack: Создаем TMapStream', 2);
+        FMap := TMapStream.CreateEx('HistoryToDB for QIP ('+MyAccount+')',MAXDWORD,2000);
+      end;
+    end
+    else
+    begin
+      if Assigned(FMap) then
+      begin
+        FMap.Free;
+        FMap := nil;
+      end;
+    end;
   end;
 end;
 
