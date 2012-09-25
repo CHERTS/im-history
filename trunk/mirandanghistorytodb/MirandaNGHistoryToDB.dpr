@@ -51,7 +51,11 @@ begin
 end;
 
 var
+  {$ifdef REPLDEFHISTMOD}
   PluginInterfaces: array[0..2] of TGUID;
+  {$else}
+  PluginInterfaces: array[0..1] of TGUID;
+  {$endif REPLDEFHISTMOD}
 
   PluginStatus: Boolean = False;
   StartExport: Boolean = False;
@@ -85,9 +89,14 @@ function OpenHistoryWindow(wParam:WPARAM;lParam:LPARAM):int_ptr;cdecl; forward;
 // tell Miranda about supported interfaces
 function MirandaPluginInterfaces:PMUUID; cdecl;
 begin
+  {$ifdef REPLDEFHISTMOD}
   PluginInterfaces[0]:=MIID_UIHISTORY;
   PluginInterfaces[1]:=MIID_LOGWINDOW;
   PluginInterfaces[2]:=MIID_LAST;
+  {$else}
+  PluginInterfaces[0]:=MIID_LOGWINDOW;
+  PluginInterfaces[1]:=MIID_LAST;
+  {$endif REPLDEFHISTMOD}
   Result := @PluginInterfaces;
 end;
 
