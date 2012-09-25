@@ -140,7 +140,7 @@ function MainMenuGetContactList(wParam: wParam; lParam: lParam; lParam1: integer
 var
   hContact: Cardinal;
   ContactProto, ContactID, ContactName, GroupName: AnsiString;
-  ProtoCount, I: Integer;
+  ProtoCount: Integer;
   ProtoName: ^PPROTOCOLDESCRIPTOR;
 begin
   // Получаем список контактов
