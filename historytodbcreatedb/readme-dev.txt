@@ -1,7 +1,7 @@
 HistoryToDBCreateDB
 -------------------
 
-Доп. утилита для серии плагинов xHistoryToDB (RnQHistoryToDB, QIPHistoryToDB, MirandaHistoryToDB)
+Доп. утилита для серии плагинов xHistoryToDB (RnQHistoryToDB, QIPHistoryToDB, MirandaHistoryToDB, MirandaNGHistoryToDB)
 HistoryToDBCreateDB позволяет создать БД, создать/удалить пользователя БД, создать/удалить структуру таблиц,
 выдать/забрать права на таблицы для пользователя.
 
