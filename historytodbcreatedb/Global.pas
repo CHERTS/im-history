@@ -18,12 +18,13 @@ uses
 
 const
   ProgramsName = 'IM-History CreateDB';
-  ProgramsVer : WideString = '1.6.0.0';
+  ProgramsVer : WideString = '1.7.0.0';
   DefaultDBAddres = 'db01.im-history.ru';
   DefaultDBName = 'imhistory';
   DefaultSQLiteDBName = 'imhistory.sqlite';
   DefaultFireBirdDBName = 'c:\imhistory.fdb';
-  ININame = 'DefaultUser.ini';
+  DefaultININame = 'DefaultUser.ini';
+  ININame = 'HistoryToDBCreateDB.ini';
   ErrorLogName = 'HistoryToDBCreateDBErr.log';
   // Начальная дата (01/01/1970) Unix Timestamp для функций конвертации
   UnixStartDate: TDateTime = 25569.0;
@@ -43,7 +44,7 @@ var
   ERR_NO_DB_CONNECTED : WideString = '[%s] Соединение с БД не установлено.';
   ERR_SQL_QUERY : WideString = '[%s] Ошибка SQL запроса: %s';
   DBType, DBAddress, DBSchema, DBPort, DBName, DBUserName, DBPasswd, DefaultLanguage: String;
-  WriteErrLog: Boolean;
+  WriteErrLog, INIFileLoaded: Boolean;
   // Шифрование
   Cipher: TDCP_3des;
   Digest: Array[0..19] of Byte;
@@ -55,7 +56,7 @@ var
   LangDoc: IXMLDocument;
 
 procedure WriteInLog(LogPath: String; TextString: String; LogType: Integer);
-procedure LoadINI(INIPath: String; NotSettingsForm: Boolean);
+procedure LoadINI(INIPath: String);
 procedure EncryptInit;
 procedure EncryptFree;
 function MatchStrings(source, pattern: String): Boolean;
@@ -138,7 +139,7 @@ begin
 end;
 
 // Загружаем настройки
-procedure LoadINI(INIPath: String; NotSettingsForm: Boolean);
+procedure LoadINI(INIPath: String);
 var
   Path: WideString;
   Temp: String;
@@ -147,45 +148,25 @@ begin
   // Проверяем наличие каталога
   if not DirectoryExists(INIPath) then
     CreateDir(INIPath);
-  Path := INIPath + ininame;
+  Path := INIPath + ININame;
   if FileExists(Path) then
   begin
    Ini := TIniFile.Create(Path);
-   DBType := INI.ReadString('Main', 'DBType', 'mysql');  // mysql или postgresql
-   DBAddress := INI.ReadString('Main', 'DBAddress', DefaultDBAddres);
-   DBSchema := INI.ReadString('Main', 'DBSchema', 'username');
-   DBPort := INI.ReadString('Main', 'DBPort', '3306');  // 3306 для mysql, 5432 для postgresql
-   DBName := INI.ReadString('Main', 'DBName', DefaultDBName);
-   // Если вызываем LoadINI НЕ с формы SettingsForm, то DBName ставим без замены <ProfilePluginPath> и <PluginPath>
-   {if NotSettingsForm then
-   begin
-      // Замена подстроки в строке DBName
-      if MatchStrings(DBName,'<ProfilePluginPath>*') then
-        DBName := StringReplace(DBName,'<ProfilePluginPath>',ProfilePath,[RFReplaceall])
-      else if MatchStrings(DBName,'<PluginPath>*') then
-        DBName := StringReplace(DBName,'<PluginPath>',ExtractFileDir(PluginPath),[RFReplaceall]);
-      // End
-   end;}
-   DBUserName := INI.ReadString('Main', 'DBUserName', 'username');
-   DBPasswd := INI.ReadString('Main', 'DBPasswd', 'password');
-   if DBPasswd <> '' then
-     DBPasswd := DecryptStr(DBPasswd);
-
-   DefaultLanguage := INI.ReadString('Main', 'DefaultLanguage', 'Russian');
+   try
+     DBType := INI.ReadString('Main', 'DBType', 'mysql');  // mysql или postgresql
+     DBAddress := INI.ReadString('Main', 'DBAddress', DefaultDBAddres);
+     DBSchema := INI.ReadString('Main', 'DBSchema', 'username');
+     DBPort := INI.ReadString('Main', 'DBPort', '3306');  // 3306 для mysql, 5432 для postgresql
+     DBName := INI.ReadString('Main', 'DBName', DefaultDBName);
+     DBUserName := INI.ReadString('Main', 'DBUserName', 'username');
+     DefaultLanguage := INI.ReadString('Main', 'DefaultLanguage', 'Russian');
+     INIFileLoaded := True;
+   finally
+    INI.Free;
+   end;
   end
- else
-  begin
-   INI := TIniFile.Create(path);
-   INI.WriteString('Main', 'DBType', 'mysql');  // mysql или postgresql
-   INI.WriteString('Main', 'DBAddress', DefaultDBAddres);
-   INI.WriteString('Main', 'DBSchema', 'username');
-   INI.WriteString('Main', 'DBPort', '3306'); // 3306 для mysql, 5432 для postgresql
-   INI.WriteString('Main', 'DBName', DefaultDBName);
-   INI.WriteString('Main', 'DBUserName', 'username');
-   INI.WriteString('Main', 'DBPasswd', EncryptStr('password'));
-   INI.WriteString('Main','DefaultLanguage', 'Russian');
-  end;
-  INI.Free;
+  else
+    INIFileLoaded := False;
 end;
 
 {Функция осуществляет сравнение двух строк. Первая строка

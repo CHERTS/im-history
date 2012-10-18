@@ -157,7 +157,6 @@ object MainForm: TMainForm
           Height = 21
           Style = csDropDownList
           TabOrder = 0
-          OnChange = CBDBTypeChange
           Items.Strings = (
             'MySQL'
             'PostgreSQL'

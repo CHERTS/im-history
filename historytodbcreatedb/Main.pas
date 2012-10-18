@@ -137,8 +137,13 @@ begin
   MainFormHandle := Handle;
   SetWindowLong(Handle, GWL_HWNDPARENT, 0);
   SetWindowLong(Handle, GWL_EXSTYLE, GetWindowLong(Handle, GWL_EXSTYLE) or WS_EX_APPWINDOW);
+  // Загружаем параметры
+  LoadINI(ExtractFilePath(Application.ExeName));
   // Загружаем настройки локализации
-  FLanguage := 'Russian';
+  if INIFileLoaded then
+    FLanguage := DefaultLanguage
+  else
+    FLanguage := 'Russian';
   LangDoc := NewXMLDocument();
   if not DirectoryExists(ExtractFilePath(Application.ExeName) + dirLangs) then
     CreateDir(ExtractFilePath(Application.ExeName) + dirLangs);
@@ -159,8 +164,25 @@ var
 begin
   Caption := ProgramsName;
   // Ставим галки на нужный язык по умолчанию
-  Lang_PM.Items[0].Checked := True;
-  Lang_PM.Items[1].Checked := False;
+  if INIFileLoaded then
+  begin
+    if DefaultLanguage = 'Russian' then
+    begin
+      Lang_PM.Items[0].Checked := True;
+      Lang_PM.Items[1].Checked := False;
+    end
+    else
+    begin
+      Lang_PM.Items[0].Checked := False;
+      Lang_PM.Items[1].Checked := True;
+    end;
+  end
+  else
+  begin
+    Lang_PM.Items[0].Checked := True;
+    Lang_PM.Items[1].Checked := False;
+  end;
+  // Активная вкладка
   StepsPageControl.ActivePage := Step0TabSheet;
   StepsPageControl.Pages[1].TabVisible := False;
   StepsPageControl.Pages[2].TabVisible := False;
@@ -182,7 +204,16 @@ begin
     if CBDBType.Items[I] = DBType then
       CBDBType.ItemIndex := I;
   end;
-  EIMDBName.Text := DefaultDBName;
+  if INIFileLoaded then
+  begin
+    EDBAddress.Text := DBAddress;
+    EDBPort.Text := DBPort;
+    EDBName.Text := DBName;
+    EIMDBName.Text := DBName;
+    EDBUserName.Text := DBUserName;
+    EDBPasswd.SetFocus;
+  end;
+  CBDBType.OnChange := CBDBTypeChange;
 end;
 
 { Обработчик запроса к БД }
@@ -288,6 +319,9 @@ begin
   if (ZConnection1.Protocol = 'oracle') or
    (ZConnection1.Protocol = 'oracle-9i') then
     SQL_Zeos_Exec('alter session set current_schema='+EDBAddress.Text);
+  // Если загружены настройки, то ставим фокус на поле Логина пользователя
+  if INIFileLoaded then
+    EUserName.SetFocus;
 end;
 
 { После отключения от БД }
@@ -678,7 +712,7 @@ begin
   begin
     // Инициализация криптования
     EncryptInit;
-    Path := ExtractFilePath(Application.ExeName) + ININame;
+    Path := ExtractFilePath(Application.ExeName) + DefaultININame;
     INI := TIniFile.Create(Path);
     INI.WriteString('Main', 'DBType', CBDBType.Items[CBDBType.ItemIndex]);
     if (CBDBType.Items[CBDBType.ItemIndex] = 'oracle') or
