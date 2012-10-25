@@ -10,6 +10,8 @@
 
 unit FSMonitor;
 
+{$I jedi.inc}
+
 interface
 
 type
@@ -161,7 +163,11 @@ end;}
 
 procedure TWFS.WatchEvent;
 var
+{$ifdef DELPHIXE_UP}
+  CompletionKey: DWORD_PTR;
+{$ELSE}
   CompletionKey: Cardinal;
+{$endif}
   // Перенесено из HandleEvent
   FileNotifyInfo : PFileNotifyInformation;
   InfoCallBack   : TInfoCallBack;

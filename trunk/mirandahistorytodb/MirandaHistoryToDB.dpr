@@ -10,7 +10,6 @@
 
 library MirandaHistoryToDB;
 
-{$I Compilers.inc}
 {$I Global.inc}
 
 uses
@@ -92,11 +91,11 @@ var
 const
   hLangpack: THANDLE = 0;
 
-function OnModulesLoad(awParam:WPARAM; alParam:LPARAM):int; cdecl; forward;
+function OnModulesLoad(awParam:WPARAM; alParam:LPARAM): Integer; cdecl; forward;
 function OnBuildContactMenu(awParam: WPARAM; alParam: LPARAM): Integer; cdecl; forward;
 function OnEventAdded(wParam: WPARAM; lParam: LPARAM): Integer; cdecl; forward;
 //function OnTTBLoaded(awParam: WPARAM; alParam: LPARAM): Integer; cdecl; forward;
-function OpenHistoryWindow(wParam:WPARAM;lParam:LPARAM):int_ptr;cdecl; forward;
+function OpenHistoryWindow(wParam:WPARAM;lParam:LPARAM): Integer; cdecl; forward;
 
 function MirandaPluginInfo(mirandaVersion:DWORD): PPLUGININFO; cdecl;
 begin
@@ -510,7 +509,7 @@ begin
         DeleteFile(PluginPath + DefININame);
     end;
   end;
-  // Задяем вопросы при первом запуске
+  // Задаем вопросы при первом запуске
   if (GetDBInt(htdDBName, 'FirstRun.FirstActivate', 0) = 0) or (DefaultINICopy) then
   begin
     if AutoCoreLang = 'Russian' then
@@ -556,8 +555,6 @@ begin
       end;
     end;
   end;
-  // Загружаем настройки
-  LoadINI(ProfilePath);
   // Выбор языка по умолчанию
   if AutoCoreLang <> DefaultLanguage then
   begin
@@ -578,6 +575,11 @@ begin
   CoreLanguageChanged;
   // Записываем типа IM клиента
   WriteCustomINI(ProfilePath, 'IMClientType', htdIMClientName);
+  {$IfDef WIN32}
+  WriteCustomINI(ProfilePath, 'IMClientPlatformType', 'x86');
+  {$Else}
+  WriteCustomINI(ProfilePath, 'IMClientPlatformType', 'x64');
+  {$EndIf}
   // Записываем отсутствие запроса на чтение настроек
   WriteCustomINI(ProfilePath, 'SettingsFormRequestSend', '0');
   // Создаем окно About и Export
@@ -774,10 +776,13 @@ begin
   begin
     if ExportFormDestroy then
       ChildExport := TExportForm.Create(nil);
-    if not ChildExport.Showing then
-      ChildExport.Show
-    else
-      ChildExport.BringFormToFront(ChildExport);
+    if Assigned(ChildExport) then
+    begin
+      if not ChildExport.Showing then
+        ChildExport.Show
+      else
+        ChildExport.BringFormToFront(ChildExport);
+    end;
   end;
   // Если не запускаем обновление, то запускаем программу синхронизации HistoryToDBSync
   if not StartUpdate then
@@ -839,8 +844,9 @@ begin
     ProfilePath := TmpProfilePath
   else
     ProfilePath := ExtractFilePath(DllPath);
-  // Записываем наше имя, потом оно используется для заголовка программ
-  // Имя профиля
+  // Загружаем настройки
+  LoadINI(ProfilePath);
+  // Записываем Имя профиля, потом оно используется для заголовка программ
   MyAccount := ExtractFileNameEx(pAnsiChar(ProfileName), False);
   WriteCustomINI(ProfilePath, 'MyAccount', MyAccount);
   // Инициализация основных функций
@@ -911,4 +917,4 @@ exports
 
 begin
 end.
-
+б

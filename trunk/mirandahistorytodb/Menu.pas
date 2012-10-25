@@ -10,6 +10,8 @@
 
 unit Menu;
 
+{$I jedi.inc}
+
 interface
 
 uses
@@ -32,6 +34,17 @@ var
 
 procedure MenuMainItemsInit; cdecl; forward;
 procedure RebuildMainMenu; cdecl; forward;
+{$ifdef DELPHIXE_UP}
+function MainMenuSync(wParam: wParam; lParam: lParam; lParam1: NativeInt): NativeInt; cdecl; forward;
+function MainMenuGetContactList(wParam: wParam; lParam: lParam; lParam1: NativeInt): NativeInt; cdecl; forward;
+function MainMenuCheckUpdate(wParam: wParam; lParam: lParam; lParam1: NativeInt): NativeInt; cdecl; forward;
+function MainMenuExportAllHistory(wParam: wParam; lParam: lParam; lParam1: NativeInt): NativeInt; cdecl; forward;
+function MainMenuCheckMD5Hash(wParam: wParam; lParam: lParam; lParam1: NativeInt): NativeInt; cdecl; forward;
+function MainMenuCheckAndDeleteMD5Hash(wParam: wParam; lParam: lParam; lParam1: NativeInt): NativeInt; cdecl; forward;
+function MainMenuUpdateContactList(wParam: wParam; lParam: lParam; lParam1: NativeInt): NativeInt; cdecl; forward;
+function MainMenuSettings(wParam: wParam; lParam: lParam; lParam1: NativeInt): NativeInt; cdecl; forward;
+function MainMenuAbout(wParam: wParam; lParam: lParam; lParam1: NativeInt): NativeInt; cdecl; forward;
+{$ELSE}
 function MainMenuSync(wParam: wParam; lParam: lParam; lParam1: integer): integer; cdecl; forward;
 function MainMenuGetContactList(wParam: wParam; lParam: lParam; lParam1: integer): integer; cdecl; forward;
 function MainMenuCheckUpdate(wParam: wParam; lParam: lParam; lParam1: integer): integer; cdecl; forward;
@@ -41,6 +54,7 @@ function MainMenuCheckAndDeleteMD5Hash(wParam: wParam; lParam: lParam; lParam1: 
 function MainMenuUpdateContactList(wParam: wParam; lParam: lParam; lParam1: integer): integer; cdecl; forward;
 function MainMenuSettings(wParam: wParam; lParam: lParam; lParam1: integer): integer; cdecl; forward;
 function MainMenuAbout(wParam: wParam; lParam: lParam; lParam1: integer): integer; cdecl; forward;
+{$endif DELPHIXE_UP}
 
 implementation
 
@@ -117,14 +131,22 @@ begin
 end;
 
 { Синхронизировать историю }
+{$ifdef DELPHIXE_UP}
+function MainMenuSync(wParam: wParam; lParam: lParam; lParam1: NativeInt): NativeInt; cdecl;
+{$ELSE}
 function MainMenuSync(wParam: wParam; lParam: lParam; lParam1: integer): integer; cdecl;
+{$endif DELPHIXE_UP}
 begin
   Result := 0;
   OnSendMessageToOneComponent('HistoryToDBSync for ' + htdIMClientName + ' ('+MyAccount+')', '002');
 end;
 
 { Экспорт истории }
+{$ifdef DELPHIXE_UP}
+function MainMenuExportAllHistory(wParam: wParam; lParam: lParam; lParam1: NativeInt): NativeInt; cdecl;
+{$ELSE}
 function MainMenuExportAllHistory(wParam: wParam; lParam: lParam; lParam1: integer): integer; cdecl;
+{$endif DELPHIXE_UP}
 begin
   Result := 0;
   if ExportFormDestroy then
@@ -136,7 +158,11 @@ begin
 end;
 
 { Сохранить список протоколов и контакт лист }
+{$ifdef DELPHIXE_UP}
+function MainMenuGetContactList(wParam: wParam; lParam: lParam; lParam1: NativeInt): NativeInt; cdecl;
+{$ELSE}
 function MainMenuGetContactList(wParam: wParam; lParam: lParam; lParam1: integer): integer; cdecl;
+{$endif DELPHIXE_UP}
 var
   hContact: Cardinal;
   ContactProto, ContactID, ContactName, GroupName: AnsiString;
@@ -181,21 +207,33 @@ begin
 end;
 
 { Запустить перерасчет MD5-хешей }
+{$ifdef DELPHIXE_UP}
+function MainMenuCheckMD5Hash(wParam: wParam; lParam: lParam; lParam1: NativeInt): NativeInt; cdecl;
+{$ELSE}
 function MainMenuCheckMD5Hash(wParam: wParam; lParam: lParam; lParam1: integer): integer; cdecl;
+{$endif DELPHIXE_UP}
 begin
   Result := 0;
   OnSendMessageToOneComponent('HistoryToDBSync for ' + htdIMClientName + ' ('+MyAccount+')', '0050');
 end;
 
 { Запустить перерасчет MD5-хешей и удаления дубликатов }
+{$ifdef DELPHIXE_UP}
+function MainMenuCheckAndDeleteMD5Hash(wParam: wParam; lParam: lParam; lParam1: NativeInt): NativeInt; cdecl;
+{$ELSE}
 function MainMenuCheckAndDeleteMD5Hash(wParam: wParam; lParam: lParam; lParam1: integer): integer; cdecl;
+{$endif DELPHIXE_UP}
 begin
   Result := 0;
   OnSendMessageToOneComponent('HistoryToDBSync for ' + htdIMClientName + ' ('+MyAccount+')', '0051');
 end;
 
 { Запрос на обновление контакт листа }
+{$ifdef DELPHIXE_UP}
+function MainMenuUpdateContactList(wParam: wParam; lParam: lParam; lParam1: NativeInt): NativeInt; cdecl;
+{$ELSE}
 function MainMenuUpdateContactList(wParam: wParam; lParam: lParam; lParam1: integer): integer; cdecl;
+{$endif DELPHIXE_UP}
 begin
   Result := 0;
   if FileExists(ProfilePath+ContactListName) then
@@ -205,7 +243,11 @@ begin
 end;
 
 { Запустить обновление }
+{$ifdef DELPHIXE_UP}
+function MainMenuCheckUpdate(wParam: wParam; lParam: lParam; lParam1: NativeInt): NativeInt; cdecl;
+{$ELSE}
 function MainMenuCheckUpdate(wParam: wParam; lParam: lParam; lParam1: integer): integer; cdecl;
+{$endif DELPHIXE_UP}
 var
   WinName: String;
 begin
@@ -232,7 +274,11 @@ begin
 end;
 
 { Показываем окно Настроек плагина }
+{$ifdef DELPHIXE_UP}
+function MainMenuSettings(wParam: wParam; lParam: lParam; lParam1: NativeInt): NativeInt; cdecl;
+{$ELSE}
 function MainMenuSettings(wParam: wParam; lParam: lParam; lParam1: integer): integer; cdecl;
+{$endif DELPHIXE_UP}
 var
   WinName: String;
 begin
@@ -263,7 +309,11 @@ begin
 end;
 
 { Показываем окно О плагине }
+{$ifdef DELPHIXE_UP}
+function MainMenuAbout(wParam: wParam; lParam: lParam; lParam1: NativeInt): NativeInt; cdecl;
+{$ELSE}
 function MainMenuAbout(wParam: wParam; lParam: lParam; lParam1: integer): integer; cdecl;
+{$endif DELPHIXE_UP}
 begin
   Result := 0;
   AboutForm.Show;
