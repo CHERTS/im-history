@@ -369,20 +369,20 @@ begin
       else WriteErrLog := false;
 
       Temp := INI.ReadString('Main', 'ShowAnimation', '1');
-      if Temp = '1' then AniEvents := true
-      else AniEvents := false;
+      if Temp = '1' then AniEvents := True
+      else AniEvents := False;
 
       Temp := INI.ReadString('Main', 'EnableHistoryEncryption', '0');
-      if Temp = '1' then EnableHistoryEncryption := true
-      else EnableHistoryEncryption := false;
+      if Temp = '1' then EnableHistoryEncryption := True
+      else EnableHistoryEncryption := False;
 
       DefaultLanguage := INI.ReadString('Main', 'DefaultLanguage', 'English');
       IMClientType := INI.ReadString('Main', 'IMClientType', 'Unknown');
       MyAccount := INI.ReadString('Main', 'MyAccount', DBUserName);
 
       Temp := INI.ReadString('Main', 'HideHistorySyncIcon', '0');
-      if Temp = '1' then HideSyncIcon := true
-      else HideSyncIcon := false;
+      if Temp = '1' then HideSyncIcon := True
+      else HideSyncIcon := False;
 
       SyncTimeCount := INI.ReadInteger('Main', 'SyncTimeCount', 40);
 
