@@ -799,13 +799,13 @@ function GetLangStr(StrID: String): WideString;
 begin
   if (not Assigned(LangDoc)) or (not LangDoc.Active) then
   begin
-    Result := '';
+    Result := StrID;
     Exit;
   end;
   if LangDoc.ChildNodes['strings'].ChildNodes.FindNode(StrID) <> nil then
     Result := LangDoc.ChildNodes['strings'].ChildNodes[StrID].Text
   else
-    Result := 'String not found.';
+    Result := 'String not found';
 end;
 
 { Обработчик изменений файлов в каталоге профиля }
