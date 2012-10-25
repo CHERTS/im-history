@@ -10,7 +10,6 @@
 
 library MirandaNGHistoryToDB;
 
-{$I Compilers.inc}
 {$I Global.inc}
 
 uses
@@ -80,11 +79,11 @@ var
 const
   hLangpack: THANDLE = 0;
 
-function OnModulesLoad(awParam:WPARAM; alParam:LPARAM):int; cdecl; forward;
+function OnModulesLoad(awParam:WPARAM; alParam:LPARAM): Integer; cdecl; forward;
 function OnBuildContactMenu(awParam: WPARAM; alParam: LPARAM): Integer; cdecl; forward;
 function OnEventAdded(wParam: WPARAM; lParam: LPARAM): Integer; cdecl; forward;
 //function OnTTBLoaded(awParam: WPARAM; alParam: LPARAM): Integer; cdecl; forward;
-function OpenHistoryWindow(wParam:WPARAM;lParam:LPARAM):int_ptr;cdecl; forward;
+function OpenHistoryWindow(wParam:WPARAM;lParam:LPARAM): Integer; cdecl; forward;
 
 // tell Miranda about supported interfaces
 function MirandaPluginInterfaces:PMUUID; cdecl;
@@ -228,6 +227,7 @@ var
   Date_Str, MsgStatus: String;
   InsertSQLData, EncInsertSQLData, WinName: String;
   ASize: Integer;
+  hContact: THandle;
 begin
   Result := 0;
   ZeroMemory(@DBEventInfo, SizeOf(DBEventInfo));
@@ -272,14 +272,20 @@ begin
         Msg_Text := AnsiToWideString(msgA, CP_ACP, msgLen - 1);
     end;
     // Тип истории
-    ContactProto := GetContactProto(wParam);
+    hContact := wParam;
+    ContactProto := GetContactProto(hContact);
     ProtoType := StrContactProtoToInt(ContactProto);
     // Данные собеседника
-    ContactID := GetContactID(wParam, ContactProto);
-    ContactName := GetContactDisplayName(wParam, '', True);
+    ContactID := GetContactID(hContact, ContactProto);
+    ContactName := GetContactDisplayName(hContact, '', True);
     // Мои данные
     MyContactName := GetMyContactDisplayName(ContactProto);
     MyContactID := GetMyContactID(ContactProto);
+    // Доп. проверка протокола
+    if ContactProto = MyAccount then
+      ContactProto := 'ICQ';
+    ProtoType := StrContactProtoToInt(ContactProto);
+    // End
     if ContactID = '' then
       ContactID := 'NoContactID';
     if ContactName = '' then
@@ -494,7 +500,7 @@ begin
         DeleteFile(PluginPath + DefININame);
     end;
   end;
-  // Задяем вопросы при первом запуске
+  // Задаем вопросы при первом запуске
   if (GetDBInt(htdDBName, 'FirstRun.FirstActivate', 0) = 0) or (DefaultINICopy) then
   begin
     if AutoCoreLang = 'Russian' then
@@ -540,8 +546,6 @@ begin
       end;
     end;
   end;
-  // Загружаем настройки
-  LoadINI(ProfilePath);
   // Выбор языка по умолчанию
   if AutoCoreLang <> DefaultLanguage then
   begin
@@ -562,6 +566,11 @@ begin
   CoreLanguageChanged;
   // Записываем типа IM клиента
   WriteCustomINI(ProfilePath, 'IMClientType', htdIMClientName);
+  {$IfDef WIN32}
+  WriteCustomINI(ProfilePath, 'IMClientPlatformType', 'x86');
+  {$Else}
+  WriteCustomINI(ProfilePath, 'IMClientPlatformType', 'x64');
+  {$EndIf}
   // Записываем отсутствие запроса на чтение настроек
   WriteCustomINI(ProfilePath, 'SettingsFormRequestSend', '0');
   // Создаем окно About и Export
@@ -758,10 +767,13 @@ begin
   begin
     if ExportFormDestroy then
       ChildExport := TExportForm.Create(nil);
-    if not ChildExport.Showing then
-      ChildExport.Show
-    else
-      ChildExport.BringFormToFront(ChildExport);
+    if Assigned(ChildExport) then
+    begin
+      if not ChildExport.Showing then
+        ChildExport.Show
+      else
+        ChildExport.BringFormToFront(ChildExport);
+    end;
   end;
   // Если не запускаем обновление, то запускаем программу синхронизации HistoryToDBSync
   if not StartUpdate then
@@ -822,8 +834,9 @@ begin
     ProfilePath := TmpProfilePath
   else
     ProfilePath := ExtractFilePath(DllPath);
-  // Записываем наше имя, потом оно используется для заголовка программ
-  // Имя профиля
+  // Загружаем настройки
+  LoadINI(ProfilePath);
+  // Записываем Имя профиля, потом оно используется для заголовка программ
   MyAccount := ExtractFileNameEx(pAnsiChar(ProfileName), False);
   WriteCustomINI(ProfilePath, 'MyAccount', MyAccount);
   // Инициализация основных функций
