@@ -1252,7 +1252,8 @@ begin
           begin
             if WriteErrLog then
               WriteInLog(ProfilePath, Format(ERR_READ_DB_CONNECT_ERR, [FormatDateTime('dd.mm.yy hh:mm:ss', Now), Trim(e.Message)]), 1);
-            MsgInf(MainSyncForm.Caption + ' - ' + GetLangStr('ErrCaption'), GetLangStr('ErrSQLQuery') + #13 + Trim(e.Message));
+            if not HideSyncIcon then
+              MsgInf(MainSyncForm.Caption + ' - ' + GetLangStr('ErrCaption'), GetLangStr('ErrSQLQuery') + #13 + Trim(e.Message));
           end;
       end;
     end;
@@ -1283,7 +1284,8 @@ begin
           begin
             if WriteErrLog then
               WriteInLog(ProfilePath, Format(ERR_READ_DB_CONNECT_ERR, [FormatDateTime('dd.mm.yy hh:mm:ss', Now), Trim(e.Message)]), 1);
-            MsgInf(MainSyncForm.Caption + ' - ' + GetLangStr('ErrCaption'), GetLangStr('ErrSQLQuery') + #13 + Trim(e.Message));
+            if not HideSyncIcon then
+              MsgInf(MainSyncForm.Caption + ' - ' + GetLangStr('ErrCaption'), GetLangStr('ErrSQLQuery') + #13 + Trim(e.Message));
           end;
         end;
     end;
@@ -1320,7 +1322,8 @@ begin
               ZConnection1.Rollback;
             if WriteErrLog then
               WriteInLog(ProfilePath, Format(ERR_READ_DB_CONNECT_ERR, [FormatDateTime('dd.mm.yy hh:mm:ss', Now), Trim(e.Message)]), 1);
-            MsgInf(MainSyncForm.Caption + ' - ' + GetLangStr('ErrCaption'), GetLangStr('ErrSQLExecQuery') + #13 + Trim(e.Message));
+            if not HideSyncIcon then
+              MsgInf(MainSyncForm.Caption + ' - ' + GetLangStr('ErrCaption'), GetLangStr('ErrSQLExecQuery') + #13 + Trim(e.Message));
           end;
         end;
       if MatchStrings(DBType, 'firebird*') then
