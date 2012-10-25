@@ -243,6 +243,7 @@ var
   Date_Str, MsgStatus: String;
   InsertSQLData, EncInsertSQLData, WinName: String;
   ASize: Integer;
+  hContact: THandle;
 begin
   Result := 0;
   ZeroMemory(@DBEventInfo, SizeOf(DBEventInfo));
@@ -287,14 +288,20 @@ begin
         Msg_Text := AnsiToWideString(msgA, CP_ACP, msgLen - 1);
     end;
     // Тип истории
-    ContactProto := GetContactProto(wParam);
+    hContact := wParam;
+    ContactProto := GetContactProto(hContact);
     ProtoType := StrContactProtoToInt(ContactProto);
     // Данные собеседника
-    ContactID := GetContactID(wParam, ContactProto);
-    ContactName := GetContactDisplayName(wParam, '', True);
+    ContactID := GetContactID(hContact, ContactProto);
+    ContactName := GetContactDisplayName(hContact, '', True);
     // Мои данные
     MyContactName := GetMyContactDisplayName(ContactProto);
     MyContactID := GetMyContactID(ContactProto);
+    // Доп. проверка протокола
+    if ContactProto = MyAccount then
+      ContactProto := 'ICQ';
+    ProtoType := StrContactProtoToInt(ContactProto);
+    // End
     if ContactID = '' then
       ContactID := 'NoContactID';
     if ContactName = '' then
