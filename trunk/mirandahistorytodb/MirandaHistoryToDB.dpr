@@ -184,6 +184,9 @@ var
 begin
   Result := 0;
   ContactProto := GetContactProto(awParam);
+  // Доп. проверка протокола
+  if ContactProto = MyAccount then
+    ContactProto := 'ICQ';
   // Меню
   ZeroMemory(@MenuItem, SizeOf(MenuItem));
   MenuItem.cbSize := SizeOf(MenuItem);
@@ -198,7 +201,6 @@ begin
     MatchStrings(LowerCase(ContactProto), 'skype*') or
     MatchStrings(LowerCase(ContactProto), 'vkonta*') then
   begin // Показываем пунк в меню контакта
-    //MsgInf(htdPluginShortName, GetDBStr(awParam, 'Protocol', 'p', 'NoProto'));
     ContactID := GetContactID(awParam, ContactProto);
     ContactName := GetContactDisplayName(awParam, '', True);
     if ContactName = '' then
@@ -630,7 +632,7 @@ begin
   Si.pszName := pAnsiChar(AnsiString(Format(WideStringToString(GetLangStr('IMButtonCaption'), CP_ACP), [htdPluginShortName])));
   Si.pszService := MS_MHTD_SHOWHISTORY;//MS_HISTORY_SHOWCONTACTHISTORY;
   Si.hIcon := LoadImage(hInstance,'ICON_0',IMAGE_ICON,16,16,0);;
-  HookSystemHistoryMenu := PluginLink.CallService(MS_CLIST_ADDMAINMENUITEM,0,LPARAM(@Si));
+  HookSystemHistoryMenu := PluginLink^.CallService(MS_CLIST_ADDMAINMENUITEM,0,LPARAM(@Si));
   //{$endif REPLDEFHISTMOD}
   // Создаем свой пункт в меню контакта
   PluginLink^.CreateServiceFunction(htdPluginShortName+'/ContactMenuCommand', @OpenHistoryWindow);
