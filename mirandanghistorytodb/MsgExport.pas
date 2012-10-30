@@ -102,6 +102,9 @@ begin
   while hContact <> 0 do
   begin
     ContactProto := GetContactProto(hContact);
+    // Доп. проверка протокола
+    if ContactProto = MyAccount then
+      ContactProto := 'ICQ';
     ContactID := GetContactID(hContact, ContactProto);
     ContactName := GetContactDisplayName(hContact, '', True);
     if ContactName = '' then
@@ -259,6 +262,9 @@ begin
           end;
           // Тип истории
           ContactProto := GetContactProto(ExportContactRecords[I].hContact);
+          // Доп. проверка протокола
+          if ContactProto = MyAccount then
+            ContactProto := 'ICQ';
           ProtoType := StrContactProtoToInt(ContactProto);
           // Данные собеседника
           ContactID := GetContactID(ExportContactRecords[I].hContact, ContactProto);

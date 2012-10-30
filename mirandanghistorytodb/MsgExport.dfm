@@ -4288,8 +4288,6 @@ object ExportForm: TExportForm
       WaterMark.Image.Alignment = iaCenter
       WaterMark.Image.Layout = ilCenter
       WaterMark.Width = 201
-      ExplicitWidth = 0
-      ExplicitHeight = 0
     end
     object Page2: TJvWizardInteriorPage
       Header.Height = 50

@@ -168,6 +168,9 @@ var
 begin
   Result := 0;
   ContactProto := GetContactProto(awParam);
+  // Доп. проверка протокола
+  if ContactProto = MyAccount then
+    ContactProto := 'ICQ';
   // Меню
   ZeroMemory(@MenuItem, SizeOf(MenuItem));
   MenuItem.cbSize := SizeOf(MenuItem);
@@ -182,7 +185,6 @@ begin
     MatchStrings(LowerCase(ContactProto), 'skype*') or
     MatchStrings(LowerCase(ContactProto), 'vkonta*') then
   begin // Показываем пунк в меню контакта
-    //MsgInf(htdPluginShortName, GetDBStr(awParam, 'Protocol', 'p', 'NoProto'));
     ContactID := GetContactID(awParam, ContactProto);
     ContactName := GetContactDisplayName(awParam, '', True);
     if ContactName = '' then
