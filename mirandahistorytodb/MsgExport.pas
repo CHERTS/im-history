@@ -103,11 +103,11 @@ begin
   while hContact <> 0 do
   begin
     ContactProto := GetContactProto(hContact);
+    ContactID := GetContactID(hContact, ContactProto);
+    ContactName := GetContactDisplayName(hContact, '', True);
     // Доп. проверка протокола
     if ContactProto = MyAccount then
       ContactProto := 'ICQ';
-    ContactID := GetContactID(hContact, ContactProto);
-    ContactName := GetContactDisplayName(hContact, '', True);
     if ContactName = '' then
       ContactName := 'NoContactName';
     if ContactID = '' then
@@ -263,16 +263,16 @@ begin
           end;
           // Тип истории
           ContactProto := GetContactProto(ExportContactRecords[I].hContact);
-          // Доп. проверка протокола
-          if ContactProto = MyAccount then
-            ContactProto := 'ICQ';
-          ProtoType := StrContactProtoToInt(ContactProto);
           // Данные собеседника
           ContactID := GetContactID(ExportContactRecords[I].hContact, ContactProto);
           ContactName := GetContactDisplayName(ExportContactRecords[I].hContact, '', True);
           // Мои данные
           MyContactName := GetMyContactDisplayName(ContactProto);
           MyContactID := GetMyContactID(ContactProto);
+          // Доп. проверка протокола
+          if ContactProto = MyAccount then
+            ContactProto := 'ICQ';
+          ProtoType := StrContactProtoToInt(ContactProto);
           if ContactID = '' then
             ContactID := 'NoContactID';
           if ContactName = '' then

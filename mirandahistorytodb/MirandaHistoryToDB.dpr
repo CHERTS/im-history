@@ -184,14 +184,12 @@ var
 begin
   Result := 0;
   ContactProto := GetContactProto(awParam);
-  // Доп. проверка протокола
-  if ContactProto = MyAccount then
-    ContactProto := 'ICQ';
   // Меню
   ZeroMemory(@MenuItem, SizeOf(MenuItem));
   MenuItem.cbSize := SizeOf(MenuItem);
   MenuItem.flags := CMIM_FLAGS;
-  if MatchStrings(LowerCase(ContactProto), 'icq*') or
+  if (ContactProto = MyAccount) or
+    MatchStrings(LowerCase(ContactProto), 'icq*') or
     MatchStrings(LowerCase(ContactProto), 'jabber*') or
     MatchStrings(LowerCase(ContactProto), 'aim*') or
     MatchStrings(LowerCase(ContactProto), 'irc*') or
@@ -207,6 +205,9 @@ begin
       ContactName := 'NoContactName';
     if ContactID = '' then
       ContactID := 'NoContactID';
+    // Доп. проверка протокола
+    if ContactProto = MyAccount then
+      ContactProto := 'ICQ';
     MenuItem.flags := MenuItem.flags or CMIM_NAME;
     MenuItem.pszName := pAnsiChar(AnsiString(Format(WideStringToString(GetLangStr('ShowContactHistory'), CP_ACP), [ContactName, ContactID])));
     PluginLink^.CallService(MS_CLIST_MODIFYMENUITEM, HookContactMenu, lParam(@MenuItem));
@@ -225,6 +226,9 @@ begin
         ContactName := 'NoContactName';
       if ContactID = '' then
         ContactID := 'NoContactID';
+      // Доп. проверка протокола
+      if ContactProto = MyAccount then
+        ContactProto := 'ICQ';
       WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Функция OnBuildContactMenu: ' + 'Contact ID: ' + ContactID + ' | Contact Name: ' + ContactName + ' | Proto: ' + ContactProto, 2);
     end;
   end;
