@@ -137,6 +137,9 @@ begin
     MyContactID := 'NoMyContactID';
   if MyContactName = '' then
     MyContactName := 'NoMyContactName';
+  // Доп. проверка протокола
+  if ContactProto = MyAccount then
+    ContactProto := 'ICQ';
   if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Функция PluginContactMenuCommand: ' + 'Contact ID: ' + ContactID + ' | Contact Name: ' + ContactName + ' | Proto: ' + ContactProto + ' | My Contact ID: ' + MyContactID + ' | My Contact Name: ' + MyContactName, 2);
   // Тип истории
   ProtoType := StrContactProtoToInt(ContactProto);
