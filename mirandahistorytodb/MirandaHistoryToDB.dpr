@@ -735,7 +735,7 @@ begin
     begin
       DeleteFile(UpdTmpPath + 'HistoryToDBUpdater.exe');
       if CoreLanguage = 'Russian' then
-        MsgDie(htdPluginShortName, Format('Ошибка обновления утилиты %s', [PluginPath + 'HistoryToDBUpdater.exe']))
+        MsgDie(htdPluginShortName, Format('Ошибка обновления утилиты %s из временной папки.', [PluginPath + 'HistoryToDBUpdater.exe']))
       else
         MsgDie(htdPluginShortName, Format('Error update utility %s', [PluginPath + 'HistoryToDBUpdater.exe']));
     end;
@@ -753,6 +753,7 @@ begin
     end
     else // Иначе посылаем запрос
       OnSendMessageToOneComponent(WinName, '009');
+    Sleep(800);
     // Удаляем старую утилиту
     if DeleteFile(PluginPath + 'HistoryToDBUpdater.exe') then
     begin
@@ -769,7 +770,7 @@ begin
     begin
       DeleteFile(PluginPath + 'HistoryToDBUpdater.upd');
       if CoreLanguage = 'Russian' then
-        MsgDie(htdPluginShortName, Format('Ошибка обновления утилиты %s', [PluginPath + 'HistoryToDBUpdater.exe']))
+        MsgDie(htdPluginShortName, Format('Ошибка обновления утилиты %s из папки плагинов.', [PluginPath + 'HistoryToDBUpdater.exe']))
       else
         MsgDie(htdPluginShortName, Format('Error update utility %s', [PluginPath + 'HistoryToDBUpdater.exe']));
     end;

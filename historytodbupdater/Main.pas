@@ -59,6 +59,7 @@ type
     LDBType: TLabel;
     CBDBType: TComboBox;
     ImageList_Main: TImageList;
+    LPlatformType: TLabel;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
@@ -167,6 +168,7 @@ begin
       INI.WriteString('Proxy', 'ProxyAuth', BoolToIntStr(CBProxyAuth.Checked));
       INI.WriteString('Proxy', 'ProxyUser', EProxyUser.Text);
       INI.WriteString('Proxy', 'ProxyUserPasswd', EncryptStr(EProxyUserPasswd.Text));
+      INI.WriteString('Updater', 'UpdateServer', UpdateServer);
     finally
       INI.Free;
     end;
@@ -328,6 +330,7 @@ begin
     CBIMClientType.Items.Add('RnQ');
     CBIMClientType.Items.Add('Skype');
     CBIMClientType.Items.Add('Miranda');
+    CBIMClientType.Items.Add('MirandaNG');
     if ParamCount = 0 then
     begin
       for I := 0 to CBIMClientType.Items.Count-1 do
@@ -346,12 +349,17 @@ begin
     CBIMClientType.Items.Add(IMClientType);
     CBIMClientType.ItemIndex := 0;
   end;
+  // Платформа
+  LPlatformType.Caption := IMClientPlatformType;
+  // Прокси
   CBUseProxy.Checked := IMUseProxy;
   EProxyAddress.Text := IMProxyAddress;
   EProxyPort.Text := IMProxyPort;
   CBProxyAuth.Checked := IMProxyAuth;
   EProxyUser.Text := IMProxyUser;
   EProxyUserPasswd.Text := IMProxyUserPagsswd;
+  // Версия утилиты обновления
+  LogMemo.Lines.Add(ProgramsName + ' v' + ProgramsVer);
 end;
 
 procedure TMainForm.ButtonSettingsClick(Sender: TObject);
@@ -374,16 +382,6 @@ var
   AllProcessEndErr, I: Integer;
   MsgString: String;
 begin
-  //IsProcessRun('HistoryToDBSync.exe', 'HistoryToDBSync for ' + IMClientType);
-  //KillTask('HistoryToDBSync.exe', 'HistoryToDBSync for ' + IMClientType);
-  //EndTask('HistoryToDBSync.exe', 'HistoryToDBSync for ' + IMClientType);
-  //RetVal := TProcessInfoArray(EndIMClient('svchost.exe', False));
-  //RetVal := TProcessInfoArray(EndIMClient('postgres.exe', False));
-  {RetVal := EndIMClient('pcapsvc.exe', False);
-  for i := Low(RetVal) to High(RetVal) do
-    showmessage(RetVal[i].ProcessName + #10#13 + IntToStr(RetVal[i].PID) + #10#13 +
-      RetVal[i].ProcessFullCmd + #10#13 + RetVal[i].ProcessPath + #10#13 +
-      RetVal[i].ProcessParamCmd);}
   AllProcessEndErr := 0;
   if (DBType = 'Unknown') or (IMClientType  = 'Unknown') then
     MsgInf(Caption, GetLangStr('SelectDBTypeAndIMClient'))
@@ -423,10 +421,18 @@ begin
         LogMemo.Lines.Add(Format(GetLangStr('EndProcess'), ['qip.exe']));
         QIPProcessInfo := EndProcess('qip.exe', 0, True);
       end;
-      if IMClientType = 'Miranda' then
+      if (IMClientType = 'Miranda') or (IMClientType = 'MirandaNG') then
       begin
-        LogMemo.Lines.Add(Format(GetLangStr('EndProcess'), ['miranda32.exe']));
-        MirandaProcessInfo := EndProcess('miranda32.exe', 1, True);
+        if IMClientPlatformType = 'x86' then
+        begin
+          LogMemo.Lines.Add(Format(GetLangStr('EndProcess'), ['miranda32.exe']));
+          MirandaProcessInfo := EndProcess('miranda32.exe', 1, True);
+        end
+        else
+        begin
+          LogMemo.Lines.Add(Format(GetLangStr('EndProcess'), ['miranda64.exe']));
+          MirandaProcessInfo := EndProcess('miranda64.exe', 1, True);
+        end;
       end;
       if IMClientType = 'RnQ' then
       begin
@@ -450,7 +456,10 @@ begin
       TrueHeader := False;
       CurrentUpdateStep := 0;
       SetProxySettings;
-      IMDownloader1.URL := uURL;
+      if IMClientPlatformType = 'x86' then
+        IMDownloader1.URL := UpdateServer + '&platform=windows-x86'
+      else
+        IMDownloader1.URL := UpdateServer + '&platform=windows-x64';
       IMDownloader1.DownLoad;
     end
     else
@@ -592,7 +601,7 @@ var
   MaxStep, IMClientCount, IMClientDownloadFileCount: Integer;
   DatabaseCount, DatabaseDownloadFileCount, I: Integer;
   IMClientName, IMClientNum, UpdateURL: String;
-  DatabaseName, DatabaseNum: String;
+  DatabaseName, DatabaseNum, TmpUpdateServer: String;
   FileListArray: TArrayOfString;
   DownloadListArray: TArrayOfString;
 begin
@@ -600,6 +609,11 @@ begin
   if FileExists(INIFileName) then
   begin
     UpdateINI := TIniFile.Create(INIFileName);
+    // Смена сервера обновления
+    TmpUpdateServer := UpdateINI.ReadString('HistoryToDBUpdate', 'UpdateServer', UpdateServer);
+    if TmpUpdateServer <> UpdateServer then
+      UpdateServer := TmpUpdateServer;
+    // End
     MaxStep := UpdateINI.ReadInteger('HistoryToDBUpdate', 'FileCount', 0);
     IMClientCount := UpdateINI.ReadInteger('HistoryToDBUpdate', 'IMClientCount', 0);
     if EnableDebug then
@@ -686,8 +700,12 @@ begin
       // Запуск IM-клиента
       if IMClientType = 'QIP' then
         RunIMClient('qip.exe', QIPProcessInfo);
-      if IMClientType = 'Miranda' then
+      if (IMClientType = 'Miranda') or (IMClientType = 'MirandaNG') then
+        {$IfDef WIN32}
         RunIMClient('miranda32.exe', MirandaProcessInfo);
+        {$Else}
+        RunIMClient('miranda64.exe', MirandaProcessInfo);
+        {$EndIf}
       if IMClientType = 'RnQ' then
       begin
         RunIMClient('R&Q.exe', RnQProcessInfo);
@@ -728,6 +746,7 @@ end;
 procedure TMainForm.InstallUpdate;
 var
   SR: TSearchRec;
+  FileName: String;
 begin
   LAmount.Caption := '0 '+GetLangStr('Kb');
   LFileName.Caption := GetLangStr('Unknown');
