@@ -10,6 +10,8 @@
 
 unit Global;
 
+{$I jedi.inc}
+
 interface
 
 uses
@@ -17,6 +19,7 @@ uses
   DCPdes, DCPmd5, TypInfo, Messages, XMLIntf, XMLDoc, StrUtils, Types, TLHELP32, PsAPI, NTNative;
 
 type
+  TWinVersion = (wvUnknown,wv95,wv98,wvME,wvNT3,wvNT4,wvW2K,wvXP,wv2003,wvVista,wv7,wv2008,wv8);
   TCopyDataType = (cdtString = 0, cdtImage = 1, cdtRecord = 2);
   TDelim = set of Char;
   TArrayOfString = Array of String;
@@ -32,7 +35,7 @@ type
 
 const
   ProgramsName = 'HistoryToDBUpdater';
-  ProgramsVer : WideString = '2.4.0.0';
+  ProgramsVer : WideString = '2.5.0.0';
   DefaultDBAddres = 'db01.im-history.ru';
   DefaultDBName = 'imhistory';
   ININame = 'HistoryToDB.ini';
@@ -62,6 +65,8 @@ var
   IMUseProxy, IMProxyAuth: Boolean;
   IMProxyAddress, IMProxyPort, IMProxyUser, IMProxyUserPagsswd: String;
   DBUserName, MyAccount: String;
+  IMClientPlatformType: String;
+  UpdateServer: String;
   // Шифрование
   Cipher: TDCP_3des;
   Digest: Array[0..19] of Byte;
@@ -101,7 +106,7 @@ function ProcessTerminate(dwPID: Cardinal): Boolean;
 function ProcCloseEnum(hwnd: THandle; data: Pointer):BOOL;stdcall;
 function ProcQuitEnum(hwnd: THandle; data: Pointer):BOOL;stdcall;
 function GetProcessFileName(PID: DWord; FullPath: Boolean=True): String;
-function GetProcessCmdLine(PID:DWord): String;
+function GetProcessCmdLine(dwProcessId : DWORD): String;
 function SetProcessDebugPrivelege: Boolean;
 function EndProcess(IMClientExeName: String; EndType: Integer; EndProcess: Boolean): TProcessInfoArray;
 function GetUserTempPath: WideString;
@@ -118,6 +123,8 @@ procedure MakeTransp(winHWND: HWND);
 procedure OnSendMessageToAllComponent(Msg: String);
 procedure IMDelay(Value: Cardinal);
 procedure OnSendMessageToOneComponent(WinName, Msg: String);
+function DetectWinVersion: TWinVersion;
+function DetectWinVersionStr: String;
 // Для мультиязыковой поддержки
 procedure MsgDie(Caption, Msg: WideString);
 procedure MsgInf(Caption, Msg: WideString);
@@ -346,6 +353,14 @@ begin
       IMProxyUserPagsswd := INI.ReadString('Proxy', 'ProxyUserPasswd', '');
       if IMProxyUserPagsswd <> '' then
         IMProxyUserPagsswd := DecryptStr(IMProxyUserPagsswd);
+
+      {$IfDef WIN32}
+      IMClientPlatformType := INI.ReadString('Main', 'IMClientPlatformType', 'x86');
+      {$Else}
+      IMClientPlatformType := INI.ReadString('Main', 'IMClientPlatformType', 'x64');
+      {$EndIf}
+
+      UpdateServer := INI.ReadString('Updater', 'UpdateServer', uURL);
     finally
       INI.Free;
     end;
@@ -384,6 +399,7 @@ begin
       INI.WriteString('Proxy', 'ProxyAuth', BoolToIntStr(IMProxyAuth));
       INI.WriteString('Proxy', 'ProxyUser', IMProxyUser);
       INI.WriteString('Proxy', 'ProxyUserPasswd', IMProxyUserPagsswd);
+      INI.WriteString('Updater', 'UpdateServer', uURL);
     finally
       INI.Free;
     end;
@@ -866,7 +882,7 @@ function EndProcess(IMClientExeName: String; EndType: Integer; EndProcess: Boole
 var
   I: Integer;
   ProcessPIDListArray: TArrayOfCardinal;
-  MyFullCMD, MyCMD, MyCMDParam: String;
+  MyFullCMD, MyCMD, MyCMDParam, ProcessCmdLine: String;
 begin
   SetLength(Result, 0);
   SetLength(ProcessPIDListArray, 0);
@@ -876,7 +892,42 @@ begin
     SetLength(Result, Length(Result)+1);
     Result[Length(Result)-1].ProcessName := IMClientExeName;
     Result[Length(Result)-1].PID := ProcessPIDListArray[I];
-    Result[Length(Result)-1].ProcessFullCmd := GetProcessCmdLine(ProcessPIDListArray[I]);
+    ProcessCmdLine := GetProcessCmdLine(ProcessPIDListArray[I]);
+    if ProcessCmdLine = '' then
+    begin
+
+      if (IMClientExeName = 'qip.exe') and (DetectWinVersionStr = 'Windows 7') then
+        ProcessCmdLine := '"C:\Program Files\QIP 2012\qip.exe"'
+      else if (IMClientExeName = 'qip.exe') and (DetectWinVersionStr <> 'Windows 7') then
+        ProcessCmdLine := '"C:\Program Files (x86)\QIP 2012\qip.exe"'
+
+      else if (IMClientExeName = 'miranda32.exe') and (IMClientType = 'Miranda') and (DetectWinVersionStr = 'Windows 7') then
+        ProcessCmdLine := '"C:\Program Files\Miranda IM\miranda32.exe"'
+      else if (IMClientExeName = 'miranda32.exe') and (IMClientType = 'Miranda') and (DetectWinVersionStr <> 'Windows 7') then
+        ProcessCmdLine := '"C:\Program Files (x86)\Miranda IM\miranda32.exe"'
+      else if (IMClientExeName = 'miranda64.exe') and (IMClientType = 'Miranda') and (DetectWinVersionStr = 'Windows 7') then
+        ProcessCmdLine := '"C:\Program Files\Miranda IM\miranda32.exe"'
+      else if (IMClientExeName = 'miranda64.exe') and (IMClientType = 'Miranda') and (DetectWinVersionStr <> 'Windows 7') then
+        ProcessCmdLine := '"C:\Program Files\Miranda IM\miranda32.exe"'
+
+      else if (IMClientExeName = 'miranda32.exe') and (IMClientType = 'MirandaNG') and (DetectWinVersionStr = 'Windows 7') then
+        ProcessCmdLine := '"C:\Program Files\Miranda NG\miranda32.exe"'
+      else if (IMClientExeName = 'miranda32.exe') and (IMClientType = 'MirandaNG') and (DetectWinVersionStr <> 'Windows 7') then
+        ProcessCmdLine := '"C:\Program Files (x86)\Miranda NG\miranda32.exe"'
+      else if (IMClientExeName = 'miranda64.exe') and (IMClientType = 'MirandaNG') and (DetectWinVersionStr = 'Windows 7') then
+        ProcessCmdLine := '"C:\Program Files\Miranda NG\miranda32.exe"'
+      else if (IMClientExeName = 'miranda64.exe') and (IMClientType = 'MirandaNG') and (DetectWinVersionStr <> 'Windows 7') then
+        ProcessCmdLine := '"C:\Program Files\Miranda NG\miranda32.exe"'
+
+      else if (IMClientExeName = 'skype.exe') and (DetectWinVersionStr = 'Windows 7') then
+        ProcessCmdLine := '"C:\Program Files (x86)\Skype\Phone\skype.exe"'
+      else if (IMClientExeName = 'skype.exe') and (DetectWinVersionStr <> 'Windows 7') then
+        ProcessCmdLine := '"C:\Program Files\Skype\Phone\skype.exe"'
+      else
+        ProcessCmdLine := IMClientExeName;
+    end;
+    Result[Length(Result)-1].ProcessFullCmd := ProcessCmdLine;
+    //MsgInf('EndProcess', 'ProcessName: ' + Result[Length(Result)-1].ProcessName + #13 + 'PID: ' + IntToStr(Result[Length(Result)-1].PID) + #13 + 'ProcessFullCmd: ' + Result[Length(Result)-1].ProcessFullCmd);
     //Result[Length(Result)-1] := GetProcessFileName(StrToInt(ProcessListArray[I]), True);
     // Если в полном CMD вида
     // "C:/Program Files/PostgreSQL/9.1/bin/postgres.exe" "--forklog" "244" "248"
@@ -1190,38 +1241,124 @@ begin
 end;
 
 { Получаем команду запуска программы с полным путем по её PID }
-function GetProcessCmdLine(PID: DWord): String;
+function GetProcessCmdLine(dwProcessId : DWORD): String;
+const
+  STATUS_SUCCESS             = $00000000;
+  SE_DEBUG_NAME              = 'SeDebugPrivilege';
+  ProcessWow64Information    = 26;
 var
-  hProcess: THandle;
-  pProcBasicInfo: PROCESS_BASIC_INFORMATION;
-  ReturnLength: DWORD;
-  prb: PEB;
-  ProcessParameters: PROCESS_PARAMETERS;
-  cb: cardinal;
-  ws: WideString;
+  ProcessHandle        : THandle;
+  ProcessBasicInfo     : PROCESS_BASIC_INFORMATION;
+  ReturnLength         : DWORD;
+  lpNumberOfBytesRead  : ULONG_PTR;
+  TokenHandle          : THandle;
+  lpLuid               : TOKEN_PRIVILEGES;
+  OldlpLuid            : TOKEN_PRIVILEGES;
+  Rtl : RTL_USER_PROCESS_PARAMETERS;
+  Mbi : TMemoryBasicInformation;
+  Peb : _PEB;
+  EnvStrBlock  : TBytes;
+  EnvStrLength : ULONG;
+  IsProcessx64 : Boolean;
+  {$IFDEF CPUX64}
+  PEBBaseAddress32 : Pointer;
+  Peb32 : _PEB32;
+  Rtl32 : RTL_USER_PROCESS_PARAMETERS32;
+  {$ENDIF}
+  Ws: WideString;
 begin
-  Result := '';
-  if PID = 0 then
-    Exit;
-  hProcess := OpenProcess(PROCESS_QUERY_INFORMATION or PROCESS_VM_READ, FALSE, PID);
-  if (hProcess <> 0) then
-  try
-    if (NtQueryInformationProcess(hProcess,ProcessBasicInformation,
-                               @pProcBasicInfo,
-                               sizeof(PROCESS_BASIC_INFORMATION),@ReturnLength) = STATUS_SUCCESS) then
+  Result:='';
+  if OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES or TOKEN_QUERY, TokenHandle) then
   begin
-   if ReadProcessMemory(hProcess,pProcBasicInfo.PebBaseAddress,@prb,sizeof(PEB),cb) then
-     if ReadProcessMemory(hProcess,prb.ProcessParameters,@ProcessParameters,sizeof(PROCESS_PARAMETERS),cb) then
-     begin
-       SetLength(ws,(ProcessParameters.CommandLine.Length div 2));
-       if ReadProcessMemory(hProcess,ProcessParameters.CommandLine.Buffer,
-                            PWideChar(ws),ProcessParameters.CommandLine.Length,cb) then
-       Result := String(ws)
-     end
+    try
+      if not LookupPrivilegeValue(nil, SE_DEBUG_NAME, lpLuid.Privileges[0].Luid) then
+        RaiseLastOSError
+      else
+      begin
+        lpLuid.PrivilegeCount := 1;
+        lpLuid.Privileges[0].Attributes  := SE_PRIVILEGE_ENABLED;
+        ReturnLength := 0;
+        OldlpLuid    := lpLuid;
+        // Включаем себе SeDebugPrivilege
+        if not AdjustTokenPrivileges(TokenHandle, False, lpLuid, SizeOf(OldlpLuid), OldlpLuid, ReturnLength) then RaiseLastOSError;
+      end;
+
+      ProcessHandle := OpenProcess(PROCESS_QUERY_INFORMATION or PROCESS_VM_READ, false, dwProcessId);
+      if ProcessHandle = 0 then RaiseLastOSError
+      else
+      try
+        IsProcessx64 := ProcessIsX64(ProcessHandle);
+
+        {$IFNDEF CPUX64}
+        if IsProcessx64 then
+          raise Exception.Create('Only 32 bits processes are supported');
+        {$ENDIF}
+
+        {$IFDEF CPUX64}
+        if IsProcessx64 then
+        begin
+        {$ENDIF}
+          // Получаем доступ к PROCESS_BASIC_INFORMATION по адресу PEB
+          if (NtQueryInformationProcess(ProcessHandle,0{=>ProcessBasicInformation},@ProcessBasicInfo, SizeOf(ProcessBasicInfo), @ReturnLength)=STATUS_SUCCESS) and (ReturnLength=SizeOf(ProcessBasicInfo)) then
+          begin
+            // Читаем PEB структуру
+            if not ReadProcessMemory(ProcessHandle, ProcessBasicInfo.PEBBaseAddress, @Peb, sizeof(Peb), lpNumberOfBytesRead) then
+              RaiseLastOSError
+            else
+            begin
+              // Читаем RTL_USER_PROCESS_PARAMETERS структуру
+              if not ReadProcessMemory(ProcessHandle, Peb.ProcessParameters, @Rtl, SizeOf(Rtl), lpNumberOfBytesRead) then
+               RaiseLastOSError
+              else
+              begin
+                SetLength(ws,(Rtl.CommandLine.Length div 2));
+                if not ReadProcessMemory(ProcessHandle,Rtl.CommandLine.Buffer,PWideChar(ws),Rtl.CommandLine.Length,lpNumberOfBytesRead) then
+                  RaiseLastOSError
+                else
+                  Result := String(ws);
+              end;
+            end;
+          end
+          else
+          RaiseLastOSError;
+        {$IFDEF CPUX64}
+        end
+        else
+        begin
+          // Получаем PEB адрес
+          if  NtQueryInformationProcess(ProcessHandle, ProcessWow64Information, @PEBBaseAddress32, SizeOf(PEBBaseAddress32), nil)=STATUS_SUCCESS then
+          begin
+            // Читаем PEB структуру
+            if not ReadProcessMemory(ProcessHandle, PEBBaseAddress32, @Peb32, sizeof(Peb32), lpNumberOfBytesRead) then
+              RaiseLastOSError
+            else
+            begin
+              // Читаем RTL_USER_PROCESS_PARAMETERS структуру
+              if not ReadProcessMemory(ProcessHandle, Pointer(Peb32.ProcessParameters), @Rtl32, SizeOf(Rtl32), lpNumberOfBytesRead) then
+               RaiseLastOSError
+              else
+              begin
+                SetLength(ws,(Rtl32.CommandLine.Length div 2));
+                if not ReadProcessMemory(ProcessHandle, Pointer(Rtl32.CommandLine.Buffer), PWideChar(ws), Rtl32.CommandLine.Length, lpNumberOfBytesRead) then
+                  RaiseLastOSError
+                else
+                  Result := String(Ws);
+              end;
+            end;
+          end
+          else
+          RaiseLastOSError;
+        end;
+       {$ENDIF}
+      finally
+        CloseHandle(ProcessHandle);
+      end;
+    finally
+      CloseHandle(TokenHandle);
+    end;
   end
- finally
-  Closehandle(hProcess);
- end
+  else
+  RaiseLastOSError;
 end;
 
 { Включаем себе SeDebugPrivilege }
@@ -1351,6 +1488,99 @@ begin
   GetLongPathName(PChar(UserPath), PChar(UserPath), MAX_PATH);
   SetLength(UserPath, StrLen(PChar(UserPath)));
   Result := UserPath;
+end;
+
+{
+DwMajorVersion:DWORD - старшая цифра версии Windows
+
+  Windows 95      - 4
+   Windows 98      - 4
+   Windows Me      - 4
+   Windows NT 3.51 - 3
+   Windows NT 4.0  - 4
+   Windows 2000    - 5
+   Windows XP      - 5
+
+DwMinorVersion: DWORD - младшая цифра версии
+
+  Windows 95      - 0
+   Windows 98      - 10
+   Windows Me      - 90
+   Windows NT 3.51 - 51
+   Windows NT 4.0  - 0
+   Windows 2000    - 0
+   Windows XP      - 1
+
+
+DwBuildNumber: DWORD
+ Win NT 4 - номер билда
+ Win 9x   - старший байт - старшая и младшая цифры версии / младший - номер
+билда
+
+dwPlatformId: DWORD
+
+ VER_PLATFORM_WIN32s            Win32s on Windows 3.1.
+ VER_PLATFORM_WIN32_WINDOWS     Win32 on Windows 9x
+ VER_PLATFORM_WIN32_NT          Win32 on Windows NT, 2000
+
+
+SzCSDVersion:DWORD
+  NT - содержит PСhar с инфо о установленном ServicePack
+  9x - доп. инфо, может и не быть
+}
+function DetectWinVersion: TWinVersion;
+var
+  OSVersionInfo : TOSVersionInfo;
+begin
+  Result := wvUnknown;                      // Неизвестная версия ОС
+  OSVersionInfo.dwOSVersionInfoSize := sizeof(TOSVersionInfo);
+  if GetVersionEx(OSVersionInfo)
+    then
+      begin
+        case OSVersionInfo.DwMajorVersion of
+          3:  Result := wvNT3;              // Windows NT 3
+          4:  case OSVersionInfo.DwMinorVersion of
+                0: if OSVersionInfo.dwPlatformId = VER_PLATFORM_WIN32_NT
+                   then Result := wvNT4     // Windows NT 4
+                   else Result := wv95;     // Windows 95
+                10: Result := wv98;         // Windows 98
+                90: Result := wvME;         // Windows ME
+              end;
+          5:  case OSVersionInfo.DwMinorVersion of
+                0: Result := wvW2K;         // Windows 2000
+                1: Result := wvXP;          // Windows XP
+                2: Result := wv2003;        // Windows 2003
+                3: Result := wvVista;       // Windows Vista
+              end;
+          6:  case OSVersionInfo.DwMinorVersion of
+                0: Result := wv2008;        // Windows 2008
+                1: Result := wv7;           // Windows 7
+              end;
+          7:  case OSVersionInfo.DwMinorVersion of
+                1: Result := wv8;           // Windows 8
+              end;
+        end;
+      end;
+end;
+
+function DetectWinVersionStr: String;
+const
+  VersStr : Array[TWinVersion] of String = (
+    'Unknown OS',
+    'Windows 95',
+    'Windows 98',
+    'Windows ME',
+    'Windows NT 3',
+    'Windows NT 4',
+    'Windows 2000',
+    'Windows XP',
+    'Windows Server 2003',
+    'Windows Vista',
+    'Windows 7',
+    'Windows Server 2008',
+    'Windows 8');
+begin
+  Result := VersStr[DetectWinVersion];
 end;
 
 begin

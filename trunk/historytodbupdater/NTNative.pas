@@ -1,65 +1,47 @@
 unit NTNative;
  
 interface
- 
-uses
-  Windows;
- 
-const
-   STATUS_SUCCESS = 0;
- 
+
+uses Classes, SysUtils, Windows;
+
 type
-  NTSTATUS = Longint;
-  PVOID = Pointer;
-  KSPIN_LOCK = ULONG;
-  KAFFINITY = ULONG;
-  KPRIORITY = Integer;
- 
+  Pointer32 = ULONG;
+  THANDLE32 = ULONG;
+
   _UNICODE_STRING = record
-    Length: WORD;
-    MaximumLength: WORD;
-    Buffer:PWideChar;
+    Length: Word;
+    MaximumLength: Word;
+    Buffer: LPWSTR;
   end;
   UNICODE_STRING = _UNICODE_STRING;
-  PUNICODE_STRING = ^_UNICODE_STRING;
- 
-  _CURDIR = record
-    DosPath: UNICODE_STRING;
-    Handle: THandle;
+
+  //http://msdn.microsoft.com/en-us/library/windows/desktop/ms684280%28v=vs.85%29.aspx
+  PROCESS_BASIC_INFORMATION = record
+    Reserved1 : Pointer;
+    PebBaseAddress: Pointer;
+    Reserved2: array [0..1] of Pointer;
+    UniqueProcessId: ULONG_PTR;
+    Reserved3: Pointer;
   end;
-  CURDIR = _CURDIR;
-  PCURDIR = ^_CURDIR;
- 
-  PLIST_ENTRY = ^_LIST_ENTRY;
-  _LIST_ENTRY = record
-    Flink: PLIST_ENTRY;
-    Blink: PLIST_ENTRY;
-  end;
-  LIST_ENTRY = _LIST_ENTRY;
-  RESTRICTED_POINTER = ^_LIST_ENTRY;
-  PRLIST_ENTRY = ^_LIST_ENTRY;
- 
-  _PEB_LDR_DATA = record
-    Length: ULONG;
-    Initialized: BOOLEAN;
-    SsHandle: PVOID;
-    InLoadOrderModuleList: LIST_ENTRY;
-    InMemoryOrderModuleList: LIST_ENTRY;
-    InInitializationOrderModuleList: LIST_ENTRY;
-  end;
-  PEB_LDR_DATA = _PEB_LDR_DATA;
-  PPEB_LDR_DATA = ^_PEB_LDR_DATA;
- 
+
+
+  //http://undocumented.ntinternals.net/UserMode/Structures/RTL_DRIVE_LETTER_CURDIR.html
   _RTL_DRIVE_LETTER_CURDIR = record
-    Flags: WORD;
-    Length: WORD;
-    TimeStamp: DWORD;
+    Flags: Word;
+    Length: Word;
+    TimeStamp: ULONG;
     DosPath: UNICODE_STRING;
   end;
   RTL_DRIVE_LETTER_CURDIR = _RTL_DRIVE_LETTER_CURDIR;
-  PRTL_DRIVE_LETTER_CURDIR = ^_RTL_DRIVE_LETTER_CURDIR;
- 
-  _PROCESS_PARAMETERS = record
+
+   _CURDIR = record
+    DosPath: UNICODE_STRING;
+    Handle: THANDLE;
+  end;
+  CURDIR = _CURDIR;
+
+ //http://undocumented.ntinternals.net/UserMode/Structures/RTL_USER_PROCESS_PARAMETERS.html
+  _RTL_USER_PROCESS_PARAMETERS = record
     MaximumLength: ULONG;
     Length: ULONG;
     Flags: ULONG;
@@ -73,7 +55,7 @@ type
     DllPath: UNICODE_STRING;
     ImagePathName: UNICODE_STRING;
     CommandLine: UNICODE_STRING;
-    Environment: PWideChar;
+    Environment: Pointer;
     StartingX: ULONG;
     StartingY: ULONG;
     CountX: ULONG;
@@ -84,168 +66,145 @@ type
     WindowFlags: ULONG;
     ShowWindowFlags: ULONG;
     WindowTitle: UNICODE_STRING;
-    Desktop: UNICODE_STRING;
+    DesktopInfo: UNICODE_STRING;
     ShellInfo: UNICODE_STRING;
-    RuntimeInfo: UNICODE_STRING;
-    CurrentDirectores: array[0..31] of RTL_DRIVE_LETTER_CURDIR;
+    RuntimeData: UNICODE_STRING;
+    CurrentDirectories: array[0..31] of RTL_DRIVE_LETTER_CURDIR;
   end;
-  PROCESS_PARAMETERS = _PROCESS_PARAMETERS;
-  PPROCESS_PARAMETERS = ^_PROCESS_PARAMETERS;
-  PPPROCESS_PARAMETERS = ^PPROCESS_PARAMETERS;
- 
-  PPEBLOCKROUTINE = procedure; stdcall;
- 
-  PPEB_FREE_BLOCK = ^_PEB_FREE_BLOCK;
-  _PEB_FREE_BLOCK = record
-    Next: PPEB_FREE_BLOCK;
-    Size: ULONG;
-  end;
-  PEB_FREE_BLOCK = _PEB_FREE_BLOCK;
- 
-  _RTL_BITMAP = record
-    SizeOfBitMap: DWORD;
-    Buffer: PDWORD;
-  end;
-  RTL_BITMAP = _RTL_BITMAP;
-  PRTL_BITMAP = ^_RTL_BITMAP;
-  PPRTL_BITMAP = ^PRTL_BITMAP;
- 
-  _SYSTEM_STRINGS = record
-    SystemRoot: UNICODE_STRING;
-    System32Root: UNICODE_STRING;
-    BaseNamedObjects: UNICODE_STRING;
-  end;
-  SYSTEM_STRINGS = _SYSTEM_STRINGS;
-  PSYSTEM_STRINGS = ^_SYSTEM_STRINGS;
- 
-  _TEXT_INFO = record
-    Reserved: PVOID;
-    SystemStrings: PSYSTEM_STRINGS;
-  end;
-  TEXT_INFO = _TEXT_INFO;
-  PTEXT_INFO = ^_TEXT_INFO;
- 
+  RTL_USER_PROCESS_PARAMETERS = _RTL_USER_PROCESS_PARAMETERS;
+  PRTL_USER_PROCESS_PARAMETERS = ^RTL_USER_PROCESS_PARAMETERS;
+
   _PEB = record
-    InheritedAddressSpace: UCHAR;
-    ReadImageFileExecOptions: UCHAR;
-    BeingDebugged: UCHAR;
-    SpareBool: BYTE;
-    Mutant: PVOID;
-    ImageBaseAddress: PVOID;
-    Ldr: PPEB_LDR_DATA;
-    ProcessParameters: PPROCESS_PARAMETERS;
-    SubSystemData: PVOID;
-    ProcessHeap: PVOID;
-    FastPebLock: KSPIN_LOCK;
-    FastPebLockRoutine: PPEBLOCKROUTINE;
-    FastPebUnlockRoutine: PPEBLOCKROUTINE;
-    EnvironmentUpdateCount: ULONG;
-    KernelCallbackTable: PPOINTER;
-    EventLogSection: PVOID;
-    EventLog: PVOID;
-    FreeList: PPEB_FREE_BLOCK;
-    TlsExpansionCounter: ULONG;
-    TlsBitmap: PRTL_BITMAP;
-    TlsBitmapData: array[0..1] of ULONG;
-    ReadOnlySharedMemoryBase: PVOID;
-    ReadOnlySharedMemoryHeap: PVOID;
-    ReadOnlyStaticServerData: PTEXT_INFO;
-    InitAnsiCodePageData: PVOID;
-    InitOemCodePageData: PVOID;
-    InitUnicodeCaseTableData: PVOID;
-    KeNumberProcessors: ULONG;
-    NtGlobalFlag: ULONG;
-    d6C: DWORD;
-    MmCriticalSectionTimeout: Int64;
-    MmHeapSegmentReserve: ULONG;
-    MmHeapSegmentCommit: ULONG;
-    MmHeapDeCommitTotalFreeThreshold: ULONG;
-    MmHeapDeCommitFreeBlockThreshold: ULONG;
-    NumberOfHeaps: ULONG;
-    AvailableHeaps: ULONG;
-    ProcessHeapsListBuffer: PHANDLE;
-    GdiSharedHandleTable: PVOID;
-    ProcessStarterHelper: PVOID;
-    GdiDCAttributeList: PVOID;
-    LoaderLock: KSPIN_LOCK;
-    NtMajorVersion: ULONG;
-    NtMinorVersion: ULONG;
-    NtBuildNumber: USHORT;
-    NtCSDVersion: USHORT;
-    PlatformId: ULONG;
-    Subsystem: ULONG;
-    MajorSubsystemVersion: ULONG;
-    MinorSubsystemVersion: ULONG;
-    AffinityMask: KAFFINITY;
-    GdiHandleBuffer: array[0..33] of ULONG;
-    PostProcessInitRoutine: ULONG;
-    TlsExpansionBitmap: ULONG;
-    TlsExpansionBitmapBits: array[0..127] of UCHAR;
-    SessionId: ULONG;
-    AppCompatFlags: Int64;
-    CSDVersion: PWORD;
+    Reserved1     : array [0..1] of Byte;
+    BeingDebugged : Byte;
+    Reserved2     : Byte;
+    Reserved3     : array [0..1] of Pointer;
+    Ldr           : Pointer;
+    ProcessParameters : PRTL_USER_PROCESS_PARAMETERS;
+    Reserved4     : array [0..102] of Byte;
+    Reserved5     : array [0..51] of Pointer;
+    PostProcessInitRoutine : Pointer;
+    Reserved6     : array [0..127] of byte;
+    Reserved7     : Pointer;
+    SessionId     : ULONG;
   end;
-  PEB = _PEB;
-  PPEB = ^_PEB;
- 
-  _PROCESS_BASIC_INFORMATION = record
-    ExitStatus: NTSTATUS;
-    PebBaseAddress: PPEB;
-    AffinityMask: KAFFINITY;
-    BasePriority: KPRIORITY;
-    UniqueProcessId: ULONG;
-    InheritedFromUniqueProcessId: ULONG;
+  PEB=_PEB;
+
+{$IFDEF CPUX64}
+  _UNICODE_STRING32 = record
+    Length: Word;
+    MaximumLength: Word;
+    Buffer: Pointer32;
   end;
-  PROCESS_BASIC_INFORMATION = _PROCESS_BASIC_INFORMATION;
-  PPROCESS_BASIC_INFORMATION = ^_PROCESS_BASIC_INFORMATION;
-  TProcessBasicInformation = PROCESS_BASIC_INFORMATION;
-  PProcessBasicInformation = ^PROCESS_BASIC_INFORMATION;
- 
-  PROCESSINFOCLASS = (
-    ProcessBasicInformation,
-    ProcessQuotaLimits,
-    ProcessIoCounters,
-    ProcessVmCounters,
-    ProcessTimes,
-    ProcessBasePriority,
-    ProcessRaisePriority,
-    ProcessDebugPort,
-    ProcessExceptionPort,
-    ProcessAccessToken,
-    ProcessLdtInformation,
-    ProcessLdtSize,
-    ProcessDefaultHardErrorMode,
-    ProcessIoPortHandlers,
-    ProcessPooledUsageAndLimits,
-    ProcessWorkingSetWatch,
-    ProcessUserModeIOPL,
-    ProcessEnableAlignmentFaultFixup,
-    ProcessPriorityClass,
-    ProcessWx86Information,
-    ProcessHandleCount,
-    ProcessAffinityMask,
-    ProcessPriorityBoost,
-    ProcessDeviceMap,
-    ProcessSessionInformation,
-    ProcessForegroundInformation,
-    ProcessWow64Information,
-    ProcessImageFileName,
-    ProcessLUIDDeviceMapsEnabled,
-    ProcessBreakOnTermination,
-    ProcessDebugObjectHandle,
-    ProcessDebugFlags,
-    ProcessHandleTracing,
-    ProcessIoPriority,
-    ProcessExecuteFlags,
-    ProcessResourceManagement,
-    ProcessCookie,
-    ProcessImageInformation,
-    MaxProcessInfoClass
-);
- 
-{$EXTERNALSYM NtQueryInformationProcess}
-  function NtQueryInformationProcess(ProcessHandle: THANDLE; ProcessInformationClass: PROCESSINFOCLASS; ProcessInformation: pointer; ProcessInformationLength: ULONG; ReturnLength: PDWORD): DWORD; stdcall;
- 
+  UNICODE_STRING32 = _UNICODE_STRING32;
+
+  _RTL_DRIVE_LETTER_CURDIR32 = record
+    Flags: Word;
+    Length: Word;
+    TimeStamp: ULONG;
+    DosPath: UNICODE_STRING32;
+  end;
+  RTL_DRIVE_LETTER_CURDIR32 = _RTL_DRIVE_LETTER_CURDIR32;
+
+   _CURDIR32 = record
+    DosPath: UNICODE_STRING32;
+    Handle: THANDLE32;
+  end;
+  CURDIR32 = _CURDIR32;
+
+  _RTL_USER_PROCESS_PARAMETERS32 = record
+    MaximumLength: ULONG;
+    Length: ULONG;
+    Flags: ULONG;
+    DebugFlags: ULONG;
+    ConsoleHandle: THANDLE32;
+    ConsoleFlags: ULONG;
+    StandardInput: THANDLE32;
+    StandardOutput: THANDLE32;
+    StandardError: THANDLE32;
+    CurrentDirectory: CURDIR32;
+    DllPath: UNICODE_STRING32;
+    ImagePathName: UNICODE_STRING32;
+    CommandLine: UNICODE_STRING32;
+    Environment: Pointer32;
+    StartingX: ULONG;
+    StartingY: ULONG;
+    CountX: ULONG;
+    CountY: ULONG;
+    CountCharsX: ULONG;
+    CountCharsY: ULONG;
+    FillAttribute: ULONG;
+    WindowFlags: ULONG;
+    ShowWindowFlags: ULONG;
+    WindowTitle: UNICODE_STRING32;
+    DesktopInfo: UNICODE_STRING32;
+    ShellInfo: UNICODE_STRING32;
+    RuntimeData: UNICODE_STRING32;
+    CurrentDirectories: array[0..31] of RTL_DRIVE_LETTER_CURDIR32;
+  end;
+  RTL_USER_PROCESS_PARAMETERS32 = _RTL_USER_PROCESS_PARAMETERS32;
+  PRTL_USER_PROCESS_PARAMETERS32 = ^RTL_USER_PROCESS_PARAMETERS32;
+
+  _PEB32 = record
+    Reserved1     : array [0..1] of Byte;
+    BeingDebugged : Byte;
+    Reserved2     : Byte;
+    Reserved3     : array [0..1] of Pointer32;
+    Ldr           : Pointer32;
+    ProcessParameters : Pointer32;//PRTL_USER_PROCESS_PARAMETERS;
+    Reserved4     : array [0..102] of Byte;
+    Reserved5     : array [0..51] of Pointer32;
+    PostProcessInitRoutine : Pointer32;
+    Reserved6     : array [0..127] of byte;
+    Reserved7     : Pointer32;
+    SessionId     : ULONG;
+  end;
+   PEB32=_PEB32;
+{$ENDIF}
+
+type
+  TIsWow64Process = function(Handle:THandle; var IsWow64 : BOOL) : BOOL; stdcall;
+var
+  _IsWow64Process  : TIsWow64Process;
+
+function NtQueryInformationProcess(ProcessHandle : THandle; ProcessInformationClass : DWORD; ProcessInformation : Pointer; ProcessInformationLength : ULONG; ReturnLength : PULONG ): LongInt; stdcall; external 'ntdll.dll';
+function NtQueryVirtualMemory(ProcessHandle : THandle; BaseAddress : Pointer;  MemoryInformationClass : DWORD;  MemoryInformation : Pointer;  MemoryInformationLength : ULONG; ReturnLength : PULONG ): LongInt; stdcall; external 'ntdll.dll';
+function ProcessIsX64(hProcess: DWORD): Boolean;
+procedure Init_IsWow64Process;
+
 implementation
-  function NtQueryInformationProcess; external 'NTDLL.DLL';
+
+procedure Init_IsWow64Process;
+var
+  hKernel32      : Integer;
+begin
+  hKernel32 := LoadLibrary(kernel32);
+  if (hKernel32 = 0) then RaiseLastOSError;
+  try
+    _IsWow64Process := GetProcAddress(hkernel32, 'IsWow64Process');
+  finally
+    FreeLibrary(hKernel32);
+  end;
+end;
+
+function ProcessIsX64(hProcess: DWORD): Boolean;
+var
+  IsWow64: BOOL;
+begin
+  Result := False;
+  {$IFNDEF CPUX64}
+    Exit;
+  {$ENDIF}
+  if not Assigned(_IsWow64Process) then
+   Init_IsWow64Process;
+
+  if Assigned(_IsWow64Process) then
+  begin
+    if (_IsWow64Process(hProcess, IsWow64)) then
+      Result := not IsWow64
+    else
+      RaiseLastOSError;
+  end;
+end;
+
 end.
