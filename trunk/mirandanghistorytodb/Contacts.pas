@@ -82,7 +82,7 @@ begin
     if Proto = '' then
       Proto := GetContactProto(hContact);
     if Proto = '' then
-      Result := TranslateW('''(Unknown Contact)''')
+      Result := TranslateW('Unknown Contact')
     else
     begin
       ci.cbSize := SizeOf(ci);
@@ -92,7 +92,7 @@ begin
       if CallService(MS_CONTACT_GETCONTACTINFO, 0, LPARAM(@ci)) = 0 then
       begin
         RetPWideChar := ci.retval.szVal.w;
-        UW := TranslateW('''(Unknown Contact)''');
+        UW := TranslateW('Unknown Contact');
         if WideCompareText(RetPWideChar, UW) = 0 then
           Result := AnsiToWideString(GetContactID(hContact, Proto), CP_ACP)
         else
@@ -167,7 +167,7 @@ begin
   if CallService(MS_CONTACT_GETCONTACTINFO, 0, LPARAM(@ci)) = 0 then
   begin
     RetPWideChar := ci.retval.szVal.w;
-    UW := TranslateW('''(Unknown Contact)''');
+    UW := TranslateW('Unknown Contact');
     if WideCompareText(RetPWideChar, UW) = 0 then
       Result := 'NoContactName'
     else
@@ -190,7 +190,7 @@ begin
   if CallService(MS_CONTACT_GETCONTACTINFO, 0, LPARAM(@ci)) = 0 then
   begin
     RetPWideChar := ci.retval.szVal.w;
-    UW := TranslateW('''(Unknown Contact)''');
+    UW := TranslateW('Unknown Contact');
     if WideCompareText(RetPWideChar, UW) = 0 then
       Result := 'NoContactID'
     else
