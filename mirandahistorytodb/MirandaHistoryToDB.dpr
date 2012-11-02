@@ -719,6 +719,7 @@ begin
     end
     else // Иначе посылаем запрос
       OnSendMessageToOneComponent(WinName, '009');
+    Sleep(800);
     // Удаляем старую утилиту
     if DeleteFile(PluginPath + 'HistoryToDBUpdater.exe') then
     begin
