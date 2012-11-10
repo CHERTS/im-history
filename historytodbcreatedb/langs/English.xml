@@ -37,6 +37,8 @@
   <LHelpSQLite>Attention! Base for storing the history will be created automatically when you click on "Connect to DB"</LHelpSQLite>
   <LHelpFirebird>Attention! First you need to create a database on the tab "Step 1 - 4" and then run to her connection to create tables and users.</LHelpFirebird>
   <LHelpEmpty>Empty</LHelpEmpty>
+  <NoNullRecordCountCaption>The user has the data in the database</NoNullRecordCountCaption>
+  <NoNullRecordCount>WARNING! The user has the data in the database.%sDo you really want to remove the table?</NoNullRecordCount>
 
   <ErrCaption>Error</ErrCaption>
   <ErrDBConnect>Error: Unable to connect to the database.</ErrDBConnect>

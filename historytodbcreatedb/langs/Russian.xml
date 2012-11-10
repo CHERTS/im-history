@@ -37,6 +37,8 @@
   <LHelpSQLite>Внимание! База для хранения истории будет создана автоматически при нажатии на кнопку "Подключиться к БД"</LHelpSQLite>
   <LHelpFirebird>Внимание! Вначале Вам нужно создать БД на вкладке "Шаг 1 - 4" и только потом выполнить к ней подключение для создания таблиц и пользователей.</LHelpFirebird>
   <LHelpEmpty>Empty</LHelpEmpty>
+  <NoNullRecordCountCaption>В таблицах пользователя есть записи</NoNullRecordCountCaption>
+  <NoNullRecordCount>ВНИМАНИЕ! В таблицах пользователя есть записи.%sВы действительно хотите удалить эти таблицы?</NoNullRecordCount>
 
   <ErrCaption>Ошибка</ErrCaption>
   <ErrDBConnect>Ошибка: Не удается установить подключение к БД.</ErrDBConnect>

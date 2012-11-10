@@ -103,8 +103,8 @@ type
     function SQL_Zeos(SQL: WideString): Boolean;
     function SQL_Zeos_Exec(SQL: WideString): Boolean;
     function CheckZeroRecordCount(SQL: String): Boolean;
-    procedure ZSQLMonitor1Trace(Sender: TObject; Event: TZLoggingEvent;
-      var LogTrace: Boolean);
+    function CheckTableRecord: Boolean;
+    procedure ZSQLMonitor1Trace(Sender: TObject; Event: TZLoggingEvent; var LogTrace: Boolean);
     procedure ClearLogButtonClick(Sender: TObject);
     procedure CBAllowUpdateDBClick(Sender: TObject);
   private
@@ -927,7 +927,177 @@ procedure TMainForm.DeleteTableDB;
 var
   ErrorsCount: Integer;
 begin
-  ErrorsCount := 0;
+  // Проверка наличия записей в таблицах
+  if CheckTableRecord then
+  begin
+    ErrorsCount := 0;
+    if EUserName.Text = '' then
+    begin
+      MsgDie(ProgramsName, GetLangStr('ErrDeleteTable') + ' ' + GetLangStr('NoEmptyLogin'));
+      Exit;
+    end;
+    if CheckRegExprStr('^([a-zA-Z0-9\-\_]{1,})$', EUserName.Text) then
+    begin
+      if (MatchStrings(CBDBType.Items[CBDBType.ItemIndex], 'mysql*')) then
+      begin
+        // Проверка на соответствие имени БД
+        if not CheckRegExprStr('^([a-zA-Z0-9\-\_]{1,})$', EIMDBName.Text) then
+        begin
+          MsgDie(ProgramsName, GetLangStr('ErrDeleteTable') + ' ' + GetLangStr('ErrRegexprDBName'));
+          Exit;
+        end;
+        // Удаление таблиц
+        SQL_Zeos_Exec('use ' + EIMDBName.Text + ';');
+        // Удаление таблицы config
+        if CBDropConfigTable.Checked then
+        begin
+          if (not DBUpdate(ExtractFilePath(Application.ExeName) + 'sql\mysql_delete_config.sql')) then
+          begin
+            Inc(ErrorsCount);
+            MsgDie(ProgramsName, GetLangStr('ErrDeleteTable') + ' ' + Format(GetLangStr('ErrSQLQueryInFile'), ['sql\mysql_delete_config.sql']));
+          end;
+        end;
+        // Удаление остальных таблиц
+        if (not DBUpdate(ExtractFilePath(Application.ExeName) + 'sql\delete_table.sql')) then
+        begin
+          Inc(ErrorsCount);
+          MsgDie(ProgramsName, GetLangStr('ErrDeleteTable') + ' ' + Format(GetLangStr('ErrSQLQueryInFile'), ['sql\delete_table.sql']));
+        end;
+      end
+      else if (MatchStrings(CBDBType.Items[CBDBType.ItemIndex], 'postgresql*')) then
+      begin
+        // Меняем БД
+        ZConnection1.Disconnect;
+        ZConnection1.Database := EIMDBName.Text;
+        ZConnection1.Connect;
+        if not ZConnection1.Connected then
+          Exit;
+        // Удаление таблицы config
+        if CBDropConfigTable.Checked then
+        begin
+          SQL_Zeos('select delete_config_tbl(0)');
+          // Удаление функций создания таблицы config
+          if (not DBUpdate(ExtractFilePath(Application.ExeName) + 'sql\postgresql_delete_global_function.sql')) then
+          begin
+            Inc(ErrorsCount);
+            MsgDie(ProgramsName, GetLangStr('ErrDeleteSequence') + ' ' + Format(GetLangStr('ErrSQLQueryInFile'), ['sql\postgresql_delete_global_function.sql']));
+          end;
+        end;
+        // Удаление остальных таблиц
+        if (not DBUpdate(ExtractFilePath(Application.ExeName) + 'sql\delete_table.sql')) then
+        begin
+          Inc(ErrorsCount);
+          MsgDie(ProgramsName, GetLangStr('ErrDeleteTable') + ' ' + Format(GetLangStr('ErrSQLQueryInFile'), ['sql\delete_table.sql']));
+        end;
+        // Удаление последовательностей
+        if (not DBUpdate(ExtractFilePath(Application.ExeName) + 'sql\delete_sequence.sql')) then
+        begin
+          Inc(ErrorsCount);
+          MsgDie(ProgramsName, GetLangStr('ErrDeleteSequence') + ' ' + Format(GetLangStr('ErrSQLQueryInFile'), ['sql\delete_sequence.sql']));
+        end;
+        // Удаление функций
+        if (not DBUpdate(ExtractFilePath(Application.ExeName) + 'sql\postgresql_delete_function.sql')) then
+        begin
+          Inc(ErrorsCount);
+          MsgDie(ProgramsName, GetLangStr('ErrDeleteSequence') + ' ' + Format(GetLangStr('ErrSQLQueryInFile'), ['sql\postgresql_delete_function.sql']));
+        end;
+      end
+      else if (MatchStrings(CBDBType.Items[CBDBType.ItemIndex], 'oracle*')) then
+      begin
+        // Удаление таблицы config
+        if CBDropConfigTable.Checked then
+        begin
+          SQL_Zeos('SELECT TABLE_NAME FROM ALL_TABLES WHERE TABLE_NAME = ''CONFIG''');
+          if UpdateQuery.FieldByName('TABLE_NAME').AsString = 'CONFIG' then
+          begin
+            if (not DBUpdate(ExtractFilePath(Application.ExeName) + 'sql\oracle_delete_config.sql')) then
+            begin
+              Inc(ErrorsCount);
+              MsgDie(ProgramsName, GetLangStr('ErrDeleteTable') + ' ' + Format(GetLangStr('ErrSQLQueryInFile'), ['sql\oracle_delete_config.sql']));
+            end;
+          end;
+        end;
+        // Удаление остальных таблиц
+        if (not DBUpdate(ExtractFilePath(Application.ExeName) + 'sql\oracle_delete_table.sql')) then
+        begin
+          Inc(ErrorsCount);
+          MsgDie(ProgramsName, GetLangStr('ErrDeleteTable') + ' ' + Format(GetLangStr('ErrSQLQueryInFile'), ['sql\oracle_delete_table.sql']));
+        end;
+        // Удаление последовательностей
+        if (not DBUpdate(ExtractFilePath(Application.ExeName) + 'sql\delete_sequence.sql')) then
+        begin
+          Inc(ErrorsCount);
+          MsgDie(ProgramsName, GetLangStr('ErrDeleteSequence') + ' ' + Format(GetLangStr('ErrSQLQueryInFile'), ['sql\delete_sequence.sql']));
+        end;
+      end
+      else if (MatchStrings(CBDBType.Items[CBDBType.ItemIndex], 'sqlite*')) then
+      begin
+        // Удаление таблицы config
+        if CBDropConfigTable.Checked then
+        begin
+          if (not DBUpdate(ExtractFilePath(Application.ExeName) + 'sql\sqlite_delete_config.sql')) then
+          begin
+            Inc(ErrorsCount);
+            MsgDie(ProgramsName, GetLangStr('ErrDeleteTable') + ' ' + Format(GetLangStr('ErrSQLQueryInFile'), ['sql\sqlite_delete_config.sql']));
+          end;
+        end;
+        // Удаление остальных таблиц
+        if (not DBUpdate(ExtractFilePath(Application.ExeName) + 'sql\delete_table.sql')) then
+        begin
+          Inc(ErrorsCount);
+          MsgDie(ProgramsName, GetLangStr('ErrDeleteTable') + ' ' + Format(GetLangStr('ErrSQLQueryInFile'), ['sql\delete_table.sql']));
+        end;
+      end
+      else if (MatchStrings(CBDBType.Items[CBDBType.ItemIndex], 'firebird*')) then
+      begin
+        DBUpdateProcessor.DelimiterType := dtSetTerm;
+        // Удаление таблицы config
+        if CBDropConfigTable.Checked then
+        begin
+          if (not DBUpdate(ExtractFilePath(Application.ExeName) + 'sql\firebird_delete_config.sql')) then
+          begin
+            Inc(ErrorsCount);
+            MsgDie(ProgramsName, GetLangStr('ErrDeleteTable') + ' ' + Format(GetLangStr('ErrSQLQueryInFile'), ['sql\firebird_delete_config.sql']));
+          end;
+        end;
+        // Удаление таблиц
+        if (not DBUpdate(ExtractFilePath(Application.ExeName) + 'sql\firebird_delete_table.sql')) then
+        begin
+          Inc(ErrorsCount);
+          MsgDie(ProgramsName, GetLangStr('ErrDeleteTable') + ' ' + Format(GetLangStr('ErrSQLQueryInFile'), ['sql\firebird_delete_table.sql']));
+        end;
+        // Удаление последовательностей
+        if (not DBUpdate(ExtractFilePath(Application.ExeName) + 'sql\firebird_delete_sequence.sql')) then
+        begin
+          Inc(ErrorsCount);
+          MsgDie(ProgramsName, GetLangStr('ErrDeleteSequence') + ' ' + Format(GetLangStr('ErrSQLQueryInFile'), ['sql\firebird_delete_sequence.sql']));
+        end;
+        DBUpdateProcessor.DelimiterType := dtDefault;
+      end
+      else
+      begin
+        MsgInf(ProgramsName, GetLangStr('ErrDeleteTableUnknownDBType'));
+        Exit;
+      end;
+    end
+    else
+    begin
+      MsgDie(ProgramsName, GetLangStr('ErrDeleteTable') + ' ' + GetLangStr('ErrRegexprUserName'));
+      Exit;
+    end;
+    if ErrorsCount = 0 then
+      MsgInf(ProgramsName, GetLangStr('DeleteTableDone'))
+    else
+      MsgDie(ProgramsName, GetLangStr('ErrDeleteTable') + ' ' + Format(GetLangStr('ErrFile'), [ErrorLogName]));
+  end;
+end;
+
+function TMainForm.CheckTableRecord: Boolean;
+var
+  RecCount: Integer;
+begin
+  Result := False;
+  RecCount := 0;
   if EUserName.Text = '' then
   begin
     MsgDie(ProgramsName, GetLangStr('ErrDeleteTable') + ' ' + GetLangStr('NoEmptyLogin'));
@@ -935,157 +1105,27 @@ begin
   end;
   if CheckRegExprStr('^([a-zA-Z0-9\-\_]{1,})$', EUserName.Text) then
   begin
-    if (MatchStrings(CBDBType.Items[CBDBType.ItemIndex], 'mysql*')) then
+    // Проверка на соответствие имени БД
+    if not CheckRegExprStr('^([a-zA-Z0-9\-\_]{1,})$', EIMDBName.Text) then
     begin
-      // Проверка на соответствие имени БД
-      if not CheckRegExprStr('^([a-zA-Z0-9\-\_]{1,})$', EIMDBName.Text) then
-      begin
-        MsgDie(ProgramsName, GetLangStr('ErrDeleteTable') + ' ' + GetLangStr('ErrRegexprDBName'));
-        Exit;
-      end;
-      // Удаление таблиц
-      SQL_Zeos_Exec('use ' + EIMDBName.Text + ';');
-      // Удаление таблицы config
-      if CBDropConfigTable.Checked then
-      begin
-        if (not DBUpdate(ExtractFilePath(Application.ExeName) + 'sql\mysql_delete_config.sql')) then
-        begin
-          Inc(ErrorsCount);
-          MsgDie(ProgramsName, GetLangStr('ErrDeleteTable') + ' ' + Format(GetLangStr('ErrSQLQueryInFile'), ['sql\mysql_delete_config.sql']));
-        end;
-      end;
-      // Удаление остальных таблиц
-      if (not DBUpdate(ExtractFilePath(Application.ExeName) + 'sql\delete_table.sql')) then
-      begin
-        Inc(ErrorsCount);
-        MsgDie(ProgramsName, GetLangStr('ErrDeleteTable') + ' ' + Format(GetLangStr('ErrSQLQueryInFile'), ['sql\delete_table.sql']));
-      end;
-    end
-    else if (MatchStrings(CBDBType.Items[CBDBType.ItemIndex], 'postgresql*')) then
-    begin
-      // Меняем БД
-      ZConnection1.Disconnect;
-      ZConnection1.Database := EIMDBName.Text;
-      ZConnection1.Connect;
-      if not ZConnection1.Connected then
-        Exit;
-      // Удаление таблицы config
-      if CBDropConfigTable.Checked then
-      begin
-        SQL_Zeos('select delete_config_tbl(0)');
-        // Удаление функций создания таблицы config
-        if (not DBUpdate(ExtractFilePath(Application.ExeName) + 'sql\postgresql_delete_global_function.sql')) then
-        begin
-          Inc(ErrorsCount);
-          MsgDie(ProgramsName, GetLangStr('ErrDeleteSequence') + ' ' + Format(GetLangStr('ErrSQLQueryInFile'), ['sql\postgresql_delete_global_function.sql']));
-        end;
-      end;
-      // Удаление остальных таблиц
-      if (not DBUpdate(ExtractFilePath(Application.ExeName) + 'sql\delete_table.sql')) then
-      begin
-        Inc(ErrorsCount);
-        MsgDie(ProgramsName, GetLangStr('ErrDeleteTable') + ' ' + Format(GetLangStr('ErrSQLQueryInFile'), ['sql\delete_table.sql']));
-      end;
-      // Удаление последовательностей
-      if (not DBUpdate(ExtractFilePath(Application.ExeName) + 'sql\delete_sequence.sql')) then
-      begin
-        Inc(ErrorsCount);
-        MsgDie(ProgramsName, GetLangStr('ErrDeleteSequence') + ' ' + Format(GetLangStr('ErrSQLQueryInFile'), ['sql\delete_sequence.sql']));
-      end;
-      // Удаление функций
-      if (not DBUpdate(ExtractFilePath(Application.ExeName) + 'sql\postgresql_delete_function.sql')) then
-      begin
-        Inc(ErrorsCount);
-        MsgDie(ProgramsName, GetLangStr('ErrDeleteSequence') + ' ' + Format(GetLangStr('ErrSQLQueryInFile'), ['sql\postgresql_delete_function.sql']));
-      end;
-    end
-    else if (MatchStrings(CBDBType.Items[CBDBType.ItemIndex], 'oracle*')) then
-    begin
-      // Удаление таблицы config
-      if CBDropConfigTable.Checked then
-      begin
-        SQL_Zeos('SELECT TABLE_NAME FROM ALL_TABLES WHERE TABLE_NAME = ''CONFIG''');
-        if UpdateQuery.FieldByName('TABLE_NAME').AsString = 'CONFIG' then
-        begin
-          if (not DBUpdate(ExtractFilePath(Application.ExeName) + 'sql\oracle_delete_config.sql')) then
-          begin
-            Inc(ErrorsCount);
-            MsgDie(ProgramsName, GetLangStr('ErrDeleteTable') + ' ' + Format(GetLangStr('ErrSQLQueryInFile'), ['sql\oracle_delete_config.sql']));
-          end;
-        end;
-      end;
-      // Удаление остальных таблиц
-      if (not DBUpdate(ExtractFilePath(Application.ExeName) + 'sql\oracle_delete_table.sql')) then
-      begin
-        Inc(ErrorsCount);
-        MsgDie(ProgramsName, GetLangStr('ErrDeleteTable') + ' ' + Format(GetLangStr('ErrSQLQueryInFile'), ['sql\oracle_delete_table.sql']));
-      end;
-      // Удаление последовательностей
-      if (not DBUpdate(ExtractFilePath(Application.ExeName) + 'sql\delete_sequence.sql')) then
-      begin
-        Inc(ErrorsCount);
-        MsgDie(ProgramsName, GetLangStr('ErrDeleteSequence') + ' ' + Format(GetLangStr('ErrSQLQueryInFile'), ['sql\delete_sequence.sql']));
-      end;
-    end
-    else if (MatchStrings(CBDBType.Items[CBDBType.ItemIndex], 'sqlite*')) then
-    begin
-      // Удаление таблицы config
-      if CBDropConfigTable.Checked then
-      begin
-        if (not DBUpdate(ExtractFilePath(Application.ExeName) + 'sql\sqlite_delete_config.sql')) then
-        begin
-          Inc(ErrorsCount);
-          MsgDie(ProgramsName, GetLangStr('ErrDeleteTable') + ' ' + Format(GetLangStr('ErrSQLQueryInFile'), ['sql\sqlite_delete_config.sql']));
-        end;
-      end;
-      // Удаление остальных таблиц
-      if (not DBUpdate(ExtractFilePath(Application.ExeName) + 'sql\delete_table.sql')) then
-      begin
-        Inc(ErrorsCount);
-        MsgDie(ProgramsName, GetLangStr('ErrDeleteTable') + ' ' + Format(GetLangStr('ErrSQLQueryInFile'), ['sql\delete_table.sql']));
-      end;
-    end
-    else if (MatchStrings(CBDBType.Items[CBDBType.ItemIndex], 'firebird*')) then
-    begin
-      DBUpdateProcessor.DelimiterType := dtSetTerm;
-      // Удаление таблицы config
-      if CBDropConfigTable.Checked then
-      begin
-        if (not DBUpdate(ExtractFilePath(Application.ExeName) + 'sql\firebird_delete_config.sql')) then
-        begin
-          Inc(ErrorsCount);
-          MsgDie(ProgramsName, GetLangStr('ErrDeleteTable') + ' ' + Format(GetLangStr('ErrSQLQueryInFile'), ['sql\firebird_delete_config.sql']));
-        end;
-      end;
-      // Удаление таблиц
-      if (not DBUpdate(ExtractFilePath(Application.ExeName) + 'sql\firebird_delete_table.sql')) then
-      begin
-        Inc(ErrorsCount);
-        MsgDie(ProgramsName, GetLangStr('ErrDeleteTable') + ' ' + Format(GetLangStr('ErrSQLQueryInFile'), ['sql\firebird_delete_table.sql']));
-      end;
-      // Удаление последовательностей
-      if (not DBUpdate(ExtractFilePath(Application.ExeName) + 'sql\firebird_delete_sequence.sql')) then
-      begin
-        Inc(ErrorsCount);
-        MsgDie(ProgramsName, GetLangStr('ErrDeleteSequence') + ' ' + Format(GetLangStr('ErrSQLQueryInFile'), ['sql\firebird_delete_sequence.sql']));
-      end;
-      DBUpdateProcessor.DelimiterType := dtDefault;
-    end
-    else
-    begin
-      MsgInf(ProgramsName, GetLangStr('ErrDeleteTableUnknownDBType'));
+      MsgDie(ProgramsName, GetLangStr('ErrDeleteTable') + ' ' + GetLangStr('ErrRegexprDBName'));
       Exit;
     end;
-  end
-  else
-  begin
-    MsgDie(ProgramsName, GetLangStr('ErrDeleteTable') + ' ' + GetLangStr('ErrRegexprUserName'));
-    Exit;
+    // Проверка на нулевое кол. записей
+    if not CheckZeroRecordCount('select count(*) AS cnt from uin_' + EUserName.Text) then
+      Inc(RecCount);
+    if not CheckZeroRecordCount('select count(*) AS cnt from uin_chat_' + EUserName.Text) then
+      Inc(RecCount);
+    if RecCount > 0 then
+    begin
+      case MessageBox(Handle,PWideChar(Format(GetLangStr('NoNullRecordCount'),[#13])),PWideChar(GetLangStr('NoNullRecordCountCaption')),36) of
+        6: Result := True;
+        7: Result := False;
+      end;
+    end
+    else
+      Result := True;
   end;
-  if ErrorsCount = 0 then
-    MsgInf(ProgramsName, GetLangStr('DeleteTableDone'))
-  else
-    MsgDie(ProgramsName, GetLangStr('ErrDeleteTable') + ' ' + Format(GetLangStr('ErrFile'), [ErrorLogName]));
 end;
 
 { Создание поьзователя }
