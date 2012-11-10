@@ -1443,7 +1443,9 @@ var
   MsgDateTime: TDateTime;
   FirstNickNameFound, NickNameFound: Boolean;
   CurrentAccountName, CurrentAccountUIN: WideString;
+  {$IFDEF DELPHI16_UP}
   FS: TFormatSettings;
+  {$ENDIF}
 begin
   if RButtonSelectFile.Checked then
     ReciverUin := EReciverUIN.Text
