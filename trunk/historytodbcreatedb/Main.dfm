@@ -68,7 +68,7 @@ object MainForm: TMainForm
     Top = 44
     Width = 353
     Height = 392
-    ActivePage = StepsTabSheet
+    ActivePage = Step0TabSheet
     Anchors = [akLeft, akTop, akRight, akBottom]
     TabOrder = 2
     object Step0TabSheet: TTabSheet
