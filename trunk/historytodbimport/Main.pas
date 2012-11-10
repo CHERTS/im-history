@@ -10,6 +10,7 @@
 
 unit Main;
 
+{$I jedi.inc}
 {$I HistoryToDBImport.inc}
 
 interface
@@ -1442,6 +1443,7 @@ var
   MsgDateTime: TDateTime;
   FirstNickNameFound, NickNameFound: Boolean;
   CurrentAccountName, CurrentAccountUIN: WideString;
+  FS: TFormatSettings;
 begin
   if RButtonSelectFile.Checked then
     ReciverUin := EReciverUIN.Text
@@ -1534,7 +1536,14 @@ begin
     FileStringCount := 0;
     MsgFoundPos := 0;
     NickNameFound := False;
-    DateSeparator := '/';
+    //DateSeparator := '/';
+    {$IFDEF DELPHI16_UP}
+      FS := TFormatSettings.Create(GetThreadLocale);
+      FS.DateSeparator := '/';
+    {$ELSE}
+      //GetLocaleFormatSettings(GetThreadLocale, FormatSettings);
+      DateSeparator := '/';
+    {$ENDIF}
     if UnicodeFiles.Count > 0 then
     begin
       if RButtonSelectDir.Checked then

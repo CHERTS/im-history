@@ -22,7 +22,7 @@ IM-клиент:	Любой
 Необходимые компоненты для сборки плагина:
 ------------------------------------------
 
-1. Embarcadero RAD Studio XE 2011
+1. Embarcadero RAD Studio XE3
 
 2. IM-History Downloader Component
    See also directory IMDownloaderComponent

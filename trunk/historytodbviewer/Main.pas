@@ -10,6 +10,7 @@
 
 unit Main;
 
+{$I jedi.inc}
 {$I HistoryToDBViewer.inc}
 {$R Images.res}
 
@@ -944,6 +945,9 @@ var
   FoundEncryptKeyID: Boolean;
   TC: Cardinal;
   SummaryQuery: TZQuery;
+  {$IFDEF DELPHI16_UP}
+  FS: TFormatSettings;
+  {$ENDIF}
 begin
   if EnableDebug then TC := GetTickCount;
   if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура ShowSummaryHistory: Запущено показ истории', 2);
@@ -955,8 +959,15 @@ begin
   Application.ProcessMessages;
   // Читаем региональные настройки параметров формата Даты, Времени и т.п.
   GetLocaleFormatSettings(LOCALE_SYSTEM_DEFAULT, SystemSettings);
-  DateSeparator := SystemSettings.DateSeparator;
-  TimeSeparator := SystemSettings.TimeSeparator;
+  {$IFDEF DELPHI16_UP}
+    FS := TFormatSettings.Create(GetThreadLocale);
+    FS.DateSeparator := SystemSettings.DateSeparator;
+    FS.TimeSeparator := SystemSettings.TimeSeparator;
+  {$ELSE}
+    //GetLocaleFormatSettings(GetThreadLocale, FormatSettings);
+    DateSeparator := SystemSettings.DateSeparator;
+    TimeSeparator := SystemSettings.TimeSeparator;
+  {$ENDIF}
   // End
   // Подключаемся к базе
   ConnectDB;
@@ -1122,6 +1133,9 @@ var
   MsgEncryptStatus, MyKeyPasswordCnt: Integer;
   FoundEncryptKeyID: Boolean;
   TC: Cardinal;
+  {$IFDEF DELPHI16_UP}
+  FS: TFormatSettings;
+  {$ENDIF}
 begin
   if EnableDebug then TC := GetTickCount;
   if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура ShowHistory: Запущено показ истории', 2);
@@ -1133,8 +1147,15 @@ begin
   Application.ProcessMessages;
   // Читаем региональные настройки параметров формата Даты, Времени и т.п.
   GetLocaleFormatSettings(LOCALE_SYSTEM_DEFAULT, SystemSettings);
-  DateSeparator := SystemSettings.DateSeparator;
-  TimeSeparator := SystemSettings.TimeSeparator;
+  {$IFDEF DELPHI16_UP}
+    FS := TFormatSettings.Create(GetThreadLocale);
+    FS.DateSeparator := SystemSettings.DateSeparator;
+    FS.TimeSeparator := SystemSettings.TimeSeparator;
+  {$ELSE}
+    //GetLocaleFormatSettings(GetThreadLocale, FormatSettings);
+    DateSeparator := SystemSettings.DateSeparator;
+    TimeSeparator := SystemSettings.TimeSeparator;
+  {$ENDIF}
   // End
   // Подключаемся к базе
   ConnectDB;
