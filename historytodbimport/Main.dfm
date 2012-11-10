@@ -344,6 +344,7 @@ object MainForm: TMainForm
     ParentFlat = False
     ParentFont = False
     ReadOnly = True
+    SelText = ''
     TabOrder = 2
   end
   object StatusBar1: TStatusBar
@@ -380,6 +381,15 @@ object MainForm: TMainForm
     Top = 256
   end
   object ImportHistoryZConnection: TZConnection
+    UTF8StringsAsWideField = True
+    PreprepareSQL = False
+    Catalog = ''
+    HostName = ''
+    Port = 0
+    Database = ''
+    User = ''
+    Password = ''
+    Protocol = ''
     Left = 312
     Top = 304
   end
@@ -1224,8 +1234,17 @@ object MainForm: TMainForm
       000000000000}
   end
   object MainZConnection: TZConnection
+    UTF8StringsAsWideField = True
+    PreprepareSQL = False
+    Catalog = ''
     TransactIsolationLevel = tiReadCommitted
     AfterConnect = MainZConnectionAfterConnect
+    HostName = ''
+    Port = 0
+    Database = ''
+    User = ''
+    Password = ''
+    Protocol = ''
     Left = 312
     Top = 256
   end

@@ -10,6 +10,9 @@
 
 unit Settings;
 
+{$I jedi.inc}
+{$R About.res}
+
 interface
 
 uses
@@ -19,7 +22,10 @@ uses
   ZAbstractRODataset, ZAbstractDataset, ZDataset, ZClasses, ZDbcIntfs, Main, Global,
   Spin, ExtCtrls, ButtonGroup, ShellAPI, uIMButtonGroup, JvExExtCtrls,
   JvExtComponent, JvOfficeColorButton, Buttons, Menus, JvAppHotKey,
-  DCPcrypt2, DCPblockciphers, DCPdes, DCPsha1, DCPbase64, TextFade, ImgList;
+  DCPcrypt2, DCPblockciphers, DCPdes, DCPsha1, DCPbase64, ImgList
+  {$IFDEF DELPHI16_UP}
+  ,System.UITypes
+  {$ENDIF};
 
 type
   TSettingsForm = class(TForm)
@@ -50,8 +56,6 @@ type
     LNumLastHistoryMsg: TLabel;
     GBKeys: TGroupBox;
     DBGridKeys: TJvDBGrid;
-    VirtualTable1: TVirtualTable;
-    ZQuery1: TZQuery;
     DataSource1: TDataSource;
     TestConnectionButton: TButton;
     SaveButton: TButton;
@@ -179,6 +183,7 @@ type
     CBAutoStartup: TCheckBox;
     CBRunSkype: TCheckBox;
     CBExitSkype: TCheckBox;
+    VirtualTable1: TVirtualTable;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
@@ -314,10 +319,11 @@ var
 begin
   // Переменная для режима анти-босс
   Global_SettingsForm_Showing := True;
-  // Загружаем язык интерфейса
-  LoadLanguageStrings;
   // Читаем настройки
   LoadINI(ProfilePath, false);
+  // Загружаем язык интерфейса
+  LoadLanguageStrings;
+  // Первая вкладка настроек
   SettingsPageControl.ActivePage := MainTabSheet;
   // Выводим список поддерживаемых протоколов
   CBDBType.Clear;
@@ -329,12 +335,12 @@ begin
       CBDBType.Items.Add(Protocols[J]);
   end;
   CBDBType.Sorted := True;
-  // End
   for I := 0 to CBDBType.Items.Count-1 do
   begin
     if CBDBType.Items[I] = DBType then
       CBDBType.ItemIndex := I;
   end;
+  // End
   EDBPort.Text := DBPort;
   EDBName.Text := DBName;
   EDBUserName.Text := DBUserName;
@@ -389,15 +395,11 @@ begin
   EMsgCountInterval.Text := IntToStr(SyncMessageCount);
   CBHideSyncIcon.Checked := HideSyncIcon;
   CBShowPluginButton.Checked := ShowPluginButton;
-  CBEnableEncryption.Checked := EnableHistoryEncryption;
+  {CBEnableEncryption.Checked := EnableHistoryEncryption;
   if CBEnableEncryption.Checked then
-  begin
-    GBKeys.Visible := True;
-  end
+    GBKeys.Visible := True
   else
-  begin
-    GBKeys.Visible := False;
-  end;
+    GBKeys.Visible := False;}
   CBSyncIntervalChange(Self);
   CBAddSpecialContact.Checked := AddSpecialContact;
   SettingtButtonGroup.ItemIndex := 0;
@@ -648,11 +650,21 @@ begin
     DBGridKeys.Columns[0].Title.Caption := GetLangStr('DBGridKeysColumnID');
     DBGridKeys.Columns[1].Title.Caption := GetLangStr('DBGridKeysColumnSTATUS');
     DBGridKeys.Columns[2].Title.Caption := GetLangStr('DBGridKeysColumnMETHOD');
-    if CBEnableEncryption.Checked then
+    CBEnableEncryption.Checked := EnableHistoryEncryption;
+    CBEnableEncryption.OnClick := CBEnableEncryptionClick;
+    if EnableHistoryEncryption then
+    begin
       ButtonGetEncryptionKeyClick(ButtonGetEncryptionKey);
+      GBKeys.Visible := True;
+    end
+    else
+      GBKeys.Visible := False;
   end
   else
   begin
+    CBEnableEncryption.OnClick := nil;
+    if not CBEnableEncryption.Checked then
+      GBKeys.Visible := False;
     VirtualTable1.Close;
     VirtualTable1.Clear;
     VirtualTable1.AfterScroll := nil;
@@ -668,11 +680,20 @@ begin
     DBGridKeys.Columns[0].Title.Caption := GetLangStr('DBGridKeysColumnID');
     DBGridKeys.Columns[1].Title.Caption := GetLangStr('DBGridKeysColumnSTATUS');
     DBGridKeys.Columns[2].Title.Caption := GetLangStr('DBGridKeysColumnMETHOD');
-    if CBEnableEncryption.Checked then
+    CBEnableEncryption.Checked := EnableHistoryEncryption;
+    CBEnableEncryption.OnClick := CBEnableEncryptionClick;
+    if EnableHistoryEncryption then
+    begin
       ButtonGetEncryptionKeyClick(ButtonGetEncryptionKey);
+      GBKeys.Visible := True;
+    end
+    else
+      GBKeys.Visible := False;
   end
   else
   begin
+    if not CBEnableEncryption.Checked then
+      GBKeys.Visible := False;
     VirtualTable1.Close;
     VirtualTable1.Clear;
     VirtualTable1.AfterScroll := nil;
@@ -752,19 +773,19 @@ begin
     Path := ProfilePath + ININame;
     if FileExists(Path) then
     begin
+      // Ждем пока файл освободит антивирь или еще какая-нибудь гадость
+      IsFileClosed := False;
+      repeat
+        sFile := CreateFile(PChar(Path),GENERIC_READ or GENERIC_WRITE,0,nil,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,0);
+        if (sFile <> INVALID_HANDLE_VALUE) then
+        begin
+          CloseHandle(sFile);
+          IsFileClosed := True;
+        end;
+      until IsFileClosed;
+      // End
+      INI := TIniFile.Create(Path);
       try
-        // Ждем пока файл освободит антивирь или еще какая-нибудь гадость
-        IsFileClosed := False;
-        repeat
-          sFile := CreateFile(PChar(Path),GENERIC_READ or GENERIC_WRITE,0,nil,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,0);
-          if (sFile <> INVALID_HANDLE_VALUE) then
-          begin
-            CloseHandle(sFile);
-            IsFileClosed := True;
-          end;
-        until IsFileClosed;
-        // End
-        INI := TIniFile.Create(Path);
         INI.WriteString('Main', 'DBType', CBDBType.Items[CBDBType.ItemIndex]);
         if (CBDBType.Items[CBDBType.ItemIndex] = 'oracle') or
           (CBDBType.Items[CBDBType.ItemIndex] = 'oracle-9i') then
@@ -869,79 +890,62 @@ begin
   begin
     ErrorCount := 0;
     DBParamSet;
-    try
-      MainForm.ZConnection1.Connect;
-      if MainForm.ZConnection1.Connected then
-      begin
-        if MainForm.CheckServiceMode then
-        begin
-          MsgInf(MainForm.Caption, GetLangStr('ERR_DB_SERVICE_MODE'));
-          MainForm.ZConnection1.Disconnect;
-        end;
-      end;
-      if MainForm.ZConnection1.Connected then
-      begin
-        if IMClientType = 'ICQ' then
-          SQLClientType := 'icq_version'
-        else if IMClientType = 'QIP' then
-          SQLClientType := 'qip_version'
-        else if IMClientType = 'RnQ' then
-          SQLClientType := 'rnq_version'
-        else if IMClientType = 'Miranda' then
-          SQLClientType := 'miranda_version'
+    MainForm.ConnectDB;
+    if MainForm.ZConnection1.Connected then
+    begin
+      if IMClientType = 'ICQ' then
+        SQLClientType := 'icq_version'
+      else if IMClientType = 'QIP' then
+        SQLClientType := 'qip_version'
+      else if IMClientType = 'RnQ' then
+        SQLClientType := 'rnq_version'
+      else if IMClientType = 'Miranda' then
+        SQLClientType := 'miranda_version'
+      else if IMClientType = 'MirandaNG' then
+        SQLClientType := 'miranda_version'
+      else
+        SQLClientType := 'icq_version';
+      Query := TZQuery.Create(nil);
+      Query.Connection := MainForm.ZConnection1;
+      try
+        Query.SQL.Text := 'select config_value from config where config_name = '''+SQLClientType+'''';
+        Query.Open;
+        DBVer := Query.FieldByName('config_value').AsString;
+        Query.Close;
+        TempDBVer := DBVer+'.0.0';
+        TempDBVer := StringReplace(TempDBVer, '.', '', [RFReplaceall]);
+        LocalTempDBVer := 0;
+        LocalTempProgramsVer := 0;
+        if IsNumber(TempDBVer) then
+          LocalTempDBVer := StrToInt(TempDBVer)
         else
-          SQLClientType := 'icq_version';
-        Query := TZQuery.Create(nil);
-        Query.Connection := MainForm.ZConnection1;
-        try
-          Query.SQL.Text := 'select config_value from config where config_name = '''+SQLClientType+'''';
-          Query.Open;
-          DBVer := Query.FieldByName('config_value').AsString;
-          Query.Close;
-          TempDBVer := DBVer+'.0.0';
-          TempDBVer := StringReplace(TempDBVer, '.', '', [RFReplaceall]);
-          if IsNumber(TempDBVer) then
-            LocalTempDBVer := StrToInt(TempDBVer)
-          else
-            Inc(ErrorCount);
-          TempProgramsVer := StringReplace(ProgramsVer, '.', '', [RFReplaceall]);
-          if IsNumber(TempProgramsVer) then
-            LocalTempProgramsVer := StrToInt(TempProgramsVer)
-          else
-            Inc(ErrorCount);
-          if (LocalTempDBVer = LocalTempProgramsVer) and (ErrorCount = 0) then
-          begin
-            MsgInf(GetLangStr('InfoCaption'), GetLangStr('GoodDBConnect2') + #13
-             + PWideChar(Format(GetLangStr('UpdateMessage5'), [ProgramsVer])) + #13
-             + PWideChar(Format(GetLangStr('UpdateMessage6'), [DBVer+'.0.0'])));
-          end
-          else if (LocalTempDBVer < LocalTempProgramsVer) and (ErrorCount = 0) then
-            MsgInf(GetLangStr('UpdateCaption'), GetLangStr('UpdateMessage1') + #13 + GetLangStr('UpdateMessage4') + #13 + GetLangStr('UpdateMessage3') + #13
-             + PWideChar(Format(GetLangStr('UpdateMessage5'), [ProgramsVer])) + #13
-             + PWideChar(Format(GetLangStr('UpdateMessage6'), [DBVer+'.0.0'])))
-          else if (LocalTempDBVer > LocalTempProgramsVer) and (ErrorCount = 0) then
-            MsgInf(GetLangStr('UpdateCaption'), GetLangStr('UpdateMessage1') + #13 + GetLangStr('UpdateMessage2') + #13 + GetLangStr('UpdateMessage3') + #13
-             + PWideChar(Format(GetLangStr('UpdateMessage5'), [ProgramsVer])) + #13
-             + PWideChar(Format(GetLangStr('UpdateMessage7'), [DBVer+'.0.0'])))
-        except
-          on e :
-            Exception do
-            begin
-              MsgInf(GetLangStr('ErrCaption'), GetLangStr('ErrVersionCheck') + #13 + StringReplace(e.Message,#13#10,'',[RFReplaceall]));
-              Query.Free;
-              //ErrorCount := ErrorCount + 1;
-            end
-        end;
-        MainForm.ZConnection1.Disconnect;
-      end;
-    except
-      on e :
-        Exception do
+          Inc(ErrorCount);
+        TempProgramsVer := StringReplace(ProgramsVer, '.', '', [RFReplaceall]);
+        if IsNumber(TempProgramsVer) then
+          LocalTempProgramsVer := StrToInt(TempProgramsVer)
+        else
+          Inc(ErrorCount);
+        if (LocalTempDBVer = LocalTempProgramsVer) and (ErrorCount = 0) then
         begin
-          MsgInf(GetLangStr('ErrCaption'), GetLangStr('ErrDBConnect') + #13 + StringReplace(e.Message,#13#10,'',[RFReplaceall]));
-          MainForm.ZConnection1.Disconnect;
-          //ErrorCount := ErrorCount + 1;
+          MsgInf(GetLangStr('InfoCaption'), GetLangStr('GoodDBConnect2') + #13
+           + PWideChar(Format(GetLangStr('UpdateMessage5'), [ProgramsVer])) + #13
+           + PWideChar(Format(GetLangStr('UpdateMessage6'), [DBVer+'.0.0'])));
         end
+        else if (LocalTempDBVer < LocalTempProgramsVer) and (ErrorCount = 0) then
+          MsgInf(GetLangStr('UpdateCaption'), GetLangStr('UpdateMessage1') + #13 + GetLangStr('UpdateMessage4') + #13 + GetLangStr('UpdateMessage3') + #13
+           + PWideChar(Format(GetLangStr('UpdateMessage5'), [ProgramsVer])) + #13
+           + PWideChar(Format(GetLangStr('UpdateMessage6'), [DBVer+'.0.0'])))
+        else if (LocalTempDBVer > LocalTempProgramsVer) and (ErrorCount = 0) then
+          MsgInf(GetLangStr('UpdateCaption'), GetLangStr('UpdateMessage1') + #13 + GetLangStr('UpdateMessage2') + #13 + GetLangStr('UpdateMessage3') + #13
+           + PWideChar(Format(GetLangStr('UpdateMessage5'), [ProgramsVer])) + #13
+           + PWideChar(Format(GetLangStr('UpdateMessage7'), [DBVer+'.0.0'])))
+      except
+        on e :
+          Exception do
+            MsgInf(GetLangStr('ErrCaption'), GetLangStr('ErrVersionCheck') + #13 + StringReplace(e.Message,#13#10,'',[RFReplaceall]));
+      end;
+      Query.Free;
+      MainForm.ZConnection1.Disconnect;
     end;
     MainForm.ZConnection1.Disconnect;
   end;
@@ -1052,18 +1056,10 @@ begin
     if SettingsForm.DBParamCheck then
     begin
       DBParamSet;
-      try
-        MainForm.ZConnection1.Connect;
-        if MainForm.ZConnection1.Connected then
-        begin
-          if MainForm.CheckServiceMode then
-          begin
-            MsgInf(MainForm.Caption + ' - ' + GetLangStr('EncryptKey'), GetLangStr('ERR_DB_SERVICE_MODE'));
-            MainForm.ZConnection1.Disconnect;
-          end;
-        end;
-        if MainForm.ZConnection1.Connected then
-        begin
+      MainForm.ConnectDB;
+      if MainForm.ZConnection1.Connected then
+      begin
+        try
           MainForm.SQL_Zeos('select count(*) as cnt from key_'+ DBUserName + '');
           KeyCnt := MainForm.ViewerQuery.FieldByName('cnt').AsInteger;
           if KeyCnt > 0 then
@@ -1111,16 +1107,16 @@ begin
           end;
           ButtonGetEncryptionKeyClick(ButtonGetEncryptionKey);
           // End
+        except
+          on e :
+            Exception do
+            begin
+              MsgInf(GetLangStr('ErrCaption'), GetLangStr('ErrDBConnect') + #13 + StringReplace(e.Message,#13#10,'',[RFReplaceall]));
+              MainForm.ZConnection1.Disconnect;
+              SettingsPageControl.ActivePage := EncryptionTabSheet;
+              Exit;
+            end
         end;
-      except
-        on e :
-          Exception do
-          begin
-            MsgInf(GetLangStr('ErrCaption'), GetLangStr('ErrDBConnect') + #13 + StringReplace(e.Message,#13#10,'',[RFReplaceall]));
-            MainForm.ZConnection1.Disconnect;
-            SettingsPageControl.ActivePage := EncryptionTabSheet;
-            Exit;
-          end
       end;
       MainForm.ZConnection1.Disconnect;
     end;
@@ -1132,32 +1128,31 @@ end;
 
 { Получаем ключ шифрования с сервера }
 procedure TSettingsForm.ButtonGetEncryptionKeyClick(Sender: TObject);
+var
+  Query: TZQuery;
 begin
   VirtualTable1.Close;
   VirtualTable1.Clear;
   VirtualTable1.AfterScroll := nil;
   DBGridKeys.PopupMenu := nil;
-  if MainForm.ZConnection1.Connected then
-    MainForm.ZConnection1.Disconnect;
+  {if MainForm.ZConnection1.Connected then
+    MainForm.ZConnection1.Disconnect;}
   if DBParamCheck then
   begin
     DBParamSet;
-    try
-      MainForm.ZConnection1.Connect;
-      if MainForm.ZConnection1.Connected then
-      begin
-        if MainForm.CheckServiceMode then
-        begin
-          MsgInf(ProgramsName, GetLangStr('ERR_DB_SERVICE_MODE'));
-          MainForm.ZConnection1.Disconnect;
-        end;
-      end;
-      if MainForm.ZConnection1.Connected then
-      begin
-        VirtualTable1.Close;
-        VirtualTable1.Clear;
-        ZQuery1.SQL.Clear;
-        ZQuery1.SQL.Text := 'select id,status_key,'+
+    MainForm.ConnectDB;
+    if MainForm.ZConnection1.Connected then
+    begin
+      VirtualTable1.Close;
+      VirtualTable1.Clear;
+      Query := TZQuery.Create(nil);
+      Query.Connection := MainForm.ZConnection1;
+      Query.Options := [doCalcDefaults];
+      //Query.SortedFields := 'id';
+      Query.ParamCheck := False;
+      try
+        Query.SQL.Clear;
+        Query.SQL.Text := 'select id,status_key,'+
         ' case'+
         ' when (status_key = 1) then ''Active'''+
         ' else ''Inactive'''+
@@ -1167,28 +1162,28 @@ begin
         ' when (encryption_method = 0) then ''DES'''+
         ' when (encryption_method = 1) then ''3DES'''+
         ' when (encryption_method = 2) then ''SHA1'''+
-        ' else ''Неизвестный'''+
+        ' else ''Unknown'''+
         ' end as encryption_method_text'+
         ' from key_'+ DBUserName + ' order by id';
-        ZQuery1.Open;
-        VirtualTable1.Assign(ZQuery1);
-        ZQuery1.Close;
+        Query.Open;
+        //DataSource1.DataSet := Query;//VirtualTable1;
+        VirtualTable1.Assign(Query);
         VirtualTable1.Active := True;
         if not VirtualTable1.IsEmpty then
-          DBGridKeys.PopupMenu := EncryptKeyPM;
-        VirtualTable1.AfterScroll := VirtualTable1AfterScroll;
-        VirtualTable1.BeforeScroll := VirtualTable1BeforeScroll;
-      end;
-    except
-      on e :
-        Exception do
         begin
-          MsgInf(GetLangStr('ErrCaption'), GetLangStr('ErrDBConnect') + #13 + StringReplace(e.Message,#13#10,'',[RFReplaceall]));
-          MainForm.ZConnection1.Disconnect;
-          Exit;
-        end
+          DBGridKeys.PopupMenu := EncryptKeyPM;
+          VirtualTable1.AfterScroll := VirtualTable1AfterScroll;
+          VirtualTable1.BeforeScroll := VirtualTable1BeforeScroll;
+        end;
+        Query.Close;
+      except
+        on e :
+          Exception do
+            MsgInf(GetLangStr('ErrCaption'), GetLangStr('ErrSQLQuery') + #13 + StringReplace(e.Message,#13#10,'',[RFReplaceall]));
+      end;
+      //Query.Free;
     end;
-    MainForm.ZConnection1.Disconnect;
+    //MainForm.ZConnection1.Disconnect;
   end;
 end;
 
@@ -1226,109 +1221,99 @@ begin
   if SettingsForm.DBParamCheck then
   begin
     DBParamSet;
-    try
-      MainForm.ZConnection1.Connect;
+      MainForm.ConnectDB;
       if MainForm.ZConnection1.Connected then
       begin
-        if MainForm.CheckServiceMode then
-        begin
-          MsgInf(MainForm.Caption + ' - ' + GetLangStr('KeyPasswordChangeCaption'), GetLangStr('ERR_DB_SERVICE_MODE'));
-          MainForm.ZConnection1.Disconnect;
-        end;
-      end;
-      if MainForm.ZConnection1.Connected then
-      begin
-        MainForm.SQL_Zeos('select count(*) as cnt from key_'+ DBUserName + '');
-        KeyCnt := MainForm.ViewerQuery.FieldByName('cnt').AsInteger;
-        if KeyCnt > 0 then
-        begin
-          MainForm.SQL_Zeos('select id, encryption_method, encryption_key from key_'+ DBUserName + ' where id = ' + EncryptKeyID + '');
-          DBEncryptKey := MainForm.ViewerQuery.FieldByName('encryption_key').AsString;
-          DBKeyID := MainForm.ViewerQuery.FieldByName('id').AsString;
-          DBKeyEncryptionMethod := MainForm.ViewerQuery.FieldByName('encryption_method').AsString;
-          // Инициализация функции хеширования SHA1
-          Hash:= TDCP_sha1.Create(Self);
-          Hash.Init;
-          Hash.UpdateStr(ECurrentPassword.Text);
-          Hash.Final(Digest);
-          Hash.Free;
-          // Инициализация функции шифрования 3DES
-          Cipher := TDCP_3des.Create(Self);
-          Cipher.Init(Digest, Sizeof(Digest)*8, nil);
-          // End
-          // Расшифровываем ключ введенным паролем по алгоритму 3DES
-          try
-            Cipher.Reset;
-            FinalFullKey := Cipher.DecryptString(DBEncryptKey);
-            FinalFullKeyTmp := FinalFullKey;
-            FinalKeyID :=  Tok('|', FinalFullKey);
-            FinalKeyEncryptionMethod := Tok('|', FinalFullKey);
-            FinalKey := Tok('|', FinalFullKey);
-            if (DBKeyID <> FinalKeyID) and (DBKeyEncryptionMethod <> FinalKeyEncryptionMethod) then
-            begin
-              MsgInf(MainForm.Caption + ' - ' + GetLangStr('KeyPasswordChangeCaption'), GetLangStr('ErrKeyPasswordChange'));
-              MainForm.ZConnection1.Disconnect;
-              Cipher.Burn;
-              Cipher.Free;
-              Exit;
-            end
-            else
-            begin
-              // Меняем пароль
-              if (ENewPassword.Text = EReNewPassword.Text) and (ENewPassword.Text <> '') and (EReNewPassword.Text <> '') then
+        try
+          MainForm.SQL_Zeos('select count(*) as cnt from key_'+ DBUserName + '');
+          KeyCnt := MainForm.ViewerQuery.FieldByName('cnt').AsInteger;
+          if KeyCnt > 0 then
+          begin
+            MainForm.SQL_Zeos('select id, encryption_method, encryption_key from key_'+ DBUserName + ' where id = ' + EncryptKeyID + '');
+            DBEncryptKey := MainForm.ViewerQuery.FieldByName('encryption_key').AsString;
+            DBKeyID := MainForm.ViewerQuery.FieldByName('id').AsString;
+            DBKeyEncryptionMethod := MainForm.ViewerQuery.FieldByName('encryption_method').AsString;
+            // Инициализация функции хеширования SHA1
+            Hash:= TDCP_sha1.Create(Self);
+            Hash.Init;
+            Hash.UpdateStr(ECurrentPassword.Text);
+            Hash.Final(Digest);
+            Hash.Free;
+            // Инициализация функции шифрования 3DES
+            Cipher := TDCP_3des.Create(Self);
+            Cipher.Init(Digest, Sizeof(Digest)*8, nil);
+            // End
+            // Расшифровываем ключ введенным паролем по алгоритму 3DES
+            try
+              Cipher.Reset;
+              FinalFullKey := Cipher.DecryptString(DBEncryptKey);
+              FinalFullKeyTmp := FinalFullKey;
+              FinalKeyID :=  Tok('|', FinalFullKey);
+              FinalKeyEncryptionMethod := Tok('|', FinalFullKey);
+              FinalKey := Tok('|', FinalFullKey);
+              if (DBKeyID <> FinalKeyID) and (DBKeyEncryptionMethod <> FinalKeyEncryptionMethod) then
               begin
-                // Очистка
-                Cipher.Burn;
-                Cipher.Free;
-                // Инициализация функции хеширования SHA1
-                Hash:= TDCP_sha1.Create(Self);
-                Hash.Init;
-                Hash.UpdateStr(ENewPassword.Text);
-                Hash.Final(Digest);
-                Hash.Free;
-                // Инициализация функции шифрования 3DES
-                Cipher := TDCP_3des.Create(Self);
-                Cipher.Init(Digest, Sizeof(Digest)*8, nil);
-                // End
-                // Шифруем ключ введенным новым паролем по алгоритму 3DES
-                Cipher.Reset;
-                NewFinalFullKey := Cipher.EncryptString(FinalFullKeyTmp);
-                // Обновляем данные ключа
-                MainForm.SQL_Zeos_Exec('update key_'+ DBUserName + ' set encryption_key=''' + NewFinalFullKey + ''' where id = ' + EncryptKeyID + '');
-                if (DBType = 'sqlite') or (DBType = 'sqlite-3') then
-                  MainForm.SQL_Zeos_Exec('commit;');
-                MsgInf(MainForm.Caption + ' - ' + GetLangStr('KeyPasswordChangeCaption'), GetLangStr('KeyPasswordChanged'));
-                Cipher.Burn;
-                Cipher.Free;
-                SettingsPageControl.ActivePage := EncryptionTabSheet;
-              end
-              else
-              begin
-                MsgInf(MainForm.Caption + ' - ' + GetLangStr('KeyPasswordChangeCaption'), GetLangStr('ErrKeyPasswordChangeNotRenew'));
+                MsgInf(MainForm.Caption + ' - ' + GetLangStr('KeyPasswordChangeCaption'), GetLangStr('ErrKeyPasswordChange'));
                 MainForm.ZConnection1.Disconnect;
                 Cipher.Burn;
                 Cipher.Free;
                 Exit;
-              end;
-            end;
-          except
-            on e :
-              Exception do
+              end
+              else
               begin
-                ShowMessage('Ошибка расшифровки ключа.');
+                // Меняем пароль
+                if (ENewPassword.Text = EReNewPassword.Text) and (ENewPassword.Text <> '') and (EReNewPassword.Text <> '') then
+                begin
+                  // Очистка
+                  Cipher.Burn;
+                  Cipher.Free;
+                  // Инициализация функции хеширования SHA1
+                  Hash:= TDCP_sha1.Create(Self);
+                  Hash.Init;
+                  Hash.UpdateStr(ENewPassword.Text);
+                  Hash.Final(Digest);
+                  Hash.Free;
+                  // Инициализация функции шифрования 3DES
+                  Cipher := TDCP_3des.Create(Self);
+                  Cipher.Init(Digest, Sizeof(Digest)*8, nil);
+                  // End
+                  // Шифруем ключ введенным новым паролем по алгоритму 3DES
+                  Cipher.Reset;
+                  NewFinalFullKey := Cipher.EncryptString(FinalFullKeyTmp);
+                  // Обновляем данные ключа
+                  MainForm.SQL_Zeos_Exec('update key_'+ DBUserName + ' set encryption_key=''' + NewFinalFullKey + ''' where id = ' + EncryptKeyID + '');
+                  if (DBType = 'sqlite') or (DBType = 'sqlite-3') then
+                    MainForm.SQL_Zeos_Exec('commit;');
+                  MsgInf(MainForm.Caption + ' - ' + GetLangStr('KeyPasswordChangeCaption'), GetLangStr('KeyPasswordChanged'));
+                  Cipher.Burn;
+                  Cipher.Free;
+                  SettingsPageControl.ActivePage := EncryptionTabSheet;
+                end
+                else
+                begin
+                  MsgInf(MainForm.Caption + ' - ' + GetLangStr('KeyPasswordChangeCaption'), GetLangStr('ErrKeyPasswordChangeNotRenew'));
+                  MainForm.ZConnection1.Disconnect;
+                  Cipher.Burn;
+                  Cipher.Free;
+                  Exit;
+                end;
               end;
+            except
+              on e :
+                Exception do
+                  MsgInf(GetLangStr('ErrCaption'), 'Ошибка расшифровки ключа.');
+            end;
           end;
+        except
+        on e :
+          Exception do
+          begin
+            MsgInf(GetLangStr('ErrCaption'), GetLangStr('ErrSQLQuery') + #13 + StringReplace(e.Message,#13#10,'',[RFReplaceall]));
+            MainForm.ZConnection1.Disconnect;
+            Exit;
+          end
         end;
       end;
-    except
-      on e :
-        Exception do
-        begin
-          MsgInf(GetLangStr('ErrCaption'), GetLangStr('ErrDBConnect') + #13 + StringReplace(e.Message,#13#10,'',[RFReplaceall]));
-          MainForm.ZConnection1.Disconnect;
-          Exit;
-        end
-    end;
     MainForm.ZConnection1.Disconnect;
   end;
 end;
@@ -1343,8 +1328,8 @@ begin
   begin
     DBParamSet;
     try
-      MainForm.ZConnection1.Connect;
-      if (MainForm.ZConnection1.Connected) and (not MainForm.CheckServiceMode) then
+      MainForm.ConnectDB;
+      if MainForm.ZConnection1.Connected then
       begin
         MainForm.SQL_Zeos('select count(*) as cnt from key_'+ DBUserName + '');
         KeyCnt := MainForm.ViewerQuery.FieldByName('cnt').AsInteger;
@@ -1384,13 +1369,13 @@ begin
       on e :
         Exception do
         begin
-          MsgInf(MainForm.Caption + ' - ' + GetLangStr('ErrCaption'), GetLangStr('ErrDBConnect') + #13 + StringReplace(e.Message,#13#10,'',[RFReplaceall]));
+          MsgInf(MainForm.Caption + ' - ' + GetLangStr('ErrCaption'), GetLangStr('ErrSQLQuery') + #13 + StringReplace(e.Message,#13#10,'',[RFReplaceall]));
           MainForm.ZConnection1.Disconnect;
           Exit;
         end
     end;
-    MainForm.ZConnection1.Disconnect;
     ButtonGetEncryptionKeyClick(ButtonGetEncryptionKey);
+    MainForm.ZConnection1.Disconnect;
   end;
 end;
 
@@ -1403,10 +1388,10 @@ begin
   if SettingsForm.DBParamCheck then
   begin
     DBParamSet;
-    try
-      MainForm.ZConnection1.Connect;
-      if (MainForm.ZConnection1.Connected) and (not MainForm.CheckServiceMode) then
-      begin
+    MainForm.ConnectDB;
+    if MainForm.ZConnection1.Connected then
+    begin
+      try
         MainForm.SQL_Zeos('select count(*) as cnt from key_'+ DBUserName + '');
         KeyCnt := MainForm.ViewerQuery.FieldByName('cnt').AsInteger;
         if KeyCnt > 0 then
@@ -1448,18 +1433,18 @@ begin
             MsgInf(MainForm.Caption, GetLangStr('EncryptKeyDeleted'))
           end;
         end;
+      except
+        on e :
+          Exception do
+          begin
+            MsgInf(MainForm.Caption + ' - ' + GetLangStr('ErrCaption'), GetLangStr('ErrSQLQuery') + #13 + StringReplace(e.Message,#13#10,'',[RFReplaceall]));
+            MainForm.ZConnection1.Disconnect;
+            Exit;
+          end
       end;
-    except
-      on e :
-        Exception do
-        begin
-          MsgInf(MainForm.Caption + ' - ' + GetLangStr('ErrCaption'), GetLangStr('ErrDBConnect') + #13 + StringReplace(e.Message,#13#10,'',[RFReplaceall]));
-          MainForm.ZConnection1.Disconnect;
-          Exit;
-        end
     end;
-    MainForm.ZConnection1.Disconnect;
     ButtonGetEncryptionKeyClick(ButtonGetEncryptionKey);
+    MainForm.ZConnection1.Disconnect;
   end;
 end;
 
@@ -1467,8 +1452,8 @@ procedure TSettingsForm.CBEnableEncryptionClick(Sender: TObject);
 begin
   if CBEnableEncryption.Checked then
   begin
-    GBKeys.Visible := True;
     ButtonGetEncryptionKeyClick(ButtonGetEncryptionKey);
+    GBKeys.Visible := True;
   end
   else
   begin
@@ -1483,9 +1468,9 @@ end;
 procedure TSettingsForm.CBHideSyncIconClick(Sender: TObject);
 begin
   if CBHideSyncIcon.Checked then
-    HideSyncIcon := true
+    HideSyncIcon := True
   else
-    HideSyncIcon := false;
+    HideSyncIcon := False;
 end;
 
 procedure TSettingsForm.CBHotKeyClick(Sender: TObject);
@@ -1869,7 +1854,7 @@ begin
     DBName := EDBName.Text;
   // End
   MainForm.ZConnection1.Database := DBName;
-  MainForm.ZConnection1.LoginPrompt := false;
+  MainForm.ZConnection1.LoginPrompt := False;
 end;
 
 { Отлавливаем событие WM_MSGBOX для изменения прозрачности окна }

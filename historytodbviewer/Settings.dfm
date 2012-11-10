@@ -62,11 +62,14 @@ object SettingsForm: TSettingsForm
     Top = 6
     Width = 622
     Height = 346
-    ActivePage = SyncTabSheet
+    ActivePage = EncryptionTabSheet
     TabOrder = 1
     object MainTabSheet: TTabSheet
       Caption = #1041#1072#1079#1072' '#1076#1072#1085#1085#1099#1093
-      ExplicitHeight = 308
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       DesignSize = (
         614
         318)
@@ -78,7 +81,6 @@ object SettingsForm: TSettingsForm
         Anchors = [akLeft, akTop, akRight, akBottom]
         Caption = ' '#1041#1072#1079#1072' '#1076#1072#1085#1085#1099#1093' '
         TabOrder = 0
-        ExplicitHeight = 304
         object LDBType: TLabel
           Left = 16
           Top = 50
@@ -242,7 +244,10 @@ object SettingsForm: TSettingsForm
     object SyncTabSheet: TTabSheet
       Caption = #1057#1080#1085#1093#1088#1086#1085#1080#1079#1072#1094#1080#1103
       ImageIndex = 1
-      ExplicitHeight = 308
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       DesignSize = (
         614
         318)
@@ -407,7 +412,10 @@ object SettingsForm: TSettingsForm
     object InterfaceTabSheet: TTabSheet
       Caption = #1048#1085#1090#1077#1088#1092#1077#1081#1089
       ImageIndex = 9
-      ExplicitHeight = 308
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object GBAlphaBlend: TGroupBox
         Left = 3
         Top = 3
@@ -468,7 +476,10 @@ object SettingsForm: TSettingsForm
     object InformTabSheet: TTabSheet
       Caption = #1057#1086#1073#1099#1090#1080#1103
       ImageIndex = 2
-      ExplicitHeight = 308
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       DesignSize = (
         614
         318)
@@ -480,7 +491,6 @@ object SettingsForm: TSettingsForm
         Anchors = [akLeft, akTop, akRight, akBottom]
         Caption = ' '#1057#1086#1073#1099#1090#1080#1103' '
         TabOrder = 0
-        ExplicitHeight = 302
         object LNumLastHistoryMsg: TLabel
           Left = 85
           Top = 189
@@ -595,7 +605,10 @@ object SettingsForm: TSettingsForm
     object FontsTabSheet: TTabSheet
       Caption = #1064#1088#1080#1092#1090#1099' '#1080' '#1076#1088'.'
       ImageIndex = 4
-      ExplicitHeight = 308
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       DesignSize = (
         614
         318)
@@ -985,7 +998,10 @@ object SettingsForm: TSettingsForm
     object HotKeyTabSheet: TTabSheet
       Caption = #1043#1086#1088#1103#1095#1080#1077' '#1082#1083#1072#1074#1080#1096#1080
       ImageIndex = 6
-      ExplicitHeight = 308
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       DesignSize = (
         614
         318)
@@ -998,7 +1014,6 @@ object SettingsForm: TSettingsForm
         Caption = ' '#1043#1086#1088#1103#1095#1080#1077' '#1082#1083#1072#1074#1080#1096#1080' '
         TabOrder = 0
         Visible = False
-        ExplicitHeight = 273
         DesignSize = (
           608
           283)
@@ -1065,7 +1080,6 @@ object SettingsForm: TSettingsForm
     object EncryptionTabSheet: TTabSheet
       Caption = #1064#1080#1092#1088#1086#1074#1072#1085#1080#1077' '#1080#1089#1090#1086#1088#1080#1080
       ImageIndex = 1
-      ExplicitHeight = 308
       DesignSize = (
         614
         318)
@@ -1178,13 +1192,15 @@ object SettingsForm: TSettingsForm
         Height = 17
         Caption = #1042#1082#1083#1102#1095#1080#1090#1100' '#1096#1080#1092#1088#1086#1074#1072#1085#1080#1077' '#1080#1089#1090#1086#1088#1080#1080' '#1089#1086#1086#1073#1097#1077#1085#1080#1081
         TabOrder = 1
-        OnClick = CBEnableEncryptionClick
       end
     end
     object AboutTabSheet: TTabSheet
       Caption = #1054' '#1087#1088#1086#1075#1088#1072#1084#1084#1077
       ImageIndex = 5
-      ExplicitHeight = 308
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object LProgramName: TLabel
         Left = 96
         Top = 16
@@ -1303,7 +1319,10 @@ object SettingsForm: TSettingsForm
     object EncryptKeyCreateTabSheet: TTabSheet
       Caption = #1057#1086#1079#1076#1072#1085#1080#1077' '#1082#1083#1102#1095#1072' '#1096#1080#1092#1088#1086#1074#1072#1085#1080#1103
       ImageIndex = 7
-      ExplicitHeight = 308
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       DesignSize = (
         614
         318)
@@ -1315,7 +1334,6 @@ object SettingsForm: TSettingsForm
         Anchors = [akLeft, akTop, akRight, akBottom]
         Caption = ' '#1057#1086#1079#1076#1072#1085#1080#1077' '#1082#1083#1102#1095#1072' '#1096#1080#1092#1088#1086#1074#1072#1085#1080#1103' '
         TabOrder = 0
-        ExplicitHeight = 305
         object LKeyStatusTitle: TLabel
           Left = 16
           Top = 24
@@ -1434,7 +1452,10 @@ object SettingsForm: TSettingsForm
     object KeyPasswordChangeTabSheet: TTabSheet
       Caption = #1057#1084#1077#1085#1072' '#1087#1072#1088#1086#1083#1103' '#1082#1083#1102#1095#1072
       ImageIndex = 8
-      ExplicitHeight = 308
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       DesignSize = (
         614
         318)
@@ -1446,7 +1467,6 @@ object SettingsForm: TSettingsForm
         Anchors = [akLeft, akTop, akRight, akBottom]
         Caption = ' '#1057#1084#1077#1085#1072' '#1087#1072#1088#1086#1083#1103' '#1082#1083#1102#1095#1072' '#1096#1080#1092#1088#1086#1074#1072#1085#1080#1103' '
         TabOrder = 0
-        ExplicitHeight = 305
         object LCurrentPassword: TLabel
           Left = 16
           Top = 24
@@ -1589,17 +1609,6 @@ object SettingsForm: TSettingsForm
     HotTrack = False
     ButtonBorder = True
   end
-  object VirtualTable1: TVirtualTable
-    Left = 568
-    Top = 96
-    Data = {03000000000000000000}
-  end
-  object ZQuery1: TZQuery
-    Connection = MainForm.ZConnection1
-    Params = <>
-    Left = 568
-    Top = 152
-  end
   object DataSource1: TDataSource
     DataSet = VirtualTable1
     Left = 648
@@ -1674,5 +1683,10 @@ object SettingsForm: TSettingsForm
       ImageIndex = 16
       OnClick = DeleteKeyClick
     end
+  end
+  object VirtualTable1: TVirtualTable
+    Left = 568
+    Top = 112
+    Data = {03000000000000000000}
   end
 end

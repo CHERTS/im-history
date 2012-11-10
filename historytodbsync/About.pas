@@ -10,6 +10,8 @@
 
 unit About;
 
+{$R About.res}
+
 interface
 
 uses Windows, Messages, SysUtils, Classes, Graphics, Forms, Controls, StdCtrls,

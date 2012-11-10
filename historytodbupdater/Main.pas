@@ -87,6 +87,7 @@ type
     procedure SetProxySettings;
     procedure AntiBoss(HideAllForms: Boolean);
     procedure RunIMClient(IMClientName: String; IMProcessArray: TProcessInfoArray);
+    procedure RunAllIMClients;
     function  StartStepByStepUpdate(CurrStep: Integer; INIFileName: String): Integer;
   private
     { Private declarations }
@@ -599,7 +600,7 @@ function TMainForm.StartStepByStepUpdate(CurrStep: Integer; INIFileName: String)
 var
   UpdateINI: TIniFile;
   MaxStep, IMClientCount, IMClientDownloadFileCount: Integer;
-  DatabaseCount, DatabaseDownloadFileCount, I: Integer;
+  DatabaseCount, DatabaseDownloadFileCount, I, UpdateServerInServiceMode: Integer;
   IMClientName, IMClientNum, UpdateURL: String;
   DatabaseName, DatabaseNum, TmpUpdateServer: String;
   FileListArray: TArrayOfString;
@@ -609,6 +610,23 @@ begin
   if FileExists(INIFileName) then
   begin
     UpdateINI := TIniFile.Create(INIFileName);
+    UpdateServerInServiceMode := UpdateINI.ReadInteger('HistoryToDBUpdate', 'UpdateServerInServiceMode', 0);
+    LogMemo.Lines.Add('UpdateServerInServiceMode = ' + IntToStr(UpdateServerInServiceMode));
+    //Сервер обновлений временно на сервисном обслуживании
+    if UpdateServerInServiceMode = 1 then
+    begin
+      LogMemo.Lines.Add(Format(GetLangStr('UpdateServerInServiceMode'), [' ']));
+      IMDownloader1.BreakDownload;
+      MsgInf(Caption, Format(GetLangStr('UpdateServerInServiceMode'), [#13]));
+      Result := -1;
+      // Вкл. кнопки
+      ButtonUpdateEnableStart;
+      // Запуск IM-клиента
+      RunAllIMClients;
+      // Выход
+      Close;
+      Exit;
+    end;
     // Смена сервера обновления
     TmpUpdateServer := UpdateINI.ReadString('HistoryToDBUpdate', 'UpdateServer', UpdateServer);
     if TmpUpdateServer <> UpdateServer then
@@ -698,25 +716,7 @@ begin
       // Вкл. кнопки
       ButtonUpdateEnableStart;
       // Запуск IM-клиента
-      if IMClientType = 'QIP' then
-        RunIMClient('qip.exe', QIPProcessInfo);
-      if (IMClientType = 'Miranda') or (IMClientType = 'MirandaNG') then
-        {$IfDef WIN32}
-        RunIMClient('miranda32.exe', MirandaProcessInfo);
-        {$Else}
-        RunIMClient('miranda64.exe', MirandaProcessInfo);
-        {$EndIf}
-      if IMClientType = 'RnQ' then
-      begin
-        RunIMClient('R&Q.exe', RnQProcessInfo);
-        RunIMClient('rnq.exe', RnQProcessInfo);
-      end;
-      if IMClientType = 'Skype' then
-        RunIMClient('skype.exe', SkypeProcessInfo);
-      // Запуск Dropbox
-      {if not IsProcessRun('Dropbox.exe') then
-        RunIMClient('Dropbox.exe', DropboxProcessInfo);}
-      //MsgInf(Caption, GetLangStr('AllUpdatesInstalled'));
+      RunAllIMClients;
       Close;
       Exit;
     end;
@@ -728,7 +728,7 @@ begin
       if (UpdateURL <> '') and (CurrStep <= MaxStep) then
       begin
         LogMemo.Lines.Add(GetLangStr('FileToUpdate') + ' = ' + UpdateURL);
-        if MatchStrings(UpdateURL, '*file=Russian') or MatchStrings(UpdateURL, '*file=English') then
+        if MatchStrings(UpdateURL, '*file=Russian*') or MatchStrings(UpdateURL, '*file=English*') then
           IMDownloader1.DirPath := PluginPath + dirLangs
         else
           IMDownloader1.DirPath := PluginPath;
@@ -1383,6 +1383,28 @@ begin
       end;
     end;
   end;
+end;
+
+procedure TMainForm.RunAllIMClients;
+begin
+  if IMClientType = 'QIP' then
+    RunIMClient('qip.exe', QIPProcessInfo);
+  if (IMClientType = 'Miranda') or (IMClientType = 'MirandaNG') then
+    {$IfDef WIN32}
+    RunIMClient('miranda32.exe', MirandaProcessInfo);
+    {$Else}
+    RunIMClient('miranda64.exe', MirandaProcessInfo);
+    {$EndIf}
+  if IMClientType = 'RnQ' then
+  begin
+    RunIMClient('R&Q.exe', RnQProcessInfo);
+    RunIMClient('rnq.exe', RnQProcessInfo);
+  end;
+  if IMClientType = 'Skype' then
+    RunIMClient('skype.exe', SkypeProcessInfo);
+  // Запуск Dropbox
+  {if not IsProcessRun('Dropbox.exe') then
+    RunIMClient('Dropbox.exe', DropboxProcessInfo);}
 end;
 
 end.

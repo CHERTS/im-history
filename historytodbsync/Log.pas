@@ -16,7 +16,7 @@ uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, StdCtrls, Global, JvAppStorage, JvAppIniStorage, JvComponentBase,
   JvFormPlacement, JvThread, JvExControls, JvAnimatedImage, JvGIFCtrl, ExtCtrls,
-  ComCtrls, CommCtrl, JvExStdCtrls, JclFileUtils, Menus, ClipBrd; {JclCounter, JclSysUtils;}
+  ComCtrls, CommCtrl, JvExStdCtrls, JclFileUtils, Menus, ClipBrd;
 
 type
   TLogForm = class(TForm)

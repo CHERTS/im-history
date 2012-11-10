@@ -3139,11 +3139,12 @@ begin
   ConnectDB;
   if ZConnection1.Connected then
   begin
-    SQL_Zeos_Key('select count(*) as cnt from key_'+ DBUserName + ' where status_key = 1');
+    SQL_Zeos_Key('select count(*) as cnt from key_'+ DBUserName + ' where status_key = ''1''');
     KeyCnt := KeyQuery.FieldByName('cnt').AsInteger;
+    if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Функция GetCurrentEncryptionKeyID: Найдено ' + IntToStr(KeyCnt) + ' активных ключей.', 2);
     if KeyCnt = 1 then // Найден 1 активный ключ
     begin
-      SQL_Zeos_Key('select id from key_'+ DBUserName + ' where status_key = 1');
+      SQL_Zeos_Key('select id from key_'+ DBUserName + ' where status_key = ''1''');
       Status := 1; // Все хорошо
       ActiveKeyID := KeyQuery.FieldByName('id').AsString;
     end
@@ -3175,11 +3176,12 @@ begin
   ConnectDB;
   if ZConnection1.Connected then
   begin
-    SQL_Zeos_Key('select count(*) as cnt from key_'+ DBUserName + ' where status_key = 1');
+    SQL_Zeos_Key('select count(*) as cnt from key_'+ DBUserName + ' where status_key = ''1''');
     KeyCnt := KeyQuery.FieldByName('cnt').AsInteger;
+    if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Функция GetEncryptionKey: Найдено ' + IntToStr(KeyCnt) + ' активных ключей.', 2);
     if KeyCnt = 1 then
     begin
-      SQL_Zeos_Key('select id, encryption_method, encryption_key from key_'+ DBUserName + ' where status_key = 1');
+      SQL_Zeos_Key('select id, encryption_method, encryption_key from key_'+ DBUserName + ' where status_key = ''1''');
       DBEncryptKey := KeyQuery.FieldByName('encryption_key').AsString;
       DBKeyID := KeyQuery.FieldByName('id').AsString;
       DBKeyEncryptionMethod := KeyQuery.FieldByName('encryption_method').AsString;
