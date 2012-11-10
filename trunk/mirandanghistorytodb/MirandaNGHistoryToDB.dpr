@@ -575,11 +575,7 @@ begin
   CoreLanguageChanged;
   // Записываем типа IM клиента
   WriteCustomINI(ProfilePath, 'IMClientType', htdIMClientName);
-  {$IfDef WIN32}
-  WriteCustomINI(ProfilePath, 'IMClientPlatformType', 'x86');
-  {$Else}
-  WriteCustomINI(ProfilePath, 'IMClientPlatformType', 'x64');
-  {$EndIf}
+  WriteCustomINI(ProfilePath, 'IMClientPlatformType', htdPlatform);
   // Записываем отсутствие запроса на чтение настроек
   WriteCustomINI(ProfilePath, 'SettingsFormRequestSend', '0');
   // Создаем окно About и Export

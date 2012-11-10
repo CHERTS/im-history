@@ -65,7 +65,7 @@ begin
   // Загружаем язык интерфейса
   LoadLanguageStrings;
   // Указываем версию в окне "О плагине"
-  LVersionNum.Caption := ProgramsVer;
+  LVersionNum.Caption := ProgramsVer + ' ' + PlatformType;
   // Позиционируем лейблы
   LVersionNum.Left := LVersion.Left + 1 + LVersion.Width;
   LLicenseType.Left := LLicense.Left + 1 + LLicense.Width;

@@ -38,7 +38,11 @@ const
   EnableDebug = False;
   DebugLogPath = 'C:\';
   DebugLogName = 'HistoryToDBCreateDBDebug.log';
-
+  {$IFDEF WIN32}
+  PlatformType = 'x86';
+  {$ELSE}
+  PlatformType = 'x64';
+  {$ENDIF}
 var
   ERR_DB_CONNECT : WideString = '[%s] Ошибка: Не удаётся подключиться к БД. Ошибка: %s';
   ERR_NO_DB_CONNECTED : WideString = '[%s] Соединение с БД не установлено.';

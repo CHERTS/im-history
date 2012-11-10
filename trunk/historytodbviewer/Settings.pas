@@ -2007,7 +2007,7 @@ begin
   LVersion.Caption := GetLangStr('Version');
   LLicense.Caption := GetLangStr('License');
   LProgramName.Caption := ProgramsName;
-  LVersionNum.Caption := ProgramsVer;
+  LVersionNum.Caption := ProgramsVer + ' ' + PlatformType;
   // Позиционируем лейблы
   LProgramName.Left := AboutImage.Left + AboutImage.Width + 20;
   LabelCopyright.Left := AboutImage.Left + AboutImage.Width + 20;

@@ -40,6 +40,11 @@ const
   htdVerRelease   = {SUB_VER}0{/SUB_VER};
   htdVerBuild     = {BUILD}0{/BUILD};
   htdVersion      = htdVerMajor shl 24 + htdVerMinor shl 16 + htdVerRelease shl 8 + htdVerBuild;
+  {$IFDEF WIN32}
+  htdPlatform     = 'x86';
+  {$ELSE}
+  htdPlatform     = 'x64';
+  {$ENDIF}
   htdDBName       = 'MirandaHistoryToDB';
   htdIMClientName = 'Miranda';
   {htdFLUpdateURL    = 'http://addons.miranda-im.org/feed.php?dlfile=0';

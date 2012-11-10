@@ -52,7 +52,11 @@ const
   // End
   WM_MSGBOX = WM_USER + 2;
   uURL = 'http://im-history.ru/update/get.php?file=HistoryToDB-Update';
-
+  {$IFDEF WIN32}
+  PlatformType = 'x86';
+  {$ELSE}
+  PlatformType = 'x64';
+  {$ENDIF}
 var
   WriteErrLog: Boolean;
   EnableDebug, AlphaBlendEnable: Boolean;
@@ -354,12 +358,7 @@ begin
       if IMProxyUserPagsswd <> '' then
         IMProxyUserPagsswd := DecryptStr(IMProxyUserPagsswd);
 
-      {$IfDef WIN32}
-      IMClientPlatformType := INI.ReadString('Main', 'IMClientPlatformType', 'x86');
-      {$Else}
-      IMClientPlatformType := INI.ReadString('Main', 'IMClientPlatformType', 'x64');
-      {$EndIf}
-
+      IMClientPlatformType := INI.ReadString('Main', 'IMClientPlatformType', PlatformType);
       UpdateServer := INI.ReadString('Updater', 'UpdateServer', uURL);
     finally
       INI.Free;
