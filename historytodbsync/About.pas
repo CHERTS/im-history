@@ -80,7 +80,7 @@ begin
   LabelAuthor.Cursor := crHandPoint;
   LabelWebSite.Cursor := crHandPoint;
   // Указываем версию в окне "О плагине"
-  LVersionNum.Caption := ProgramsVer;
+  LVersionNum.Caption := ProgramsVer + ' ' + PlatformType;
   // Загружаем язык интерфейса
   LoadLanguageStrings;
 end;

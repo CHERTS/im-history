@@ -195,14 +195,14 @@ begin
   // Подсказка по параметрам запуска
   if SystemLang = 'Russian' then
   begin
-    CmdHelpStr := 'Параметры запуска ' + ProgramsName + ' v' + ProgramsVer + ':' + #13 +
+    CmdHelpStr := 'Параметры запуска ' + ProgramsName + ' v' + ProgramsVer + ' ' + PlatformType + ':' + #13 +
     '--------------------------------------------------------------' + #13#13 +
     'HistoryToDBUpdater.exe <1>' + #13#13 +
     '<1> - (Необязательный параметр) - Путь до файла настроек HistoryToDB.ini (Например: "C:\Program Files\QIP Infium\Profiles\username@qip.ru\Plugins\QIPHistoryToDB\")';
   end
   else
   begin
-    CmdHelpStr := 'Startup options ' + ProgramsName + ' v' + ProgramsVer + ':' + #13 +
+    CmdHelpStr := 'Startup options ' + ProgramsName + ' v' + ProgramsVer + ' ' + PlatformType + ':' + #13 +
     '------------------------------------------------' + #13#13 +
     'HistoryToDBUpdater.exe <1>' + #13#13 +
     '<1> - (Optional) - The path to the configuration file HistoryToDB.ini (Example: "C:\Program Files\QIP Infium\Profiles\username@qip.ru\Plugins\QIPHistoryToDB\")';
@@ -360,7 +360,7 @@ begin
   EProxyUser.Text := IMProxyUser;
   EProxyUserPasswd.Text := IMProxyUserPagsswd;
   // Версия утилиты обновления
-  LogMemo.Lines.Add(ProgramsName + ' v' + ProgramsVer);
+  LogMemo.Lines.Add(ProgramsName + ' v' + ProgramsVer + ' ' + PlatformType);
 end;
 
 procedure TMainForm.ButtonSettingsClick(Sender: TObject);

@@ -136,7 +136,7 @@ end;
 function TMapStream.CopyFrom(AStream:TStream;Count:Integer):Boolean;
 
   function SizeGood:Boolean;
-  var i,ASize:Integer;
+  var ASize:Integer;
   begin
     ASize:=AStream.Size;
     if (Count = 0) or (Count > ASize) then

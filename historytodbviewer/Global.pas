@@ -60,6 +60,11 @@ const
                     'Vyacheslav S. (HDHMETRO) for active testing of plug-in.' + #13#10 +
                     'Providence for active testing of plug-in and new ideas.' + #13#10 +
                     'Cy6 for help in implementing the import history RnQ.';
+  {$IFDEF WIN32}
+  PlatformType = 'x86';
+  {$ELSE}
+  PlatformType = 'x64';
+  {$ENDIF}
 
 var
   ERR_SAVE_TO_DB_CONNECT_ERR : WideString = '[%s] Ошибка: Не удаётся подключиться к БД. Ошибка: %s';

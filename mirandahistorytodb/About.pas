@@ -96,7 +96,7 @@ begin
   // Переменная для режима анти-босс
   Global_AboutForm_Showing := True;
   // Указываем версию в окне "О плагине"
-  LVersionNum.Caption :=   IntToStr(htdVerMajor) + '.' + IntToStr(htdVerMinor) + '.' + IntToStr(htdVerRelease) + '.' + IntToStr(htdVerBuild);
+  LVersionNum.Caption :=   IntToStr(htdVerMajor) + '.' + IntToStr(htdVerMinor) + '.' + IntToStr(htdVerRelease) + '.' + IntToStr(htdVerBuild) + ' ' + htdPlatform;
 end;
 
 procedure TAboutForm.LabelAuthorClick(Sender: TObject);

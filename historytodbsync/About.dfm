@@ -81,8 +81,6 @@ object AboutForm: TAboutForm
     TabOrder = 1
     object VersionTabSheet: TTabSheet
       Caption = #1054' '#1087#1088#1086#1075#1088#1072#1084#1084#1077
-      ExplicitWidth = 317
-      ExplicitHeight = 121
       DesignSize = (
         324
         140)
@@ -184,6 +182,8 @@ object AboutForm: TAboutForm
     object ThankYouTabSheet: TTabSheet
       Caption = #1041#1083#1072#1075#1086#1076#1072#1088#1085#1086#1089#1090#1080
       ImageIndex = 1
+      ExplicitLeft = 0
+      ExplicitTop = 0
       ExplicitWidth = 317
       ExplicitHeight = 121
       DesignSize = (
