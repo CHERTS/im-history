@@ -428,8 +428,17 @@ object MainForm: TMainForm
     end
   end
   object ZConnection1: TZConnection
+    UTF8StringsAsWideField = True
+    PreprepareSQL = False
+    Catalog = ''
     AfterConnect = ZConnection1AfterConnect
     AfterDisconnect = ZConnection1AfterDisconnect
+    HostName = ''
+    Port = 0
+    Database = ''
+    User = ''
+    Password = ''
+    Protocol = ''
     Left = 312
     Top = 160
   end

@@ -54,8 +54,6 @@ begin
 end;
 
 procedure TAboutForm.FormCreate(Sender: TObject);
-var
-  AboutBitmap: TBitmap;
 begin
   // Для мультиязыковой поддержки
   AboutFormHandle := Handle;

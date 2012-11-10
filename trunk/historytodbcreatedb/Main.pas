@@ -1414,6 +1414,7 @@ var
   ErrCount: Integer;
   StrReplace: String;
 begin
+  Result := False;
   if ZConnection1.Connected then
   begin
     ErrCount := 0;
