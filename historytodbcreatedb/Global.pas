@@ -142,7 +142,6 @@ end;
 procedure LoadINI(INIPath: String);
 var
   Path: WideString;
-  Temp: String;
   INI: TIniFile;
 begin
   // Проверяем наличие каталога
