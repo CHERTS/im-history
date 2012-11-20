@@ -379,9 +379,7 @@ end;
 
 procedure TMainForm.ButtonUpdateStartClick(Sender: TObject);
 var
-  RetVal: TProcessInfoArray;
-  AllProcessEndErr, I: Integer;
-  MsgString: String;
+  AllProcessEndErr: Integer;
 begin
   AllProcessEndErr := 0;
   if (DBType = 'Unknown') or (IMClientType  = 'Unknown') then
@@ -746,7 +744,6 @@ end;
 procedure TMainForm.InstallUpdate;
 var
   SR: TSearchRec;
-  FileName: String;
 begin
   LAmount.Caption := '0 '+GetLangStr('Kb');
   LFileName.Caption := GetLangStr('Unknown');
@@ -1284,18 +1281,18 @@ end;
 procedure TMainForm.OnControlReq(var Msg : TWMCopyData);
 var
   ControlStr, EncryptControlStr: String;
-  TmpStr, TmpUserID, TmpUserName, TmpProtocolType, TmpChatName: String;
   copyDataType : TCopyDataType;
+  GotChars: Integer;
 begin
   copyDataType := TCopyDataType(Msg.CopyDataStruct.dwData);
   if copyDataType = cdtString then
   begin
-    EncryptControlStr := PChar(Msg.CopyDataStruct.lpData);
-    Delete(EncryptControlStr, (Integer(Msg.CopyDataStruct.cbData) div 2)+1, Length(EncryptControlStr));
+    GotChars := Msg.CopyDataStruct.cbData div SizeOf(Char);
+    SetLength(EncryptControlStr, GotChars);
+    Move(Msg.CopyDataStruct.lpData^, PChar(EncryptControlStr)^, GotChars * sizeof(Char));
     if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура OnControlReq: Получено шифрованное управляющее сообщение: ' + EncryptControlStr, 1);
     ControlStr := DecryptStr(EncryptControlStr);
     if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура OnControlReq: Управляющее сообщение расшифровано: ' + ControlStr, 1);
-    //SetString(ControlStr, PChar(Msg.CopyDataStruct.lpData), StrLen(PChar(Msg.CopyDataStruct.lpData)));
     //Msg.Result := 2006;
     if ControlStr = 'Russian' then
     begin
@@ -1318,9 +1315,15 @@ begin
       AntiBoss(False);
     if ControlStr = '0041' then // Скрыть формы
       AntiBoss(True);
+    // 003 - Выход из программы
+    {if (ControlStr = '003') and (ButtonUpdate.Enabled) then
+      Close;}
     // 009 - Экстренный выход из программы
     if ControlStr = '009' then
+    begin
+      IMDownloader1.BreakDownload;
       Close;
+    end;
   end;
 end;
 

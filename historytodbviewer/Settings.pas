@@ -867,7 +867,7 @@ begin
       end;
       // Активируем новые настройки
       MainForm.LoadDBSettings;
-      // Отправляем запрос HistoryToDbSync перечитать настройки из файла HistoryToDB.ini
+      // Отправляем запрос перечитать настройки из файла HistoryToDB.ini
       OnSendMessageToAllComponent('001');
     end
     else

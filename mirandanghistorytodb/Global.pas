@@ -654,46 +654,51 @@ var
   copyDataStruct : TCopyDataStruct;
   EncryptMsg, WinName: String;
 begin
+  if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Функция OnSendMessageToAllComponent: Отправка запроса "' + Msg + '" всем компонентам плагина.', 2);
   EncryptMsg := EncryptStr(Msg);
   // Ищем окно HistoryToDBViewer и посылаем ему команду
   WinName := 'HistoryToDBViewer for ' + htdIMClientName + ' ('+MyAccount+')';
   HToDB := FindWindow(nil, pWideChar(WinName));
   if HToDB <> 0 then
   begin
-    copyDataStruct.dwData := Integer(cdtString);
-    copyDataStruct.cbData := 2*Length(EncryptMsg);
+    copyDataStruct.dwData := {$IFDEF WIN32}Integer{$ELSE}LongInt{$ENDIF}(cdtString);;
+    copyDataStruct.cbData := Length(EncryptMsg) * SizeOf(Char);;
     copyDataStruct.lpData := PChar(EncryptMsg);
-    SendMessage(HToDB, WM_COPYDATA, 0, Integer(@copyDataStruct));
+    SendMessage(HToDB, WM_COPYDATA, 0, {$IFDEF WIN32}Integer{$ELSE}LongInt{$ENDIF}(@copyDataStruct));
+    if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Функция OnSendMessageToAllComponent: Отправка запроса "' + Msg + '" окну ' + WinName, 2);
   end;
   // Ищем окно HistoryToDBSync и посылаем ему команду
   WinName := 'HistoryToDBSync for ' + htdIMClientName + ' ('+MyAccount+')';
   HToDB := FindWindow(nil, pWideChar(WinName));
   if HToDB <> 0 then
   begin
-    copyDataStruct.dwData := Integer(cdtString);
-    copyDataStruct.cbData := 2*Length(EncryptMsg);
+    copyDataStruct.dwData := {$IFDEF WIN32}Integer{$ELSE}LongInt{$ENDIF}(cdtString);;
+    copyDataStruct.cbData := Length(EncryptMsg) * SizeOf(Char);;
     copyDataStruct.lpData := PChar(EncryptMsg);
-    SendMessage(HToDB, WM_COPYDATA, 0, Integer(@copyDataStruct));
+    SendMessage(HToDB, WM_COPYDATA, 0, {$IFDEF WIN32}Integer{$ELSE}LongInt{$ENDIF}(@copyDataStruct));
+    if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Функция OnSendMessageToAllComponent: Отправка запроса "' + Msg + '" окну ' + WinName, 2);
   end;
   // Ищем окно HistoryToDBImport и посылаем ему команду
   WinName := 'HistoryToDBImport for ' + htdIMClientName + ' ('+MyAccount+')';
   HToDB := FindWindow(nil, pWideChar(WinName));
   if HToDB <> 0 then
   begin
-    copyDataStruct.dwData := Integer(cdtString);
-    copyDataStruct.cbData := 2*Length(EncryptMsg);
+    copyDataStruct.dwData := {$IFDEF WIN32}Integer{$ELSE}LongInt{$ENDIF}(cdtString);;
+    copyDataStruct.cbData := Length(EncryptMsg) * SizeOf(Char);;
     copyDataStruct.lpData := PChar(EncryptMsg);
-    SendMessage(HToDB, WM_COPYDATA, 0, Integer(@copyDataStruct));
+    SendMessage(HToDB, WM_COPYDATA, 0, {$IFDEF WIN32}Integer{$ELSE}LongInt{$ENDIF}(@copyDataStruct));
+    if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Функция OnSendMessageToAllComponent: Отправка запроса "' + Msg + '" окну ' + WinName, 2);
   end;
   // Ищем окно HistoryToDBUpdater и посылаем ему команду
   WinName := 'HistoryToDBUpdater for ' + htdIMClientName + ' ('+MyAccount+')';
   HToDB := FindWindow(nil, pWideChar(WinName));
   if HToDB <> 0 then
   begin
-    copyDataStruct.dwData := Integer(cdtString);
-    copyDataStruct.cbData := 2*Length(EncryptMsg);
+    copyDataStruct.dwData := {$IFDEF WIN32}Integer{$ELSE}LongInt{$ENDIF}(cdtString);;
+    copyDataStruct.cbData := Length(EncryptMsg) * SizeOf(Char);;
     copyDataStruct.lpData := PChar(EncryptMsg);
-    SendMessage(HToDB, WM_COPYDATA, 0, Integer(@copyDataStruct));
+    SendMessage(HToDB, WM_COPYDATA, 0, {$IFDEF WIN32}Integer{$ELSE}LongInt{$ENDIF}(@copyDataStruct));
+    if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Функция OnSendMessageToAllComponent: Отправка запроса "' + Msg + '" окну ' + WinName, 2);
   end;
 end;
 
@@ -701,17 +706,18 @@ procedure OnSendMessageToOneComponent(WinName, Msg: String);
 var
   HToDB: HWND;
   copyDataStruct : TCopyDataStruct;
-  EncryptMsg: String;
+  AppNameStr, EncryptMsg: String;
 begin
-  EncryptMsg := EncryptStr(Msg);
-  // Ищем окно HistoryToDBViewer и посылаем ему команду
-  HToDB := FindWindow(nil, pChar(WinName));
+  // Ищем окно WinName и посылаем ему команду
+  HToDB := FindWindow(nil, pWideChar(WinName));
   if HToDB <> 0 then
   begin
-    copyDataStruct.dwData := Integer(cdtString);
-    copyDataStruct.cbData := 2*Length(EncryptMsg);
+    EncryptMsg := EncryptStr(Msg);
+    copyDataStruct.dwData := {$IFDEF WIN32}Integer{$ELSE}LongInt{$ENDIF}(cdtString);
+    copyDataStruct.cbData := Length(EncryptMsg) * SizeOf(Char);
     copyDataStruct.lpData := PChar(EncryptMsg);
-    SendMessage(HToDB, WM_COPYDATA, 0, Integer(@copyDataStruct));
+    SendMessage(HToDB, WM_COPYDATA, 0, {$IFDEF WIN32}Integer{$ELSE}LongInt{$ENDIF}(@copyDataStruct));
+    if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Функция OnSendMessageToOneComponent: Отправка запроса "' + Msg + '" окну ' + WinName, 2);
   end;
 end;
 
