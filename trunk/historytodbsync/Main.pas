@@ -248,8 +248,8 @@ end;
 procedure TMainSyncForm.IMExcept(Sender: TObject; E: Exception);
 begin
   // Пишем в лог ошибки
-  if EnableDebug then
-    WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура IMExcept: Class - ' + E.ClassName + ' | Ошибка - ' + Trim(e.Message), 2);
+  //if EnableDebug then
+  WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура IMExcept: Class - ' + E.ClassName + ' | Ошибка - ' + Trim(e.Message), 2);
 end;
 
 procedure TMainSyncForm.FormCreate(Sender: TObject);
@@ -394,7 +394,8 @@ begin
       LSkypeStatus.Hint := 'HistoryToDBSyncSkypeOff';
     end;
     // Обрабатываем все исключения сами
-    Forms.Application.OnException := IMExcept;
+    if not EnableDebug then
+      Forms.Application.OnException := IMExcept;
     // MMF
     if SyncMethod = 0 then
       FMap := TMapStream.CreateEx('HistoryToDB for ' + IMClientType + ' (' + MyAccount + ')',MAXDWORD,2000);
@@ -1407,12 +1408,18 @@ procedure TMainSyncForm.OnControlReq(var Msg : TWMCopyData);
 var
   ControlStr, EncryptControlStr: String;
   copyDataType : TCopyDataType;
+  //GotChars: {$IFDEF WIN32}Integer{$ELSE}LongInt{$ENDIF};
+  GotChars: Integer;
 begin
+  if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура OnControlReq: Получено сообщение.', 2);
   copyDataType := TCopyDataType(Msg.CopyDataStruct.dwData);
   if copyDataType = cdtString then
   begin
-    EncryptControlStr := PChar(Msg.CopyDataStruct.lpData);
-    Delete(EncryptControlStr, (Integer(Msg.CopyDataStruct.cbData) div 2)+1, Length(EncryptControlStr));
+    //EncryptControlStr := pChar(Msg.copyDataStruct.lpData);
+    //Delete(EncryptControlStr, (Integer(Msg.copyDataStruct.cbData) div 2)+1, Length(EncryptControlStr));
+    GotChars := Msg.CopyDataStruct.cbData div SizeOf(Char);
+    SetLength(EncryptControlStr, GotChars);
+    Move(Msg.CopyDataStruct.lpData^, pChar(EncryptControlStr)^, GotChars * SizeOf(Char));
     if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура OnControlReq: Получено шифрованное управляющее сообщение: ' + EncryptControlStr, 2);
     ControlStr := DecryptStr(EncryptControlStr);
     if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура OnControlReq: Управляющее сообщение расшифровано: ' + ControlStr, 2);

@@ -488,6 +488,13 @@ var
   MenuMainService: PAnsiChar;
   //IMUPD: TUpdate;
 begin
+  // Лог-файлы закрыты
+  MsgLogOpened := False;
+  ErrLogOpened := False;
+  DebugLogOpened := False;
+  ContactListLogOpened := False;
+  ProtoListLogOpened := False;
+  ImportLogOpened := False;
   // Инициализация шифрования
   EncryptInit;
   // Определяем локализацию
@@ -563,13 +570,6 @@ begin
   end
   else
     CoreLanguage := DefaultLanguage;
-  // Лог-файлы закрыты
-  MsgLogOpened := False;
-  ErrLogOpened := False;
-  DebugLogOpened := False;
-  ContactListLogOpened := False;
-  ProtoListLogOpened := False;
-  ImportLogOpened := False;
   // Загружаем настройки локализации
   LangDoc := NewXMLDocument();
   CoreLanguageChanged;
@@ -882,6 +882,8 @@ begin
     UnhookEvent(HookEventAdded);
     UnhookEvent(HookBuildMenu);
     UnhookEvent(HookModulesLoad);
+    // Запрос на закрытие всех компонентов плагина
+    OnSendMessageToAllComponent('003');
     // Закрываем лог-файлы
     if MsgLogOpened then
       CloseLogFile(0);
@@ -893,8 +895,6 @@ begin
       CloseLogFile(3);
     if ProtoListLogOpened then
       CloseLogFile(4);
-    // Запрос на закрытие всех компонентов плагина
-    OnSendMessageToAllComponent('003');
     // Очистка ключей шифрования
     EncryptFree;
     // MMF

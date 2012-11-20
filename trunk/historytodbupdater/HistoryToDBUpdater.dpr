@@ -11,11 +11,6 @@
 program HistoryToDBUpdater;
 
 uses
-  madExcept,
-  madLinkDisAsm,
-  madListHardware,
-  madListProcesses,
-  madListModules,
   Forms,
   Main in 'Main.pas' {MainForm},
   Global in 'Global.pas';

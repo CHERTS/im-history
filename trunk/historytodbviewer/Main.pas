@@ -1842,8 +1842,8 @@ end;
 
 procedure TMainForm.SyncButtonClick(Sender: TObject);
 begin
-  // Отправляем запрос HistoryToDbSync для синхронизации
-  OnSendMessageToAllComponent('002');
+  // Отправляем запрос HistoryToDBSync для синхронизации
+  OnSendMessageToOneComponent('HistoryToDBSync for ' + IMClientType + ' (' + MyAccount + ')', '002');
   AddHistoryInList(Format(GetLangStr('SendSyncQuery'), [FormatDateTime('dd.mm.yy hh:mm:ss', Now)]), 0, 4);
 end;
 
@@ -2178,14 +2178,14 @@ end;
 procedure TMainForm.CheckMD5HashClick(Sender: TObject);
 begin
   // Запрос на перерасчет MD5-хешей
-  OnSendMessageToAllComponent('0050');
+  OnSendMessageToOneComponent('HistoryToDBSync for ' + IMClientType + ' (' + MyAccount + ')', '0050');
   AddHistoryInList(Format(GetLangStr('SendCheckMD5HashQuery'), [FormatDateTime('dd.mm.yy hh:mm:ss', Now)]), 0, 4);
 end;
 
 procedure TMainForm.CheckAndDeleteMD5HashClick(Sender: TObject);
 begin
   // Запрос на перерасчет MD5-хешей и удаление дубликатов
-  OnSendMessageToAllComponent('0051');
+  OnSendMessageToOneComponent('HistoryToDBSync for ' + IMClientType + ' (' + MyAccount + ')', '0051');
   AddHistoryInList(Format(GetLangStr('SendCheckAndDeleteMD5HashQuery'), [FormatDateTime('dd.mm.yy hh:mm:ss', Now)]), 0, 4);
 end;
 
@@ -2194,7 +2194,7 @@ begin
   // Запрос на обновление контакт листа
   if FileExists(ProfilePath+ContactListName) then
   begin
-    OnSendMessageToAllComponent('007');
+    OnSendMessageToOneComponent('HistoryToDBSync for ' + IMClientType + ' (' + MyAccount + ')', '007');
     AddHistoryInList(Format(GetLangStr('SendUpdateContactListInDB'), [FormatDateTime('dd.mm.yy hh:mm:ss', Now), ContactListName]), 0, 4);
   end
   else
@@ -2401,16 +2401,18 @@ var
   ControlStr, EncryptControlStr: String;
   TmpStr, TmpUserID, TmpUserName, TmpProtocolType, TmpChatName: String;
   copyDataType : TCopyDataType;
+  GotChars: Integer;
 begin
+  if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура OnControlReq: Получено сообщение.', 2);
   copyDataType := TCopyDataType(Msg.CopyDataStruct.dwData);
   if copyDataType = cdtString then
   begin
-    EncryptControlStr := PChar(Msg.CopyDataStruct.lpData);
-    Delete(EncryptControlStr, (Integer(Msg.CopyDataStruct.cbData) div 2)+1, Length(EncryptControlStr));
+    GotChars := Msg.CopyDataStruct.cbData div SizeOf(Char);
+    SetLength(EncryptControlStr, GotChars);
+    Move(Msg.CopyDataStruct.lpData^, PChar(EncryptControlStr)^, GotChars * sizeof(Char));
     if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура OnControlReq: Получено шифрованное управляющее сообщение: ' + EncryptControlStr, 2);
     ControlStr := DecryptStr(EncryptControlStr);
     if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура OnControlReq: Управляющее сообщение расшифровано: ' + ControlStr, 2);
-    //SetString(ControlStr, PChar(Msg.CopyDataStruct.lpData), StrLen(PChar(Msg.CopyDataStruct.lpData)));
     //Msg.Result := 2006;
     if ControlStr = 'Russian' then
     begin

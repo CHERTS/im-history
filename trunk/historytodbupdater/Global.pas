@@ -318,9 +318,8 @@ begin
   Path := INIPath + ININame;
   if FileExists(Path) then
   begin
+    INI := TIniFile.Create(Path);
     try
-      INI := TIniFile.Create(Path);
-
       DBType := INI.ReadString('Main', 'DBType', 'Unknown');
       DBUserName := INI.ReadString('Main', 'DBUserName', 'username');
       DefaultLanguage := INI.ReadString('Main', 'DefaultLanguage', 'English');
@@ -366,8 +365,8 @@ begin
   end
   else
   begin
+    INI := TIniFile.Create(path);
     try
-      INI := TIniFile.Create(path);
       // Значения по-умолчанию
       DBType := 'Unknown';
       DefaultLanguage := 'English';
@@ -881,7 +880,7 @@ function EndProcess(IMClientExeName: String; EndType: Integer; EndProcess: Boole
 var
   I: Integer;
   ProcessPIDListArray: TArrayOfCardinal;
-  MyFullCMD, MyCMD, MyCMDParam, ProcessCmdLine: String;
+  MyFullCMD, MyCMD, ProcessCmdLine: String;
 begin
   SetLength(Result, 0);
   SetLength(ProcessPIDListArray, 0);
@@ -1254,10 +1253,7 @@ var
   lpLuid               : TOKEN_PRIVILEGES;
   OldlpLuid            : TOKEN_PRIVILEGES;
   Rtl : RTL_USER_PROCESS_PARAMETERS;
-  Mbi : TMemoryBasicInformation;
   Peb : _PEB;
-  EnvStrBlock  : TBytes;
-  EnvStrLength : ULONG;
   IsProcessx64 : Boolean;
   {$IFDEF CPUX64}
   PEBBaseAddress32 : Pointer;
