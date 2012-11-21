@@ -10,7 +10,7 @@
 
 library RnQHistoryToDB;
 
-{$I Compilers.inc}
+{$I jedi.inc}
 
 {$IFDEF COMPILER_14_UP}
   {$WEAKLINKRTTI ON}
@@ -135,6 +135,12 @@ begin
     1: OnSendMessageToOneComponent('HistoryToDBSync for RnQ ('+MyAccount+')', '002');
     3:
     begin
+      // Закрываем файлы
+      if ContactListLogOpened then
+        CloseLogFile(3);
+      if ProtoListLogOpened then
+        CloseLogFile(4);
+      // Удаляем файлы
       if FileExists(ProfilePath+ProtoListName) then
         DeleteFile(ProfilePath+ProtoListName);
       WriteInLog(ProfilePath, WideFormat('%s;%s;%d', ['ICQ', IntToStr(Global_CurrentAccountUIN), 0]), 4);
@@ -144,8 +150,13 @@ begin
       List := RQ_GetList(PL_ROASTER);
       for I:=0 to HIGH(List) do
       begin
-       WriteInLog(ProfilePath, WideFormat('%s;%s;%s;%d', [IntToStr(List[I]), RQ_GetDisplayedName(List[I]), 'Default', 0]), 3);
+        WriteInLog(ProfilePath, WideFormat('%s;%s;%s;%d', [IntToStr(List[I]), RQ_GetDisplayedName(List[I]), 'Default', 0]), 3);
       end;
+      // Закрываем файлы
+      if ContactListLogOpened then
+        CloseLogFile(3);
+      if ProtoListLogOpened then
+        CloseLogFile(4);
     end;
     4: OnSendMessageToOneComponent('HistoryToDBSync for RnQ ('+MyAccount+')', '0050');
     5: OnSendMessageToOneComponent('HistoryToDBSync for RnQ ('+MyAccount+')', '0051');
@@ -222,16 +233,14 @@ begin
   Wnd := 0;
 end;
 
-// logtype = 0 - сообщения добавляются в файл meslogname
-// logtype = 1 - ошибки добавляются в файл errlogname
-procedure AddMsgToLog(Data: Pointer; Status: Integer; LogType: Integer);
+procedure AddMsgToLog(Data: Pointer; Status: Integer);
 var
   Msg_RcvrAcc, Msg_Flags: Integer;
   Current_UIN_Name, Msg_RcvrNick, Msg_Text, MD5String: AnsiString;
   Msg_DateTime: TDateTime;
   Date_Str: String;
   InsertSQLData, EncInsertSQLData, WinName: String;
-  ASize: Integer;
+  ASize: {$IFDEF WIN32}Integer{$ELSE}NativeInt{$ENDIF};
 begin
   if Status = 0 then
   begin
@@ -262,9 +271,9 @@ begin
       Date_Str := FormatDateTime('YYYY-MM-DD HH:MM:SS', Msg_DateTime);
     MD5String := IntToStr(Msg_RcvrAcc) + FormatDateTime('YYYY-MM-DD HH:MM:SS', Msg_DateTime) + Msg_Text;
     if (DBType = 'oracle') or (DBType = 'oracle-9i') then
-      WriteInLog(ProfilePath, Format(MSG_LOG_ORACLE, [DBUserName, '0', Current_UIN_Name, IntToStr(Global_CurrentAccountUIN), Msg_RcvrNick, IntToStr(Msg_RcvrAcc), '0', 'to_date('''+Date_Str+''', ''dd.mm.yyyy hh24:mi:ss'')', Msg_Text, EncryptMD5(MD5String)]), LogType)
+      InsertSQLData := Format(MSG_LOG_ORACLE, [DBUserName, '0', Current_UIN_Name, IntToStr(Global_CurrentAccountUIN), Msg_RcvrNick, IntToStr(Msg_RcvrAcc), '0', 'to_date('''+Date_Str+''', ''dd.mm.yyyy hh24:mi:ss'')', Msg_Text, EncryptMD5(MD5String)])
     else
-      WriteInLog(ProfilePath, Format(MSG_LOG, [DBUserName, '0', Current_UIN_Name, IntToStr(Global_CurrentAccountUIN), Msg_RcvrNick, IntToStr(Msg_RcvrAcc), '0', Date_Str, Msg_Text, EncryptMD5(MD5String)]), LogType);
+      InsertSQLData := Format(MSG_LOG, [DBUserName, '0', Current_UIN_Name, IntToStr(Global_CurrentAccountUIN), Msg_RcvrNick, IntToStr(Msg_RcvrAcc), '0', Date_Str, Msg_Text, EncryptMD5(MD5String)]);
   end
   else
   begin
@@ -304,18 +313,18 @@ begin
     if SearchMainWindow(pWideChar(WinName)) then
     begin
       EncInsertSQLData := EncryptStr(InsertSQLData);
-      ASize := 2*Length(EncInsertSQLData);
+      ASize := Length(EncInsertSQLData) * SizeOf(Char);
       with FMap do
       begin
         Clear;
-        WriteBuffer(@ASize,Sizeof(Integer));
+        WriteBuffer(@ASize,Sizeof({$IFDEF WIN32}Integer{$ELSE}NativeInt{$ENDIF}));
         WriteBuffer(PChar(EncInsertSQLData),ASize);
       end;
       // Отправляем сигнал, что сообщение в пямяти
       OnSendMessageToOneComponent('HistoryToDBSync for RnQ ('+MyAccount+')', '010');
     end
     else
-      WriteInLog(ProfilePath, InsertSQLData, LogType);
+      WriteInLog(ProfilePath, InsertSQLData, 0);
   end
   else // Для режима синхронизации по расписанию и ручного пишем сообщения в SQL-файл
     WriteInLog(ProfilePath, InsertSQLData, 0);
@@ -399,6 +408,12 @@ begin
           ProfilePath := RQ_GetUserPath();
           PluginPath := RQ_GetAndrqPath + 'plugins\';
           MyAccount := IntToStr(RQ_GetCurrentUser());
+          // Лог-файлы закрыты
+          MsgLogOpened := False;
+          ErrLogOpened := False;
+          DebugLogOpened := False;
+          ContactListLogOpened := False;
+          ProtoListLogOpened := False;
           // Копируем дефолтный файл конфигурации юзеру в профиль
           if FileExists(PluginPath + DefININame) then
           begin
@@ -570,6 +585,13 @@ begin
               if Assigned(AboutForm) then FreeAndNil(AboutForm);
               // Запрос на закрытие всех компонентов плагина
               OnSendMessageToAllComponent('003');
+              // Закрываем лог-файлы
+              if MsgLogOpened then
+                CloseLogFile(0);
+              if ErrLogOpened then
+                CloseLogFile(1);
+              if DebugLogOpened then
+                CloseLogFile(2);
               // Очистка ключей шифрования
               EncryptFree;
               // MMF
@@ -586,12 +608,12 @@ begin
 
         PE_MSG_SENT:
         begin
-          AddMsgToLog(Data, 0, 0);
+          AddMsgToLog(Data, 0);
         end;
 
         PE_MSG_GOT:
         begin
-          AddMsgToLog(Data, 1, 0);
+          AddMsgToLog(Data, 1);
         end;
       end; //case
   end; //case

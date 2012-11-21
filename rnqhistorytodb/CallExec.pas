@@ -1,7 +1,7 @@
 unit CallExec;
 
 interface
-{$I Compilers.inc}
+{$I jedi.inc}
 {$IFDEF COMPILER_14_UP}
   {$WEAKLINKRTTI ON}
   {$RTTI EXPLICIT METHODS([]) FIELDS([]) PROPERTIES([])}

@@ -23,7 +23,7 @@ WWW:		http://www.im-history.ru
 Необходимые компоненты для сборки плагина:
 ------------------------------------------
 
-1. Embarcadero RAD Studio XE 2011
+1. Embarcadero RAD Studio XE3
 
 2. ZeosLib 7.0.0-alpha
    http://www.sourceforge.net/projects/zeoslib

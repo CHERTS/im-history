@@ -22,7 +22,7 @@ IM-клиент:	RnQ версии 1106 и выше
 Необходимые компоненты для сборки плагина:
 ------------------------------------------
 
-1. Embarcadero RAD Studio XE 2011 или Embarcadero RAD Studio XE 2
+1. Embarcadero RAD Studio XE3
 
 2. JEDI Core
    http://www.delphi-jedi.org

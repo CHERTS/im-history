@@ -27,11 +27,14 @@
 //*****************************************************************//
 unit MapStream;
 
+{$I jedi.inc}
+
 interface
 
 uses Windows, SysUtils, Classes, SyncObjs;
 
-const MAXINTMINUS = MAXINT - 1;
+const
+  MAXINTMINUS = MAXINT - 1;
 
 type TMapBytes = array[0..MAXINTMINUS] of Byte;
      PMapBytes = ^TMapBytes;
@@ -39,24 +42,24 @@ type TMapBytes = array[0..MAXINTMINUS] of Byte;
 type TMapStream = class(TObject)
 private
   FHandle: THandle;
-  FPosition: Integer;
-  FSize: Integer;
-  FTimeOut: Integer;
-  procedure SetPosition(Value: Integer);
-  function CountGood(Count: Integer):Boolean;
+  FPosition: {$IFDEF WIN32}Integer{$ELSE}NativeInt{$ENDIF};
+  FSize: {$IFDEF WIN32}Integer{$ELSE}NativeInt{$ENDIF};
+  FTimeOut: {$IFDEF WIN32}Integer{$ELSE}NativeInt{$ENDIF};
+  procedure SetPosition(Value: {$IFDEF WIN32}Integer{$ELSE}NativeInt{$ENDIF});
+  function CountGood(Count: {$IFDEF WIN32}Integer{$ELSE}NativeInt{$ENDIF}): Boolean;
   function GrabEvent: Boolean;
   procedure ReleaseEvent;
 protected
   FEvent: TEvent;
   FMemory: PMapBytes;
 public
-  property Position: Integer read FPosition write SetPosition;
-  constructor CreateEx(const AName: String; ASize,ATimeOut: Integer);
+  property Position: {$IFDEF WIN32}Integer{$ELSE}NativeInt{$ENDIF} read FPosition write SetPosition;
+  constructor CreateEx(const AName: String; ASize,ATimeOut: {$IFDEF WIN32}Integer{$ELSE}NativeInt{$ENDIF});
   destructor Destroy; override;
   function Clear: Boolean;
-  function CopyFrom(AStream: TStream;Count: Integer): Boolean;
-  function ReadBuffer(P: Pointer; Count: Integer): Boolean;
-  function WriteBuffer(P: Pointer; Count: Integer): Boolean;
+  function CopyFrom(AStream: TStream;Count: {$IFDEF WIN32}Integer{$ELSE}NativeInt{$ENDIF}): Boolean;
+  function ReadBuffer(P: Pointer; Count: {$IFDEF WIN32}Integer{$ELSE}NativeInt{$ENDIF}): Boolean;
+  function WriteBuffer(P: Pointer; Count: {$IFDEF WIN32}Integer{$ELSE}NativeInt{$ENDIF}): Boolean;
 end;
 
 type ENoMapping = class(Exception);
@@ -64,15 +67,15 @@ type ENoMapping = class(Exception);
 implementation
 
 // MapStream Create & Destroy
-constructor TMapStream.CreateEx(const AName:String;ASize,ATimeOut:Integer);
+constructor TMapStream.CreateEx(const AName: String; ASize, ATimeOut: {$IFDEF WIN32}Integer{$ELSE}NativeInt{$ENDIF});
 begin
   inherited Create;
   FSize := ASize;
   FTimeOut := ATimeOut;
-  if (FSize < 1) or (FSize > MAXINTMINUS) then FSize:=MAXWORD;
-  if (FTimeOut < 1) or (FTimeOut > 5000) then FTimeOut:=2000;
+  if (FSize < 1) or (FSize > MAXINTMINUS) then FSize := MAXWORD;
+  if (FTimeOut < 1) or (FTimeOut > 5000) then FTimeOut := 2000;
   //2000ms timeout for safety
-  FHandle:=CreateFileMapping($FFFFFFFF,nil,PAGE_READWRITE,0,FSize,PChar(AName));
+  FHandle:=CreateFileMapping({$IFDEF WIN32}$FFFFFFFF{$ELSE}$FFFFFFFFFFFFFFFF{$ENDIF},nil,PAGE_READWRITE,0,FSize,PChar(AName));
   //See the Windows Kernel32 CreateFileMapping function for information
   if (FHandle = 0) then ENoMapping.Create(Format('%s file mapping failed.',[AName]))
   else begin
@@ -98,21 +101,21 @@ begin
   inherited;
 end;
 
-function TMapStream.CountGood(Count:Integer):Boolean;
+function TMapStream.CountGood(Count: {$IFDEF WIN32}Integer{$ELSE}NativeInt{$ENDIF}): Boolean;
 begin
   Result:=(FPosition + Count < FSize);
 end;
 
-function TMapStream.GrabEvent:Boolean;
+function TMapStream.GrabEvent: Boolean;
 begin
-  Result:=True;
+  Result := True;
   with FEvent do
   begin
     case WaitFor(FTimeOut) of
-      wrSignaled:ReSetEvent;
-      {locks the event for exclusive use by this app. Funny name, ReSetEvent, not
+      wrSignaled: ResetEvent;
+      {locks the event for exclusive use by this app. Funny name, ResetEvent, not
        our choice!}
-      else Result:=False;
+      else Result := False;
     end;
   end;
 end;
@@ -123,26 +126,26 @@ begin
 end;
 
 // MapStream Manipulation
-function TMapStream.Clear:Boolean;
+function TMapStream.Clear: Boolean;
 begin
   if GrabEvent then
   try
     FillChar(FMemory^[0],FSize,0);
-    FPosition:=0;
-    Result:=True;
+    FPosition := 0;
+    Result := True;
   finally ReleaseEvent end else Result:=False;
 end;
 
-function TMapStream.CopyFrom(AStream:TStream;Count:Integer):Boolean;
+function TMapStream.CopyFrom(AStream: TStream; Count: {$IFDEF WIN32}Integer{$ELSE}NativeInt{$ENDIF}): Boolean;
 
-  function SizeGood:Boolean;
-  var i,ASize:Integer;
+  function SizeGood: Boolean;
+  var ASize: {$IFDEF WIN32}Integer{$ELSE}NativeInt{$ENDIF};
   begin
-    ASize:=AStream.Size;
+    ASize := AStream.Size;
     if (Count = 0) or (Count > ASize) then
     begin
-      Count:=ASize;
-      AStream.Position:=0;
+      Count := ASize;
+      AStream.Position := 0;
     end;
     Result:=(FPosition + Count < FSize);
     {make sure the copy block is not too big. Incidentally, also make Count = 0
@@ -157,7 +160,7 @@ begin
   finally ReleaseEvent end else Result:=False;
 end;
 
-function TMapStream.ReadBuffer(P:Pointer;Count:Integer):Boolean;
+function TMapStream.ReadBuffer(P:Pointer; Count: {$IFDEF WIN32}Integer{$ELSE}NativeInt{$ENDIF}): Boolean;
 begin
   if CountGood(Count) and GrabEvent then
   try
@@ -167,17 +170,17 @@ begin
   finally ReleaseEvent end else Result:=False;
 end;
 
-function TMapStream.WriteBuffer(P:Pointer;Count:Integer):Boolean;
+function TMapStream.WriteBuffer(P:Pointer; Count: {$IFDEF WIN32}Integer{$ELSE}NativeInt{$ENDIF}): Boolean;
 begin
   if CountGood(Count) and GrabEvent then
   try
     Move(P^,FMemory^[FPosition],Count);
-    inc(FPosition,Count);
-    Result:=True;
+    Inc(FPosition, Count);
+    Result := True;
   finally ReleaseEvent end else Result:=False;
 end;
 
-procedure TMapStream.SetPosition(Value:Integer);
+procedure TMapStream.SetPosition(Value: {$IFDEF WIN32}Integer{$ELSE}NativeInt{$ENDIF});
 begin
   if (Value < FSize) and (Value >= 0) then FPosition:=Value;
 end;
