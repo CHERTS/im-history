@@ -65,6 +65,11 @@ const
                     'Vyacheslav S. (HDHMETRO) for active testing of plug-in.' + #13#10 +
                     'Providence for active testing of plug-in and new ideas.' + #13#10 +
                     'Cy6 for help in implementing the import history RnQ.';
+  {$IFDEF WIN32}
+  PlatformType = 'x86';
+  {$ELSE}
+  PlatformType = 'x64';
+  {$ENDIF}
 
 type
   TCopyDataStruct = packed record
@@ -94,6 +99,7 @@ var
   Glogal_History_Type: Integer;
   Global_AboutForm_Showing: Boolean;
   DllPath, ProfilePath, MyAccount: String;
+  IMClientPlatformType: String;
   // Для мультиязыковой поддержки
   //CoreLanguage: String;
   AboutFormHandle: HWND;
@@ -401,6 +407,8 @@ begin
    SyncMethod := INI.ReadInteger('Main', 'SyncMethod', 1);
    SyncInterval := INI.ReadInteger('Main', 'SyncInterval', 0);
 
+   IMClientPlatformType := INI.ReadString('Main', 'IMClientPlatformType', PlatformType);
+
    Temp := INI.ReadString('Main', 'WriteErrLog', '1');
    if Temp = '1' then WriteErrLog := True
    else WriteErrLog := False;
@@ -474,6 +482,7 @@ begin
     INI.WriteInteger('Main', 'SyncTimeCount', 40);
     INI.WriteInteger('Main', 'SyncMessageCount', SyncMessageCount);
     INI.WriteInteger('Main', 'NumLastHistoryMsg', 6);
+    INI.WriteString('Main', 'IMClientPlatformType', PlatformType);
     INI.WriteString('Main', 'WriteErrLog', BoolToIntStr(WriteErrLog));
     INI.WriteString('Main', 'ShowAnimation', BoolToIntStr(AniEvents));
     INI.WriteString('Main', 'EnableHistoryEncryption', BoolToIntStr(EnableHistoryEncryption));
@@ -576,46 +585,51 @@ var
   copyDataStruct : TCopyDataStruct;
   EncryptMsg, WinName: String;
 begin
+  if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Функция OnSendMessageToAllComponent: Отправка запроса "' + Msg + '" всем компонентам плагина.', 2);
   EncryptMsg := EncryptStr(Msg);
   // Ищем окно HistoryToDBViewer и посылаем ему команду
   WinName := 'HistoryToDBViewer for QIP ('+MyAccount+')';
   HToDB := FindWindow(nil, pWideChar(WinName));
   if HToDB <> 0 then
   begin
-    copyDataStruct.dwData := Integer(cdtString);
-    copyDataStruct.cbData := 2*Length(EncryptMsg);
+    copyDataStruct.dwData := {$IFDEF WIN32}Integer{$ELSE}LongInt{$ENDIF}(cdtString);;
+    copyDataStruct.cbData := Length(EncryptMsg) * SizeOf(Char);;
     copyDataStruct.lpData := PChar(EncryptMsg);
-    SendMessage(HToDB, WM_COPYDATA, 0, Integer(@copyDataStruct));
+    SendMessage(HToDB, WM_COPYDATA, 0, {$IFDEF WIN32}Integer{$ELSE}LongInt{$ENDIF}(@copyDataStruct));
+    if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Функция OnSendMessageToAllComponent: Отправка запроса "' + Msg + '" окну ' + WinName, 2);
   end;
   // Ищем окно HistoryToDBSync и посылаем ему команду
   WinName := 'HistoryToDBSync for QIP ('+MyAccount+')';
   HToDB := FindWindow(nil, pWideChar(WinName));
   if HToDB <> 0 then
   begin
-    copyDataStruct.dwData := Integer(cdtString);
-    copyDataStruct.cbData := 2*Length(EncryptMsg);
+    copyDataStruct.dwData := {$IFDEF WIN32}Integer{$ELSE}LongInt{$ENDIF}(cdtString);;
+    copyDataStruct.cbData := Length(EncryptMsg) * SizeOf(Char);;
     copyDataStruct.lpData := PChar(EncryptMsg);
-    SendMessage(HToDB, WM_COPYDATA, 0, Integer(@copyDataStruct));
+    SendMessage(HToDB, WM_COPYDATA, 0, {$IFDEF WIN32}Integer{$ELSE}LongInt{$ENDIF}(@copyDataStruct));
+    if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Функция OnSendMessageToAllComponent: Отправка запроса "' + Msg + '" окну ' + WinName, 2);
   end;
   // Ищем окно HistoryToDBImport и посылаем ему команду
   WinName := 'HistoryToDBImport for QIP ('+MyAccount+')';
   HToDB := FindWindow(nil, pWideChar(WinName));
   if HToDB <> 0 then
   begin
-    copyDataStruct.dwData := Integer(cdtString);
-    copyDataStruct.cbData := 2*Length(EncryptMsg);
+    copyDataStruct.dwData := {$IFDEF WIN32}Integer{$ELSE}LongInt{$ENDIF}(cdtString);;
+    copyDataStruct.cbData := Length(EncryptMsg) * SizeOf(Char);;
     copyDataStruct.lpData := PChar(EncryptMsg);
-    SendMessage(HToDB, WM_COPYDATA, 0, Integer(@copyDataStruct));
+    SendMessage(HToDB, WM_COPYDATA, 0, {$IFDEF WIN32}Integer{$ELSE}LongInt{$ENDIF}(@copyDataStruct));
+    if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Функция OnSendMessageToAllComponent: Отправка запроса "' + Msg + '" окну ' + WinName, 2);
   end;
   // Ищем окно HistoryToDBUpdater и посылаем ему команду
   WinName := 'HistoryToDBUpdater for QIP ('+MyAccount+')';
   HToDB := FindWindow(nil, pWideChar(WinName));
   if HToDB <> 0 then
   begin
-    copyDataStruct.dwData := Integer(cdtString);
-    copyDataStruct.cbData := 2*Length(EncryptMsg);
+    copyDataStruct.dwData := {$IFDEF WIN32}Integer{$ELSE}LongInt{$ENDIF}(cdtString);;
+    copyDataStruct.cbData := Length(EncryptMsg) * SizeOf(Char);;
     copyDataStruct.lpData := PChar(EncryptMsg);
-    SendMessage(HToDB, WM_COPYDATA, 0, Integer(@copyDataStruct));
+    SendMessage(HToDB, WM_COPYDATA, 0, {$IFDEF WIN32}Integer{$ELSE}LongInt{$ENDIF}(@copyDataStruct));
+    if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Функция OnSendMessageToAllComponent: Отправка запроса "' + Msg + '" окну ' + WinName, 2);
   end;
 end;
 
@@ -623,17 +637,18 @@ procedure OnSendMessageToOneComponent(WinName, Msg: String);
 var
   HToDB: HWND;
   copyDataStruct : TCopyDataStruct;
-  EncryptMsg: String;
+  AppNameStr, EncryptMsg: String;
 begin
-  EncryptMsg := EncryptStr(Msg);
-  // Ищем окно HistoryToDBViewer и посылаем ему команду
-  HToDB := FindWindow(nil, pChar(WinName));
+  // Ищем окно WinName и посылаем ему команду
+  HToDB := FindWindow(nil, pWideChar(WinName));
   if HToDB <> 0 then
   begin
-    copyDataStruct.dwData := Integer(cdtString);
-    copyDataStruct.cbData := 2*Length(EncryptMsg);
+    EncryptMsg := EncryptStr(Msg);
+    copyDataStruct.dwData := {$IFDEF WIN32}Integer{$ELSE}LongInt{$ENDIF}(cdtString);
+    copyDataStruct.cbData := Length(EncryptMsg) * SizeOf(Char);
     copyDataStruct.lpData := PChar(EncryptMsg);
-    SendMessage(HToDB, WM_COPYDATA, 0, Integer(@copyDataStruct));
+    SendMessage(HToDB, WM_COPYDATA, 0, {$IFDEF WIN32}Integer{$ELSE}LongInt{$ENDIF}(@copyDataStruct));
+    if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Функция OnSendMessageToOneComponent: Отправка запроса "' + Msg + '" окну ' + WinName, 2);
   end;
 end;
 

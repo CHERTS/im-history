@@ -6,11 +6,11 @@
 { #                                                                          # }
 { #  Author: Grigorev Michael (icq: 161867489, email: sleuthhound@gmail.com) # }
 { #                                                                          # }
-{ #  Docs: http://forum.vingrad.ru/topic-60076.html                          # }
-{ #                                                                          # }
 { ############################################################################ }
 
 unit FSMonitor;
+
+{$I jedi.inc}
 
 interface
 
@@ -163,7 +163,11 @@ end;}
 
 procedure TWFS.WatchEvent;
 var
+{$ifdef DELPHIXE_UP}
+  CompletionKey: DWORD_PTR;
+{$ELSE}
   CompletionKey: Cardinal;
+{$endif}
   // Перенесено из HandleEvent
   FileNotifyInfo : PFileNotifyInformation;
   InfoCallBack   : TInfoCallBack;

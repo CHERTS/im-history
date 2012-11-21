@@ -191,6 +191,12 @@ var
   UpdTmpPath, WinName: String;
 begin
   try
+    // Лог-файлы закрыты
+    MsgLogOpened := False;
+    ErrLogOpened := False;
+    DebugLogOpened := False;
+    ContactListLogOpened := False;
+    ProtoListLogOpened := False;
     GetContactList := False;
     // Инициализация шифрования
     EncryptInit;
@@ -220,12 +226,6 @@ begin
     end;
     // Загружаем настройки
     LoadINI(ProfilePath);
-    // Лог-файлы закрыты
-    MsgLogOpened := False;
-    ErrLogOpened := False;
-    DebugLogOpened := False;
-    ContactListLogOpened := False;
-    ProtoListLogOpened := False;
     // Загружаем настройки локализации
     FLanguage := DefaultLanguage;
     LangDoc := NewXMLDocument();
@@ -371,6 +371,8 @@ begin
       if Assigned(MPopupMenu) then FreeAndNil(MPopupMenu);
       if Assigned(metaPopupMenu) then FreeAndNil(metaPopupMenu);
       if Assigned(AboutForm) then FreeAndNil(AboutForm);
+      // Запрос на закрытие всех компонентов плагина
+      OnSendMessageToAllComponent('003');
       // Закрываем лог-файлы
       if MsgLogOpened then
         CloseLogFile(0);
@@ -378,8 +380,6 @@ begin
         CloseLogFile(1);
       if DebugLogOpened then
         CloseLogFile(2);
-      // Запрос на закрытие всех компонентов плагина
-      OnSendMessageToAllComponent('003');
       // Очистка ключей шифрования
       EncryptFree;
       // MMF
@@ -960,7 +960,8 @@ var
   Date_Str: String;
   BlockWriteMsg: Boolean;
   InsertSQLData, EncInsertSQLData, WinName: String;
-  I, ASize: Integer;
+  I: Integer;
+  ASize: {$IFDEF WIN32}Integer{$ELSE}NativeInt{$ENDIF};
 begin
   AQIPMsg := pQipMsgPlugin(PMSG.WParam);
   // Debug
@@ -1056,11 +1057,11 @@ begin
       if SearchMainWindow(pWideChar(WinName)) then
       begin
         EncInsertSQLData := EncryptStr(InsertSQLData);
-        ASize := 2*Length(EncInsertSQLData);
+        ASize := Length(EncInsertSQLData) * SizeOf(Char);
         with FMap do
         begin
           Clear;
-          WriteBuffer(@ASize,Sizeof(Integer));
+          WriteBuffer(@ASize,Sizeof({$IFDEF WIN32}Integer{$ELSE}NativeInt{$ENDIF}));
           WriteBuffer(PChar(EncInsertSQLData),ASize);
         end;
         // Отправляем сигнал, что сообщение в пямяти
@@ -1115,7 +1116,8 @@ var
   aMsgType: Integer;
   aIsPrivate: Boolean;
   InsertSQLData, EncInsertSQLData, WinName: String;
-  I, ASize: Integer;
+  I: Integer;
+  ASize: {$IFDEF WIN32}Integer{$ELSE}NativeInt{$ENDIF};
 begin
   AQIPChatMsg := pChatTextInfo(PMSG.NParam);
   { Принимаем только определенные типы чат-сообщений
@@ -1189,11 +1191,11 @@ begin
       if SearchMainWindow(pWideChar(WinName)) then
       begin
         EncInsertSQLData := EncryptStr(InsertSQLData);
-        ASize := 2*Length(EncInsertSQLData);
+        ASize := Length(EncInsertSQLData) * SizeOf(Char);
         with FMap do
         begin
           Clear;
-          WriteBuffer(@ASize,Sizeof(Integer));
+          WriteBuffer(@ASize,Sizeof({$IFDEF WIN32}Integer{$ELSE}NativeInt{$ENDIF}));
           WriteBuffer(PChar(EncInsertSQLData),ASize);
         end;
         // Отправляем сигнал, что сообщение в пямяти
