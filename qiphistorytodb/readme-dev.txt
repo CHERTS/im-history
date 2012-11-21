@@ -21,7 +21,7 @@ IM-клиент:	QIP Infium не ниже beta 3
 Необходимые компоненты для сборки плагина:
 ------------------------------------------
 
-1. Embarcadero RAD Studio XE 2011
+1. Embarcadero RAD Studio XE3
 
 2. JEDI Core
    http://www.delphi-jedi.org
