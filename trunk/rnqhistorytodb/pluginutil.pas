@@ -1,6 +1,6 @@
 Unit pluginutil;
 interface
-{$I Compilers.inc}
+{$I jedi.inc}
 {$IFDEF COMPILER_14_UP}
   {$WEAKLINKRTTI ON}
   {$RTTI EXPLICIT METHODS([]) FIELDS([]) PROPERTIES([])}
@@ -818,6 +818,7 @@ procedure StrSwapByteOrder(Str: PWideChar);
 // exchanges in each character of the given string the low order and high order
 // byte to go from LSB to MSB and vice versa.
 // EAX contains address of string
+{$IFDEF WIN32}
 asm
        PUSH    ESI
        PUSH    EDI
@@ -834,6 +835,24 @@ asm
 @@2:
        POP     EDI
        POP     ESI
+{$ELSE}
+asm
+       PUSH    RSI
+       PUSH    RDI
+       MOV     RSI, RAX
+       MOV     RDI, RSI
+       XOR     RAX, RAX // clear high order byte to be able to use 32bit operand below
+@@1:
+       LODSW
+       OR      RAX, RAX
+       JZ      @@2
+       XCHG    AL, AH
+       STOSW
+       JMP     @@1
+@@2:
+       POP     RDI
+       POP     RSI
+{$ENDIF}
 end;
 
 function UnWideStr(s : AnsiString) : AnsiString;
@@ -870,7 +889,7 @@ end; // _int
 
 function _byte_at(p:pointer; ofs:integer=0):byte;
 begin
-inc( integer(p), ofs);
+inc({$IFDEF WIN32}Integer{$ELSE}NativeInt{$ENDIF}(p), ofs);
 result:=byte(p^)
 end;
 
@@ -879,7 +898,7 @@ begin result:=_byte_at(@s[idx]) end;
 
 function _int_at(p:pointer; ofs:integer=0):integer; overload;
 begin
-inc( integer(p), ofs);
+inc({$IFDEF WIN32}Integer{$ELSE}NativeInt{$ENDIF}(p), ofs);
 result:=integer(p^)
 end;
 
@@ -888,7 +907,7 @@ begin result:=_int_at(@s[idx]) end;
 
 function _ptr_at(p:pointer; ofs:integer=0):pointer;
 begin
-inc( integer(p), ofs);
+inc({$IFDEF WIN32}Integer{$ELSE}NativeInt{$ENDIF}(p), ofs);
 result:=pointer(_int_at(p))
 end;
 
@@ -897,9 +916,9 @@ begin result:=_int(length(s))+s end;
 
 function _istring_at(p:pointer; ofs:integer=0):AnsiString; overload;
 begin
-inc(integer(p), ofs);
+inc({$IFDEF WIN32}Integer{$ELSE}NativeInt{$ENDIF}(p), ofs);
 setlength(result, integer(p^));
-inc(integer(p), 4);
+inc({$IFDEF WIN32}Integer{$ELSE}NativeInt{$ENDIF}(p), 4);
 move(p^, result[1], length(result));
 end; // _istring_at
 
@@ -913,12 +932,12 @@ function _intlist_at(p:pointer; ofs:integer=0):TintegerDynArray; overload;
 var
   n,i:integer;
 begin
-inc(integer(p), ofs);
+inc({$IFDEF WIN32}Integer{$ELSE}NativeInt{$ENDIF}(p), ofs);
 n:=integer(p^);
 setlength(result, n);
 for i:=0 to n-1 do
   begin
-  inc(integer(p),4);
+  inc({$IFDEF WIN32}Integer{$ELSE}NativeInt{$ENDIF}(p),4);
   result[i]:=_int_at(p);
   end;
 end; // _intlist_at
@@ -934,7 +953,7 @@ end; // _dt
 
 function _double(p:pointer; ofs:integer=0):double;
 begin
-inc(integer(p), ofs);
+inc({$IFDEF WIN32}Integer{$ELSE}NativeInt{$ENDIF}(p), ofs);
 //setlength(result, integer(p^));
 //inc(integer(p), 4);
 move(p^, result, 8);
@@ -942,7 +961,7 @@ end; // _double
 
 function _dt_at(p:pointer; ofs:integer=0): Tdatetime; overload;
 begin
-  inc( integer(p), ofs);
+  inc({$IFDEF WIN32}Integer{$ELSE}NativeInt{$ENDIF}(p), ofs);
   result:=Tdatetime(p^)
 end; // _dt_at
 function _dt_at(const s: AnsiString; idx:integer=1): Tdatetime; overload;

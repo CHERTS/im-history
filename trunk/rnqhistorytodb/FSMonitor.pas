@@ -6,11 +6,11 @@
 { #                                                                          # }
 { #  Author: Grigorev Michael (icq: 161867489, email: sleuthhound@gmail.com) # }
 { #                                                                          # }
-{ #  Docs: http://forum.vingrad.ru/topic-60076.html                          # }
-{ #                                                                          # }
 { ############################################################################ }
 
 unit FSMonitor;
+
+{$I jedi.inc}
 
 interface
 
@@ -51,7 +51,7 @@ type
     NextEntryOffset : DWORD;
     Action          : DWORD;
     FileNameLength  : DWORD;
-    FileName        : array[0..0] of WideChar;
+    FileName        : Array[0..0] of WideChar;
   end;
 
   WFSError = class(Exception);
@@ -60,7 +60,7 @@ type
   private
     FName           : String;
     FFilter         : Cardinal;
-    FSubTree        : boolean;
+    FSubTree        : Boolean;
     FInfoCallBack   : TWatchFileSystemCallBack;
     FWatchHandle    : THandle;
     FWatchBuf       : Array[0..4096] of Byte;
@@ -163,7 +163,11 @@ end;}
 
 procedure TWFS.WatchEvent;
 var
+{$ifdef DELPHIXE_UP}
+  CompletionKey: DWORD_PTR;
+{$ELSE}
   CompletionKey: Cardinal;
+{$endif}
   // Перенесено из HandleEvent
   FileNotifyInfo : PFileNotifyInformation;
   InfoCallBack   : TInfoCallBack;

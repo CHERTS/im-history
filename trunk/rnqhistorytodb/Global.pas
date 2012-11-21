@@ -56,6 +56,11 @@ const
                     'Vyacheslav S. (HDHMETRO) for active testing of plug-in.' + #13#10 +
                     'Providence for active testing of plug-in and new ideas.' + #13#10 +
                     'Cy6 for help in implementing the import history RnQ.';
+  {$IFDEF WIN32}
+  PlatformType = 'x86';
+  {$ELSE}
+  PlatformType = 'x64';
+  {$ENDIF}
 
 var
   ERR_SAVE_TO_DB_CONNECT_ERR : WideString = '[%s] Ошибка: Не удаётся подключиться к БД. Ошибка: %s';
@@ -69,7 +74,7 @@ var
   LOAD_TEMP_MSG : WideString = '[%s] В файле %s найдено %s сообщений; Загружено в БД: %s; Отбраковано: %s';
   LOAD_TEMP_MSG_NOLOGFILE : WideString = '[%s] Файл отложенных сообщений %s не найден.';
   WriteErrLog, AniEvents, EnableHistoryEncryption, HideSyncIcon, ShowPluginButton: Boolean;
-  SyncMethod, SyncInterval, NumLastHistoryMsg, SyncTimeCount, SyncMessageCount: Integer;
+  SyncMethod, SyncInterval, NumLastHistoryMsg, SyncTimeCount, SyncMessageCount, MaxErrLogSize: Integer;
   DBType, DBAddress, DBSchema, DBPort, DBName, DBUserName, DBPasswd, DefaultLanguage: String;
   Global_AccountUIN, Global_CurrentAccountUIN: Integer;
   Global_AccountName, Global_CurrentAccountName: WideString;
@@ -77,6 +82,7 @@ var
   Global_AboutForm_Showing: Boolean;
   Global_SettingsForm_Showing: Boolean;
   EnableDebug, EnableCallBackDebug: Boolean;
+  IMClientPlatformType: String;
   // Для мультиязыковой поддержки
   CoreLanguage: String;
   SettingsFormHandle: HWND;
@@ -87,6 +93,17 @@ var
   Cipher: TDCP_3des;
   Digest: Array[0..19] of Byte;
   Hash: TDCP_sha1;
+  // Лог-файлы
+  TFMsgLog: TextFile;
+  MsgLogOpened: Boolean;
+  TFErrLog: TextFile;
+  ErrLogOpened: Boolean;
+  TFDebugLog: TextFile;
+  DebugLogOpened: Boolean;
+  TFContactListLog: TextFile;
+  ContactListLogOpened: Boolean;
+  TFProtoListLog: TextFile;
+  ProtoListLogOpened: Boolean;
   // MMF
   FMap: TMapStream;
 
@@ -105,7 +122,10 @@ procedure EncryptInit;
 procedure EncryptFree;
 procedure OnSendMessageToAllComponent(Msg: String);
 procedure OnSendMessageToOneComponent(WinName, Msg: String);
-procedure WriteInLog(DllPath: String; TextString: WideString; LogType: Integer);
+procedure WriteInLog(LogPath: String; TextString: String; LogType: Integer);
+function OpenLogFile(LogPath: String; LogType: Integer): Boolean;
+procedure CloseLogFile(LogType: Integer);
+function GetMyFileSize(const Path: String): Integer;
 procedure LoadINI(INIPath: String; NotSettingsForm: Boolean);
 procedure WriteCustomINI(INIPath, CustomParams, ParamsStr: String);
 procedure ProfileDirChangeCallBack(pInfo: TInfoCallBack);
@@ -185,52 +205,190 @@ end;
 // LogType = 2 - сообщения добавляются в файл DebugLogName
 // LogType = 3 - сообщения добавляются в файл ContactListName
 // LogType = 4 - сообщения добавляются в файл ProtoListName
-procedure WriteInLog(DllPath: String; TextString: WideString; LogType: Integer);
+function OpenLogFile(LogPath: String; LogType: Integer): Boolean;
 var
   Path: WideString;
-  TF: TextFile;
 begin
   if LogType = 0 then
-    Path := DllPath + MesLogName
+    Path := LogPath + MesLogName
   else if LogType = 1 then
-    Path := DllPath + ErrLogName
-  else if LogType = 2 then
-    Path := DllPath + DebugLogName
-  else if LogType = 3 then
-    Path := DllPath + ContactListName
-  else
-    Path := DllPath + ProtoListName;
-  {$I-}
-  Assign(TF,Path);
-  if FileExists(Path) then
   begin
-    try
-      Append(TF);
-      Writeln(TF,TextString);
-      CloseFile(TF);
-    except
-      on e :
-        Exception do
-        begin
-          CloseFile(TF);
-          Exit;
-        end;
+    Path := LogPath + ErrLogName;
+    if (LogType > 0) and (GetMyFileSize(Path) > MaxErrLogSize*1024) then
+      DeleteFile(Path);
+  end
+  else if LogType = 2 then
+    Path := LogPath + DebugLogName
+  else if LogType = 3 then
+    Path := LogPath + ContactListName
+  else
+    Path := LogPath + ProtoListName;
+  {$I-}
+  try
+    if LogType = 0 then
+      Assign(TFMsgLog, Path)
+    else if LogType = 1 then
+      Assign(TFErrLog, Path)
+    else if LogType = 2 then
+      Assign(TFDebugLog, Path)
+    else if LogType = 3 then
+      Assign(TFContactListLog, Path)
+    else
+      Assign(TFProtoListLog, Path);
+    if FileExists(Path) then
+    begin
+      if LogType = 0 then
+        Append(TFMsgLog)
+      else if LogType = 1 then
+        Append(TFErrLog)
+      else if LogType = 2 then
+        Append(TFDebugLog)
+      else if LogType = 3 then
+        Append(TFContactListLog)
+      else
+        Append(TFProtoListLog);
+    end
+    else
+    begin
+      if LogType = 0 then
+        Rewrite(TFMsgLog)
+      else if LogType = 1 then
+        Rewrite(TFErrLog)
+      else if LogType = 2 then
+        Rewrite(TFDebugLog)
+      else if LogType = 3 then
+        Rewrite(TFContactListLog)
+      else
+        Rewrite(TFProtoListLog);
     end;
+    Result := True;
+  except
+    on e :
+      Exception do
+      begin
+        CloseLogFile(LogType);
+        Result := False;
+        Exit;
+      end;
+  end;
+  {$I+}
+end;
+
+// LogType = 0 - сообщения добавляются в файл MesLogName
+// LogType = 1 - ошибки добавляются в файл ErrLogName
+// LogType = 2 - сообщения добавляются в файл DebugLogName
+// LogType = 3 - сообщения добавляются в файл ContactListName
+// LogType = 4 - сообщения добавляются в файл ProtoListName
+procedure WriteInLog(LogPath: String; TextString: String; LogType: Integer);
+var
+  Path: WideString;
+begin
+  if LogType = 0 then
+  begin
+    if not MsgLogOpened then
+      MsgLogOpened := OpenLogFile(LogPath, 0);
+    Path := LogPath + MesLogName
+  end
+  else if LogType = 1 then
+  begin
+    if not ErrLogOpened then
+      ErrLogOpened := OpenLogFile(LogPath, 1);
+    Path := LogPath + ErrLogName;
+    if (LogType > 0) and (GetMyFileSize(Path) > MaxErrLogSize*1024) then
+    begin
+      CloseLogFile(LogType);
+      DeleteFile(Path);
+      if not OpenLogFile(LogPath, LogType) then
+        Exit;
+    end;
+  end
+  else if LogType = 2 then
+  begin
+    if not DebugLogOpened then
+      DebugLogOpened := OpenLogFile(LogPath, 2);
+    Path := LogPath + DebugLogName;
+  end
+  else if LogType = 3 then
+  begin
+    if not ContactListLogOpened then
+      ContactListLogOpened := OpenLogFile(LogPath, 3);
+    Path := LogPath + ContactListName;
   end
   else
   begin
-    try
-      Rewrite(TF);
-      Writeln(TF,TextString);
-      CloseFile(TF);
-    except
-      on e :
-        Exception do
-        begin
-          CloseFile(TF);
-          Exit;
-        end;
-    end;
+    if not ProtoListLogOpened then
+      ProtoListLogOpened := OpenLogFile(LogPath, 4);
+    Path := LogPath + ProtoListName;
+  end;
+  {$I-}
+  try
+    if LogType = 0 then
+      WriteLn(TFMsgLog, TextString)
+    else if LogType = 1 then
+      WriteLn(TFErrLog, TextString)
+    else if LogType = 2 then
+      WriteLn(TFDebugLog, TextString)
+    else if LogType = 3 then
+      WriteLn(TFContactListLog, TextString)
+    else
+      WriteLn(TFProtoListLog, TextString);
+  except
+    on e :
+      Exception do
+      begin
+        CloseLogFile(LogType);
+        Exit;
+      end;
+  end;
+  if MsgLogOpened then
+    CloseLogFile(0);
+  {$I+}
+end;
+
+// Если файл не существует, то вместо размера файла функция вернёт -1
+function GetMyFileSize(const Path: String): Integer;
+var
+  FD: TWin32FindData;
+  FH: THandle;
+begin
+  FH := FindFirstFile(PChar(Path), FD);
+  Result := 0;
+  if FH = INVALID_HANDLE_VALUE then
+    Exit;
+  Result := FD.nFileSizeLow;
+  if ((FD.nFileSizeLow and $80000000) <> 0) or
+     (FD.nFileSizeHigh <> 0) then
+    Result := -1;
+  //FindClose(FH);
+end;
+
+procedure CloseLogFile(LogType: Integer);
+begin
+  {$I-}
+  if LogType = 0 then
+  begin
+    CloseFile(TFMsgLog);
+    MsgLogOpened := False;
+  end
+  else if LogType = 1 then
+  begin
+    CloseFile(TFErrLog);
+    ErrLogOpened := False;
+  end
+  else if LogType = 2 then
+  begin
+    CloseFile(TFDebugLog);
+    DebugLogOpened := False;
+  end
+  else if LogType = 3 then
+  begin
+    CloseFile(TFContactListLog);
+    ContactListLogOpened := False;
+  end
+  else
+  begin
+    CloseFile(TFProtoListLog);
+    ProtoListLogOpened := False;
   end;
   {$I+}
 end;
@@ -248,60 +406,64 @@ begin
   Path := INIPath + ININame;
   if FileExists(Path) then
   begin
-   Ini := TIniFile.Create(Path);
-   DBType := INI.ReadString('Main', 'DBType', 'mysql');  // mysql или postgresql
-   DBAddress := INI.ReadString('Main', 'DBAddress', DefaultDBAddres);
-   DBSchema := INI.ReadString('Main', 'DBSchema', 'username');
-   DBPort := INI.ReadString('Main', 'DBPort', '3306');  // 3306 для mysql, 5432 для postgresql
-   DBName := INI.ReadString('Main', 'DBName', DefaultDBName);
-   // Если вызываем LoadINI НЕ с формы SettingsForm, то DBName ставим без замены <ProfilePluginPath> и <PluginPath>
-   if NotSettingsForm then
-   begin
+    Ini := TIniFile.Create(Path);
+    DBType := INI.ReadString('Main', 'DBType', 'mysql');  // mysql или postgresql
+    DBAddress := INI.ReadString('Main', 'DBAddress', DefaultDBAddres);
+    DBSchema := INI.ReadString('Main', 'DBSchema', 'username');
+    DBPort := INI.ReadString('Main', 'DBPort', '3306');  // 3306 для mysql, 5432 для postgresql
+    DBName := INI.ReadString('Main', 'DBName', DefaultDBName);
+    // Если вызываем LoadINI НЕ с формы SettingsForm, то DBName ставим без замены <ProfilePluginPath> и <PluginPath>
+    if NotSettingsForm then
+    begin
       // Замена подстроки в строке DBName
       if MatchStrings(DBName,'<ProfilePluginPath>*') then
         DBName := StringReplace(DBName,'<ProfilePluginPath>',ProfilePath,[RFReplaceall])
       else if MatchStrings(DBName,'<PluginPath>*') then
         DBName := StringReplace(DBName,'<PluginPath>',ExtractFileDir(PluginPath),[RFReplaceall]);
       // End
-   end;
-   DBUserName := INI.ReadString('Main', 'DBUserName', 'username');
-   //DBPasswd := INI.ReadString('Main', 'DBPasswd', 'password');
-   SyncMethod := INI.ReadInteger('Main', 'SyncMethod', 1);
-   SyncInterval := INI.ReadInteger('Main', 'SyncInterval', 0);
-   NumLastHistoryMsg := INI.ReadInteger('Main', 'NumLastHistoryMsg', 6);
+    end;
+    DBUserName := INI.ReadString('Main', 'DBUserName', 'username');
+    //DBPasswd := INI.ReadString('Main', 'DBPasswd', 'password');
+    SyncMethod := INI.ReadInteger('Main', 'SyncMethod', 1);
+    SyncInterval := INI.ReadInteger('Main', 'SyncInterval', 0);
+    NumLastHistoryMsg := INI.ReadInteger('Main', 'NumLastHistoryMsg', 6);
 
-   Temp := INI.ReadString('Main', 'WriteErrLog', '1');
-   if Temp = '1' then WriteErrLog := True
-   else WriteErrLog := False;
+    IMClientPlatformType := INI.ReadString('Main', 'IMClientPlatformType', PlatformType);
 
-   Temp := INI.ReadString('Main', 'ShowAnimation', '1');
-   if Temp = '1' then AniEvents := True
-   else AniEvents := False;
+    Temp := INI.ReadString('Main', 'WriteErrLog', '1');
+    if Temp = '1' then WriteErrLog := True
+    else WriteErrLog := False;
 
-   Temp := INI.ReadString('Main', 'EnableHistoryEncryption', '0');
-   if Temp = '1' then EnableHistoryEncryption := True
-   else EnableHistoryEncryption := False;
+    Temp := INI.ReadString('Main', 'ShowAnimation', '1');
+    if Temp = '1' then AniEvents := True
+    else AniEvents := False;
 
-   DefaultLanguage := INI.ReadString('Main', 'DefaultLanguage', 'Russian');
+    Temp := INI.ReadString('Main', 'EnableHistoryEncryption', '0');
+    if Temp = '1' then EnableHistoryEncryption := True
+    else EnableHistoryEncryption := False;
 
-   Temp := INI.ReadString('Main', 'HideHistorySyncIcon', '0');
-   if Temp = '1' then HideSyncIcon := True
-   else HideSyncIcon := False;
+    DefaultLanguage := INI.ReadString('Main', 'DefaultLanguage', 'Russian');
 
-   SyncTimeCount := INI.ReadInteger('Main', 'SyncTimeCount', 40);
-   SyncMessageCount := INI.ReadInteger('Main', 'SyncMessageCount', 50);
+    Temp := INI.ReadString('Main', 'HideHistorySyncIcon', '0');
+    if Temp = '1' then HideSyncIcon := True
+    else HideSyncIcon := False;
 
-   Temp := INI.ReadString('Main', 'ShowPluginButton', '1');
-   if Temp = '1' then ShowPluginButton := True
-   else ShowPluginButton := False;
+    SyncTimeCount := INI.ReadInteger('Main', 'SyncTimeCount', 40);
+    SyncMessageCount := INI.ReadInteger('Main', 'SyncMessageCount', 50);
 
-   Temp := INI.ReadString('Main', 'EnableDebug', '0');
-   if Temp = '1' then EnableDebug := True
-   else EnableDebug := False;
+    Temp := INI.ReadString('Main', 'ShowPluginButton', '1');
+    if Temp = '1' then ShowPluginButton := True
+    else ShowPluginButton := False;
 
-   Temp := INI.ReadString('Main', 'EnableCallBackDebug', '0');
-   if Temp = '1' then EnableCallBackDebug := True
-   else EnableCallBackDebug := False;
+    Temp := INI.ReadString('Main', 'EnableDebug', '0');
+    if Temp = '1' then EnableDebug := True
+    else EnableDebug := False;
+
+    Temp := INI.ReadString('Main', 'EnableCallBackDebug', '0');
+    if Temp = '1' then EnableCallBackDebug := True
+    else EnableCallBackDebug := False;
+
+    MaxErrLogSize := INI.ReadInteger('Main', 'MaxErrLogSize', 20);
   end
  else
   begin
@@ -317,6 +479,7 @@ begin
     AniEvents := True;
     EnableHistoryEncryption := False;
     ShowPluginButton := True;
+    MaxErrLogSize := 20;
     // Сохраняем настройки
     INI.WriteString('Main', 'DBType', DBType);
     INI.WriteString('Main', 'DBAddress', DefaultDBAddres);
@@ -330,6 +493,7 @@ begin
     INI.WriteInteger('Main', 'SyncTimeCount', 40);
     INI.WriteInteger('Main', 'SyncMessageCount', SyncMessageCount);
     INI.WriteInteger('Main', 'NumLastHistoryMsg', 6);
+    INI.WriteString('Main', 'IMClientPlatformType', PlatformType);
     INI.WriteString('Main', 'WriteErrLog', BoolToIntStr(WriteErrLog));
     INI.WriteString('Main', 'ShowAnimation', BoolToIntStr(AniEvents));
     INI.WriteString('Main', 'EnableHistoryEncryption', BoolToIntStr(EnableHistoryEncryption));
@@ -337,7 +501,7 @@ begin
     INI.WriteString('Main', 'HideHistorySyncIcon', '0');
     INI.WriteString('Main', 'ShowPluginButton', BoolToIntStr(ShowPluginButton));
     INI.WriteString('Main', 'AddSpecialContact', '1');
-    INI.WriteString('Main', 'MaxErrLogSize', '20');
+    INI.WriteInteger('Main', 'MaxErrLogSize', MaxErrLogSize);
     INI.WriteString('Main', 'AlphaBlend', '0');
     INI.WriteString('Main', 'AlphaBlendValue', '255');
     INI.WriteString('Main', 'EnableDebug', '0');
@@ -414,64 +578,71 @@ var
   copyDataStruct : TCopyDataStruct;
   EncryptMsg, WinName: String;
 begin
+  if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Функция OnSendMessageToAllComponent: Отправка запроса "' + Msg + '" всем компонентам плагина.', 2);
   EncryptMsg := EncryptStr(Msg);
   // Ищем окно HistoryToDBViewer и посылаем ему команду
   WinName := 'HistoryToDBViewer for RnQ ('+MyAccount+')';
   HToDB := FindWindow(nil, pWideChar(WinName));
   if HToDB <> 0 then
   begin
-    copyDataStruct.dwData := Integer(cdtString);
-    copyDataStruct.cbData := 2*Length(EncryptMsg);
+    copyDataStruct.dwData := {$IFDEF WIN32}Integer{$ELSE}LongInt{$ENDIF}(cdtString);;
+    copyDataStruct.cbData := Length(EncryptMsg) * SizeOf(Char);;
     copyDataStruct.lpData := PChar(EncryptMsg);
-    SendMessage(HToDB, WM_COPYDATA, 0, Integer(@copyDataStruct));
+    SendMessage(HToDB, WM_COPYDATA, 0, {$IFDEF WIN32}Integer{$ELSE}LongInt{$ENDIF}(@copyDataStruct));
+    if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Функция OnSendMessageToAllComponent: Отправка запроса "' + Msg + '" окну ' + WinName, 2);
   end;
   // Ищем окно HistoryToDBSync и посылаем ему команду
   WinName := 'HistoryToDBSync for RnQ ('+MyAccount+')';
   HToDB := FindWindow(nil, pWideChar(WinName));
   if HToDB <> 0 then
   begin
-    copyDataStruct.dwData := Integer(cdtString);
-    copyDataStruct.cbData := 2*Length(EncryptMsg);
+    copyDataStruct.dwData := {$IFDEF WIN32}Integer{$ELSE}LongInt{$ENDIF}(cdtString);;
+    copyDataStruct.cbData := Length(EncryptMsg) * SizeOf(Char);;
     copyDataStruct.lpData := PChar(EncryptMsg);
-    SendMessage(HToDB, WM_COPYDATA, 0, Integer(@copyDataStruct));
+    SendMessage(HToDB, WM_COPYDATA, 0, {$IFDEF WIN32}Integer{$ELSE}LongInt{$ENDIF}(@copyDataStruct));
+    if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Функция OnSendMessageToAllComponent: Отправка запроса "' + Msg + '" окну ' + WinName, 2);
   end;
   // Ищем окно HistoryToDBImport и посылаем ему команду
   WinName := 'HistoryToDBImport for RnQ ('+MyAccount+')';
   HToDB := FindWindow(nil, pWideChar(WinName));
   if HToDB <> 0 then
   begin
-    copyDataStruct.dwData := Integer(cdtString);
-    copyDataStruct.cbData := 2*Length(EncryptMsg);
+    copyDataStruct.dwData := {$IFDEF WIN32}Integer{$ELSE}LongInt{$ENDIF}(cdtString);;
+    copyDataStruct.cbData := Length(EncryptMsg) * SizeOf(Char);;
     copyDataStruct.lpData := PChar(EncryptMsg);
-    SendMessage(HToDB, WM_COPYDATA, 0, Integer(@copyDataStruct));
+    SendMessage(HToDB, WM_COPYDATA, 0, {$IFDEF WIN32}Integer{$ELSE}LongInt{$ENDIF}(@copyDataStruct));
+    if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Функция OnSendMessageToAllComponent: Отправка запроса "' + Msg + '" окну ' + WinName, 2);
   end;
   // Ищем окно HistoryToDBUpdater и посылаем ему команду
   WinName := 'HistoryToDBUpdater for RnQ ('+MyAccount+')';
   HToDB := FindWindow(nil, pWideChar(WinName));
   if HToDB <> 0 then
   begin
-    copyDataStruct.dwData := Integer(cdtString);
-    copyDataStruct.cbData := 2*Length(EncryptMsg);
+    copyDataStruct.dwData := {$IFDEF WIN32}Integer{$ELSE}LongInt{$ENDIF}(cdtString);;
+    copyDataStruct.cbData := Length(EncryptMsg) * SizeOf(Char);;
     copyDataStruct.lpData := PChar(EncryptMsg);
-    SendMessage(HToDB, WM_COPYDATA, 0, Integer(@copyDataStruct));
+    SendMessage(HToDB, WM_COPYDATA, 0, {$IFDEF WIN32}Integer{$ELSE}LongInt{$ENDIF}(@copyDataStruct));
+    if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Функция OnSendMessageToAllComponent: Отправка запроса "' + Msg + '" окну ' + WinName, 2);
   end;
 end;
+
 
 procedure OnSendMessageToOneComponent(WinName, Msg: String);
 var
   HToDB: HWND;
   copyDataStruct : TCopyDataStruct;
-  EncryptMsg: String;
+  AppNameStr, EncryptMsg: String;
 begin
-  EncryptMsg := EncryptStr(Msg);
-  // Ищем окно HistoryToDBViewer и посылаем ему команду
-  HToDB := FindWindow(nil, pChar(WinName));
+  // Ищем окно WinName и посылаем ему команду
+  HToDB := FindWindow(nil, pWideChar(WinName));
   if HToDB <> 0 then
   begin
-    copyDataStruct.dwData := Integer(cdtString);
-    copyDataStruct.cbData := 2*Length(EncryptMsg);
+    EncryptMsg := EncryptStr(Msg);
+    copyDataStruct.dwData := {$IFDEF WIN32}Integer{$ELSE}LongInt{$ENDIF}(cdtString);
+    copyDataStruct.cbData := Length(EncryptMsg) * SizeOf(Char);
     copyDataStruct.lpData := PChar(EncryptMsg);
-    SendMessage(HToDB, WM_COPYDATA, 0, Integer(@copyDataStruct));
+    SendMessage(HToDB, WM_COPYDATA, 0, {$IFDEF WIN32}Integer{$ELSE}LongInt{$ENDIF}(@copyDataStruct));
+    if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Функция OnSendMessageToOneComponent: Отправка запроса "' + Msg + '" окну ' + WinName, 2);
   end;
 end;
 
@@ -582,7 +753,7 @@ begin
       if not Assigned(FMap) then
       begin
         if EnableCallBackDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура ProfileDirChangeCallBack: Создаем TMapStream', 2);
-        FMap := TMapStream.CreateEx('HistoryToDB for QIP ('+MyAccount+')',MAXDWORD,2000);
+        FMap := TMapStream.CreateEx('HistoryToDB for RnQ ('+MyAccount+')',MAXDWORD,2000);
       end;
     end
     else

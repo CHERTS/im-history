@@ -96,7 +96,7 @@ begin
   // Переменная для режима анти-босс
   Global_AboutForm_Showing := True;
   // Указываем версию в окне "О плагине"
-  LVersionNum.Caption := PluginVersion;
+  LVersionNum.Caption := PluginVersion + ' ' + PlatformType;
 end;
 
 procedure TAboutForm.LabelAuthorClick(Sender: TObject);
