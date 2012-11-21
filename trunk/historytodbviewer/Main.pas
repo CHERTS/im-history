@@ -938,7 +938,6 @@ end;
 procedure TMainForm.ShowSummaryHistory;
 var
   MsgCount: Integer;
-  Proto_Filter: String;
   Msg_MyNick, Msg_MyUIN, Msg_Nick, Msg_UIN, Msg_Text: WideString;
   SystemSettings : TFormatSettings;
   MsgEncryptStatus, MyKeyPasswordCnt: Integer;
@@ -1462,7 +1461,7 @@ var
   ID, I, ProtoID: Integer;
   Data: pMyTreeData;
   UIN, NickName, Chat_Caption, ProtoAcc: WideString;
-  Searching, FoundDublicate: Boolean;
+  FoundDublicate: Boolean;
   Noddy: TTreeNode;
   TC: Cardinal;
 begin
