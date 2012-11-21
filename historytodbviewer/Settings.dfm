@@ -62,14 +62,10 @@ object SettingsForm: TSettingsForm
     Top = 6
     Width = 622
     Height = 346
-    ActivePage = AboutTabSheet
+    ActivePage = EncryptionTabSheet
     TabOrder = 1
     object MainTabSheet: TTabSheet
       Caption = #1041#1072#1079#1072' '#1076#1072#1085#1085#1099#1093
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       DesignSize = (
         614
         318)
@@ -244,10 +240,6 @@ object SettingsForm: TSettingsForm
     object SyncTabSheet: TTabSheet
       Caption = #1057#1080#1085#1093#1088#1086#1085#1080#1079#1072#1094#1080#1103
       ImageIndex = 1
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       DesignSize = (
         614
         318)
@@ -412,10 +404,6 @@ object SettingsForm: TSettingsForm
     object InterfaceTabSheet: TTabSheet
       Caption = #1048#1085#1090#1077#1088#1092#1077#1081#1089
       ImageIndex = 9
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object GBAlphaBlend: TGroupBox
         Left = 3
         Top = 3
@@ -476,10 +464,6 @@ object SettingsForm: TSettingsForm
     object InformTabSheet: TTabSheet
       Caption = #1057#1086#1073#1099#1090#1080#1103
       ImageIndex = 2
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       DesignSize = (
         614
         318)
@@ -605,10 +589,6 @@ object SettingsForm: TSettingsForm
     object FontsTabSheet: TTabSheet
       Caption = #1064#1088#1080#1092#1090#1099' '#1080' '#1076#1088'.'
       ImageIndex = 4
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       DesignSize = (
         614
         318)
@@ -998,10 +978,6 @@ object SettingsForm: TSettingsForm
     object HotKeyTabSheet: TTabSheet
       Caption = #1043#1086#1088#1103#1095#1080#1077' '#1082#1083#1072#1074#1080#1096#1080
       ImageIndex = 6
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       DesignSize = (
         614
         318)
@@ -1080,10 +1056,6 @@ object SettingsForm: TSettingsForm
     object EncryptionTabSheet: TTabSheet
       Caption = #1064#1080#1092#1088#1086#1074#1072#1085#1080#1077' '#1080#1089#1090#1086#1088#1080#1080
       ImageIndex = 1
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       DesignSize = (
         614
         318)
@@ -1319,10 +1291,6 @@ object SettingsForm: TSettingsForm
     object EncryptKeyCreateTabSheet: TTabSheet
       Caption = #1057#1086#1079#1076#1072#1085#1080#1077' '#1082#1083#1102#1095#1072' '#1096#1080#1092#1088#1086#1074#1072#1085#1080#1103
       ImageIndex = 7
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       DesignSize = (
         614
         318)
@@ -1452,10 +1420,6 @@ object SettingsForm: TSettingsForm
     object KeyPasswordChangeTabSheet: TTabSheet
       Caption = #1057#1084#1077#1085#1072' '#1087#1072#1088#1086#1083#1103' '#1082#1083#1102#1095#1072
       ImageIndex = 8
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       DesignSize = (
         614
         318)
@@ -1610,7 +1574,6 @@ object SettingsForm: TSettingsForm
     ButtonBorder = True
   end
   object DataSource1: TDataSource
-    DataSet = VirtualTable1
     Left = 648
     Top = 152
   end
@@ -1666,8 +1629,8 @@ object SettingsForm: TSettingsForm
   end
   object EncryptKeyPM: TPopupMenu
     Images = MainForm.ImageList_Main
-    Left = 560
-    Top = 48
+    Left = 576
+    Top = 112
     object StatusChangeKey: TMenuItem
       Caption = #1048#1079#1084#1077#1085#1080#1090#1100' '#1089#1090#1072#1090#1091#1089' '#1082#1083#1102#1095#1072
       ImageIndex = 17
@@ -1684,9 +1647,13 @@ object SettingsForm: TSettingsForm
       OnClick = DeleteKeyClick
     end
   end
-  object VirtualTable1: TVirtualTable
-    Left = 568
-    Top = 112
-    Data = {03000000000000000000}
+  object ZQueryGetKey: TZQuery
+    Connection = MainForm.ZConnection1
+    BeforeScroll = SQLBeforeScroll
+    AfterScroll = SQLAfterScroll
+    ParamCheck = False
+    Params = <>
+    Left = 576
+    Top = 168
   end
 end
