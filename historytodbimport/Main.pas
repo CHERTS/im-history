@@ -2808,6 +2808,28 @@ var
     ExtraInfoSize := extraEnd-4;
   end;
 
+  procedure Critt(var S: RawByteString; Key: Integer);
+  var
+    i : Cardinal;
+    c, d : Byte;
+    a, b : Byte;
+  begin
+    if Length(S) = 0 then
+      Exit;
+    c := Byte(Key);
+    d := Byte(Key shr 20);
+    a := $B8; //10111000b;
+    for i := 1 to Length(s) do
+    begin
+      b := Byte(S[i]) + c;
+      b := b xor d;
+      b := (b shr 3) or (b shl 5);
+      b := b xor a;
+      s[i] := AnsiChar(b);
+      a := (a shr 3) or (a shl 5);
+    end;
+  end;
+
   procedure DeCritt(var S: RawByteString; Key: Integer);
   var
     i : Cardinal;
@@ -2818,7 +2840,7 @@ var
       Exit;
     c := Byte(Key);
     d := Byte(Key shr 20);
-    a := $B8;// 10111000b;
+    a := $B8; //10111000b;
     for i := 1 to Length(S) do
     begin
       b := Byte(S[i]) xor a;
@@ -3204,11 +3226,12 @@ begin
       if Res.Kind = 1 then // Только для типа сообщения EK_msg
       begin
         TempMsg := DeCritted(TempMsg, Res.UIN);
+        {$IFDEF WIN32}
         // За процедуру FastDetectCharset огромное спасибо cy6 с форума rnq.ru
         FastDetectCharset(TempMsg, CountUTF8, CountWin, CountUTF, CountUTFBE);
         if (CountUTF > 0) then
-          //Res.Msg := WideString(StrUTF2Ansi(TempMsg))
-          Res.Msg := WideString(Utf8ToAnsi(TempMsg))
+          Res.Msg := WideString(StrUTF2Ansi(TempMsg))
+          //Res.Msg := WideString(Utf8ToAnsi(TempMsg))
         else if (CountUTFBE > 0) then
           Res.Msg := WideString(StrUTFBE2Ansi(TempMsg))
           //Res.Msg := UTF16ToString(TempMsg)
@@ -3219,6 +3242,12 @@ begin
           else
             Res.Msg := WideString(TempMsg);
         end;
+        {$ELSE}
+        if DetectUTF8Encoding(TempMsg) = etUTF8 then
+          Res.Msg := WideString(Utf8ToAnsi(TempMsg))
+        else
+          Res.Msg := WideString(StrUTFBE2Ansi(TempMsg));
+        {$ENDIF WIN32}
         {if IsUTF8String(TempMsg) then
           Res.Msg := UTF8Decode(TempMsg) // UTF8Decode - системная, UTF8ToString - из JEDI
         else
