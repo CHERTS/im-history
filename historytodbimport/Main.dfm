@@ -321,6 +321,7 @@ object MainForm: TMainForm
     Align = alLeft
     BorderWidth = 1
     Indent = 19
+    ReadOnly = True
     TabOrder = 1
     OnCustomDrawItem = FileListViewCustomDrawItem
     OnDeletion = FileListViewDeletion
@@ -352,7 +353,11 @@ object MainForm: TMainForm
     Top = 510
     Width = 797
     Height = 19
-    Panels = <>
+    Panels = <
+      item
+        Text = 'HistoryToDBImport v1.0 x86'
+        Width = 50
+      end>
   end
   object OpenDialog1: TOpenDialog
     FilterIndex = 0

@@ -60,6 +60,11 @@ const
                     'Vyacheslav S. (HDHMETRO) for active testing of plug-in.' + #13#10 +
                     'Providence for active testing of plug-in and new ideas.' + #13#10 +
                     'Cy6 for help in implementing the import history RnQ.';
+  {$IFDEF WIN32}
+  PlatformType = 'x86';
+  {$ELSE}
+  PlatformType = 'x64';
+  {$ENDIF}
 
 var
   ERR_READ_DB_CONNECT_ERR : WideString = '[%s] Ошибка: Не удаётся подключиться к БД. Ошибка: %s';
@@ -1237,6 +1242,34 @@ const
     'Windows Server 2008');
 begin
   Result := VersStr[DetectWinVersion];
+end;
+
+function StringToHex(Str1: AnsiString; Sep: AnsiChar = #0): AnsiString;
+const
+  hexAlf: Array[0..15] of AnsiChar = '0123456789ABCDEF';
+var
+  i, Size: Integer;
+begin
+  Size := Length(Str1);
+  if Sep = #0 then
+  begin
+    SetLength(Result, Size*2);
+    for i:=1 to Size do
+    begin
+      Result[i*2-1] := hexAlf[Byte(Str1[i]) shr 4];
+      Result[i*2] := hexAlf[Byte(Str1[i]) and $f];
+    end;
+  end
+  else
+  begin
+    SetLength(Result, Size*3);
+    for i:=1 to Size do
+    begin
+      Result[i*3-2] := hexAlf[Byte(Str1[i]) shr 4];
+      Result[i*3-1] := hexAlf[Byte(Str1[i]) and $f];
+      Result[i*3] := Sep;
+    end;
+  end;
 end;
 
 begin

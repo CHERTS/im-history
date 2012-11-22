@@ -144,7 +144,7 @@ type
     procedure QHFViewIconSet(Str: String; Node: TTreeNode);
     procedure AddImageToRichEdit(const AImageIndex: Integer; ImageLst: TImageList);
     procedure AddImportHistoryInList(Str: WideString; TextType: Integer);
-    procedure FindHistoryFile(Dir,Ext: String; MyNode: TTreeNode);
+    procedure FindHistoryFile(Dir,Ext: String);
     procedure ReadTXTData(FileName: String);
     procedure CBSelectAllClick(Sender: TObject);
     procedure AddToSQLLog;
@@ -295,7 +295,7 @@ begin
       Application.Terminate;
     end;
     // Проверяем наличие каталога и файла настройки
-    if not DirectoryExists(ProfilePath) then
+    if not SysUtils.DirectoryExists(ProfilePath) then
       CreateDir(ProfilePath);
     Path := ProfilePath + ININame;
     if not FileExists(Path) then
@@ -344,7 +344,7 @@ begin
     // Загружаем настройки локализации
     FLanguage := DefaultLanguage;
     LangDoc := NewXMLDocument();
-    if not DirectoryExists(PluginPath + dirLangs) then
+    if not SysUtils.DirectoryExists(PluginPath + dirLangs) then
       CreateDir(PluginPath + dirLangs);
     CoreLanguageChanged;
     LoadLanguageStrings;
@@ -356,6 +356,8 @@ begin
     end;
     UnicodeFiles := TUnicodeFile.Create(Self);
     UINToNickPointer.UINToNickCount := 0;
+    // Версия
+    StatusBar1.Panels.Items[0].Text := ProgramsName + ' v' + ProgramsVer + ' ' + PlatformType;
     // Программа запущена
     RunAppDone := True;
   end;
@@ -753,9 +755,9 @@ end;
 { Процедура читает содержимое директории и выводит список файлов }
 procedure TMainForm.StartReadDirectory;
 var
-  Node: TTreeNode;
   Data: pMyTreeData;
   FileName: String;
+  TreeNodes: TTreeNodes;
 begin
   PBWriteToDB.Position := 0;
   FileListView.PopupMenu := ImportPM;
@@ -765,13 +767,13 @@ begin
   if RButtonSelectDir.Checked then
   begin
     if HistoryImportType = 2 then       // RnQ
-      FindHistoryFile(ESelectSource.Text, '*', Node)
+      FindHistoryFile(ESelectSource.Text, '*')
     else if HistoryImportType = 3 then  // QIP 2005
-      FindHistoryFile(ESelectSource.Text, '*.txt', Node)
+      FindHistoryFile(ESelectSource.Text, '*.txt')
     else if HistoryImportType = 4 then  // QIP 2010/Infium/2012
     begin
-      FindHistoryFile(ESelectSource.Text, '*.ahf', Node);
-      FindHistoryFile(ESelectSource.Text, '*.qhf', Node);
+      FindHistoryFile(ESelectSource.Text, '*.ahf');
+      FindHistoryFile(ESelectSource.Text, '*.qhf');
     end;
     FileListView.ControlStyle := FileListView.ControlStyle + [csOpaque];
   end;
@@ -782,7 +784,8 @@ begin
     Data.Id := 0;
     Data.DirName := '';
     Data.FileName := FileName;
-    TreeNode := FileListView.Items.AddChildObject(Node, FileName, Data);
+    TreeNodes := TTreeNodes.Create(FileListView);
+    TreeNode := TreeNodes.AddChildObject(nil, FileName, Data);
     QHFViewIconSet(FileName, TreeNode); // Определяем протокол и ставим иконку
     FileListView.ControlStyle := FileListView.ControlStyle + [csOpaque];
     PBRead.Position := 0;
@@ -807,10 +810,11 @@ begin
 end;
 
 { Процедура поиска файлов по маске и формирования их списка }
-procedure TMainForm.FindHistoryFile(Dir, Ext: String; MyNode: TTreeNode);
+procedure TMainForm.FindHistoryFile(Dir, Ext: String);
 var
   Data: pMyTreeData;
   SR: TSearchRec;
+  TreeNodes: TTreeNodes;
 begin
   if FindFirst(Dir + '\*.*', faAnyFile or faDirectory, SR) = 0 then
   begin
@@ -826,12 +830,13 @@ begin
         Data.Id := 0;
         Data.DirName := Dir;
         Data.FileName := SR.Name;
-        TreeNode := FileListView.Items.AddChildObject(MyNode, SR.Name, Data);
+        TreeNodes := TTreeNodes.Create(FileListView);
+        TreeNode := TreeNodes.AddChildObject(nil, SR.Name, Data);
         QHFViewIconSet(SR.Name, TreeNode); // Определяем протокол и ставим иконку
       end;
       if (SR.Attr = faDirectory) then // Если нашли директорию, то ищем файлы в ней
       begin
-        FindHistoryFile(Dir + '\' + SR.Name, Ext, MyNode); // Pекурсивно вызываем нашу процедуру
+        FindHistoryFile(Dir + '\' + SR.Name, Ext); // Pекурсивно вызываем нашу процедуру
         Continue; // Продолжаем цикл
       end;
     until FindNext(SR) <> 0;
@@ -926,8 +931,6 @@ end;
 
 { Процедура установки иконок для списка файлов }
 procedure TMainForm.QHFViewIconSet(Str: String; Node: TTreeNode);
-var
-  ProtocolRegExp: TRegExpr;
 begin
   { Протоколы
     0 - ICQ
@@ -2749,10 +2752,10 @@ end;
 function TMainForm.TakeCHUNK(Fil: TFileStream; Pos: Int64; var Res: THCHUNK): Integer;
 var
   CHUNKSize: Int64;
-  What, Temp, I, EncMsgBodySize, ExtraInfoSize: Integer;
+  What, EncMsgBodySize, ExtraInfoSize: Integer;
   TempMsg: AnsiString;
   RnQcryptMode: Integer;
-  CountUTF8, CountWin, CountUTF, CountUTFBE: Integer;
+  CountUTF8, CountWin, CountUTF, CountUTFBE: {$IFDEF CPUX64}NativeInt{$ELSE}Integer{$ENDIF CPUX64};
 
   function getByte: Byte;
   begin
@@ -2805,65 +2808,121 @@ var
     ExtraInfoSize := extraEnd-4;
   end;
 
-  {$WARN UNSAFE_CODE OFF}
-  procedure Decritt(var S: AnsiString; Key: Integer);
+  procedure DeCritt(var S: RawByteString; Key: Integer);
+  var
+    i : Cardinal;
+    c, d : Byte;
+    a, b : Byte;
   begin
-    asm
-      push  esi
-      push  ebx
-      push  ecx
-      push  edx
-      push  eax
-
-      mov ecx, key
-      mov dl, cl
-      shr ecx, 20
-      mov dh, cl
-
-      mov esi, s
-      mov esi, [esi]
-      or  esi, esi    // nil string
-      jz  @OUT
-      mov ah, 10111000b
-
-      mov ecx, [esi-4]
-      or  ecx, ecx
-      jz  @OUT
-    @IN:
-      mov al, [esi]
-      xor al, ah
-      rol al, 3
-      xor al, dh
-      sub al, dl
-
-      mov [esi], al
-      inc esi
-      ror ah, 3
-      dec ecx
-      jnz @IN
-    @OUT:
-      pop   eax
-      pop   edx
-      pop   ecx
-      pop   ebx
-      pop   esi
+    if Length(S) = 0 then
+      Exit;
+    c := Byte(Key);
+    d := Byte(Key shr 20);
+    a := $B8;// 10111000b;
+    for i := 1 to Length(S) do
+    begin
+      b := Byte(S[i]) xor a;
+      b := (b shl 3) or (b shr 5);
+      b := b xor d;
+      b := b - c;
+      s[i] := AnsiChar(b);
+      a := (a shr 3) or (a shl 5);
     end;
   end;
-  {$WARN UNSAFE_CODE ON}
 
-  function dupString(S: AnsiString): AnsiString;
+  function dupString(S: RawByteString): RawByteString;
   begin
-    Result := copy(S, 1, Length(S));
+    Result := Copy(S, 1, Length(S));
   end;
 
-  function DeCritted(S: AnsiString; Key: Integer): AnsiString;
+  function DeCritted(S: RawByteString; Key: Integer): RawByteString;
   begin
     Result := dupString(S);
     DeCritt(Result, Key);
   end;
 
   // За процедуру FastDetectCharset огромное спасибо cy6 с форума rnq.ru
-  procedure FastDetectCharset(S: AnsiString; var CountUTF8, CountWin, CountUTF, CountUTFBE: Integer);
+  procedure FastDetectCharset(S: AnsiString; var CountUTF8, CountWin, CountUTF, CountUTFBE: {$IFDEF CPUX64}NativeInt{$ELSE}Integer{$ENDIF CPUX64});
+  {$IFDEF CPUX64}
+    asm
+      PUSH  RSI
+      PUSH  RBX
+      PUSH  RCX
+      PUSH  RDX
+      PUSH  RAX
+
+      MOV   RSI, S
+      OR    RSI, RSI
+      JZ    @OUT
+      MOV   RCX, [RSI-4]
+      OR    RCX, RCX
+      JZ    @OUT
+      XOR   RBX, RBX
+      XOR   RDX, RDX
+    @IN:
+      XOR   RAX, RAX
+      LODSB
+
+      CMP   AL, 0D0h
+      JNZ   @J1
+      INC   BL
+      JMP   @LO
+    @J1:
+      CMP   AL, 0D1h
+      JNZ   @J2
+      INC   BL
+      JMP   @LO
+    @J2:
+      CMP   AL, 0E0h
+      JNZ   @J3
+      INC   BH
+      JMP   @LO
+    @J3:
+      CMP   AL, 0EEh
+      JNZ   @J4
+      INC   BH
+      JMP   @LO
+    @J4:
+      CMP   AL, 0CEh
+      JNZ   @J5
+      INC   BH
+      JMP   @LO
+    @J5:
+      MOV   AH, CL
+      AND   AH, 01h
+      JZ    @J6
+      CMP   AL, 04h
+      JNZ   @LO
+      INC   DL
+      JMP   @LO
+    @J6:
+      CMP   AL, 04h
+      JNZ   @LO
+      INC   DH
+    @LO:
+      LOOP  @IN
+    @OUT:
+      XOR   RAX, RAX
+      MOV   AL, BL
+      MOV   RSI, [CountUTF8]
+      MOV   [RSI], RAX
+      MOV   AL, BH
+      MOV   RSI, [CountWin]
+      MOV   [RSI], RAX
+      MOV   AL, DL
+      MOV   RSI, [CountUTF]
+      MOV   [RSI], RAX
+      MOV   AL, DH
+      MOV   RSI, [CountUTFBE]
+      MOV   [RSI], RAX
+
+      POP   RAX
+      POP   RDX
+      POP   RCX
+      POP   RBX
+      POP   RSI
+    end;
+  {$ELSE}
   begin
     asm
       PUSH  ESI
@@ -2944,9 +3003,52 @@ var
       POP   ESI
     end;
   end;
+  {$ENDIF CPUX64}
 
   // За функцию StrUTF2Ansi огромное спасибо cy6 с форума rnq.ru
   function StrUTF2Ansi(S: AnsiString): AnsiString;
+  {$IFDEF CPUX64}
+   asm
+      PUSH  RSI
+      PUSH  RDI
+      PUSH  RDX
+      PUSH  RCX
+      PUSH  RAX
+
+      MOV   RSI, S
+      OR    RSI, RSI
+      JZ    @OUT
+      MOV   RAX, [RSI-4]
+      OR    RAX, RAX
+      JZ    @OUT
+      MOV   RCX, 2
+      XOR   RDX, RDX
+      DIV   RCX
+      MOV   RCX, RAX
+      MOV   RDI, Result
+      MOV   RDI, [RDI]
+    @IN:
+      LODSW
+      CMP   AH, 04h
+      JNZ   @PUT
+      CMP   AL, 10h
+      JB    @PUT
+      CMP   AL, 4Fh
+      JA    @PUT
+      ADD   AL, 0B0h
+    @PUT:
+      STOSB
+      LOOP  @IN
+      XOR   RAX, RAX
+      STOSB
+    @OUT:
+      POP   RAX
+      POP   RCX
+      POP   RDX
+      POP   RDI
+      POP   RSI
+    end;
+  {$ELSE}
   begin
     SetLength(Result, Length(S) div 2);
     asm
@@ -2990,9 +3092,53 @@ var
       POP   ESI
     end;
   end;
+  {$ENDIF CPUX64}
 
   // За функцию StrUTFBE2Ansi огромное спасибо cy6 с форума rnq.ru
   function StrUTFBE2Ansi(S: AnsiString): AnsiString;
+  {$IFDEF CPUX64}
+    asm
+      PUSH  RSI
+      PUSH  RDI
+      PUSH  RDX
+      PUSH  RCX
+      PUSH  RAX
+
+      MOV   RSI, S
+      OR    RSI, RSI
+      JZ    @OUT
+      MOV   RAX, [RSI-4]
+      OR    RAX, RAX
+      JZ    @OUT
+      MOV   RCX, 2
+      XOR   RDX, RDX
+      DIV   RCX
+      MOV   RCX, RAX
+      MOV   RDI, Result
+      MOV   RDI, [RDI]
+    @IN:
+      LODSW
+      CMP   AL, 04h
+      JNZ   @PUT
+      CMP   AH, 10h
+      JB    @PUT
+      CMP   AH, 4Fh
+      JA    @PUT
+      ADD   AH, 0B0h
+    @PUT:
+      MOV   AL, AH
+      STOSB
+      LOOP  @IN
+      XOR   RAX, RAX
+      STOSB
+    @OUT:
+      POP   RAX
+      POP   RCX
+      POP   RDX
+      POP   RDI
+      POP   RSI
+    end;
+  {$ELSE}
   begin
     SetLength(Result, Length(S) div 2);
     asm
@@ -3037,6 +3183,7 @@ var
       POP   ESI
     end;
   end;
+  {$ENDIF CPUX64}
 
 begin
   RnQcryptMode := 0;
@@ -3056,14 +3203,15 @@ begin
       TempMsg := getString();
       if Res.Kind = 1 then // Только для типа сообщения EK_msg
       begin
-        //TempMsg := DeCritted(TempMsg, StrToIntDef(IntToStr(Res.UIN), 0));
         TempMsg := DeCritted(TempMsg, Res.UIN);
         // За процедуру FastDetectCharset огромное спасибо cy6 с форума rnq.ru
         FastDetectCharset(TempMsg, CountUTF8, CountWin, CountUTF, CountUTFBE);
         if (CountUTF > 0) then
-          Res.Msg := WideString(StrUTF2Ansi(TempMsg))
+          //Res.Msg := WideString(StrUTF2Ansi(TempMsg))
+          Res.Msg := WideString(Utf8ToAnsi(TempMsg))
         else if (CountUTFBE > 0) then
           Res.Msg := WideString(StrUTFBE2Ansi(TempMsg))
+          //Res.Msg := UTF16ToString(TempMsg)
         else
         begin
           if ((CountUTF8 > 0) and (CountUTF8 > CountWin)) then
@@ -3225,7 +3373,6 @@ end;
 procedure TMainForm.OnControlReq(var Msg : TWMCopyData);
 var
   ControlStr, EncryptControlStr: String;
-  TmpStr, TmpUserID, TmpUserName, TmpProtocolType, TmpChatName: String;
   copyDataType : TCopyDataType;
 begin
   copyDataType := TCopyDataType(Msg.CopyDataStruct.dwData);
