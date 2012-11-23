@@ -1462,7 +1462,6 @@ var
   Data: pMyTreeData;
   UIN, NickName, Chat_Caption, ProtoAcc: WideString;
   FoundDublicate: Boolean;
-  Noddy: TTreeNode;
   TC: Cardinal;
 begin
   Node.DeleteChildren;

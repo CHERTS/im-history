@@ -397,8 +397,8 @@ begin
   EMsgCountInterval.Text := IntToStr(SyncMessageCount);
   CBHideSyncIcon.Checked := HideSyncIcon;
   CBShowPluginButton.Checked := ShowPluginButton;
-  {CBEnableEncryption.Checked := EnableHistoryEncryption;
-  if CBEnableEncryption.Checked then
+  CBEnableEncryption.Checked := EnableHistoryEncryption;
+  {if CBEnableEncryption.Checked then
     GBKeys.Visible := True
   else
     GBKeys.Visible := False;}
