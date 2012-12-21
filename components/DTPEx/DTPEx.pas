@@ -8,7 +8,7 @@
   Purpose:    Extended TDateTimePicker control,
               property FormatString - supports both date and time editing
 
-              For Delphi 5 to 2009
+              For Delphi 5 to XE3
 
   The source code is given as is. The author is not responsible
   for any possible damage done due to the use of this code.
@@ -22,6 +22,9 @@
   All rights reserved
   
   Change log:
+    v1.2, 15.11.2012
+    - added support for Delphi XE3
+
     v1.1, 14.10.2008
     - added support for Delphi 2009
     
@@ -30,6 +33,8 @@
 ------------------------------------------------------------------------------}
 
 unit DTPEx;
+
+{$I jedi.inc}
 
 interface
 
@@ -79,7 +84,7 @@ begin
   FIsBlank:=False;
   FWasBlank:=False;
   FFormatBlank:='''''';
-  FFormatString:=ShortDateFormat+' HH:mm:ss';
+  FFormatString:={$IFDEF DELPHI16_UP}FormatSettings.{$ENDIF}ShortDateFormat+' HH:mm:ss';
   inherited Create(AOwner);
   FLastDateTime:=DateTime;
 end;
