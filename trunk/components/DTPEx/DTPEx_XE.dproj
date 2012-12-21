@@ -24,7 +24,7 @@
 			<Base>true</Base>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Base)'!=''">
-			<DCC_UnitSearchPath>C:\Program Files\Embarcadero\RAD Studio\8.0\Neo\DTPEx;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+			<DCC_UnitSearchPath>$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
 			<DCC_Description>DateTimePickerEx</DCC_Description>
 			<DCC_CBuilderOutput>All</DCC_CBuilderOutput>
 			<DCC_Optimize>false</DCC_Optimize>

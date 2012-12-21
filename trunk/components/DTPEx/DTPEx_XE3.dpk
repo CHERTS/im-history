@@ -1,6 +1,7 @@
-package IMButtonGroup;
+package DTPEx_XE3;
 
 {$R *.res}
+{$R 'DTPEx.dcr'}
 {$IFDEF IMPLICITBUILDING This IFDEF should not be used by users}
 {$ALIGN 8}
 {$ASSERTIONS ON}
@@ -20,20 +21,24 @@ package IMButtonGroup;
 {$STACKFRAMES ON}
 {$TYPEDADDRESS OFF}
 {$VARSTRINGCHECKS ON}
-{$WRITEABLECONST ON}
+{$WRITEABLECONST OFF}
 {$MINENUMSIZE 1}
 {$IMAGEBASE $400000}
 {$DEFINE RELEASE}
 {$DEFINE DEBUG}
 {$ENDIF IMPLICITBUILDING}
-{$DESCRIPTION 'IM-History Button Group'}
+{$DESCRIPTION 'DateTimePickerEx'}
 {$IMPLICITBUILD ON}
 
 requires
   rtl,
-  vcl;
+  designide,
+  vcl,
+  vclactnband,
+  vclx,
+  xmlrtl;
 
 contains
-  uIMButtonGroup in 'uIMButtonGroup.pas';
+  DTPEx in 'DTPEx.pas';
 
 end.
