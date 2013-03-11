@@ -11,6 +11,11 @@
 program HistoryToDBViewer;
 
 uses
+  madExcept,
+  madLinkDisAsm,
+  madListHardware,
+  madListProcesses,
+  madListModules,
   Forms,
   Global in 'Global.pas',
   Main in 'Main.pas' {MainForm},

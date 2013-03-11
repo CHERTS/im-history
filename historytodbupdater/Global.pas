@@ -35,7 +35,7 @@ type
 
 const
   ProgramsName = 'HistoryToDBUpdater';
-  ProgramsVer : WideString = '2.4.0.0';
+  ProgramsVer : WideString = '2.5.0.0';
   DefaultDBAddres = 'db01.im-history.ru';
   DefaultDBName = 'imhistory';
   ININame = 'HistoryToDB.ini';

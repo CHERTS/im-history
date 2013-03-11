@@ -21,14 +21,14 @@ type
 
 const
   PLUGIN_VER_MAJOR = 2;
-  PLUGIN_VER_MINOR = 4;
+  PLUGIN_VER_MINOR = 5;
   PLUGIN_NAME        : WideString = 'QIPHistoryToDB';
   PLUGIN_AUTHOR      : WideString = 'Michael Grigorev';
   PLUGIN_DESCRUPTION : WideString = 'Хранение истории сообщений в базе дынных.';
   PLUGIN_DESCRUPTION_EN : WideString = 'Storing the history in the database.';
   // Для поддержки автоматического обновления плагином QIP Manager
   PlugCheck_Dlink    : WideString = 'http://www.im-history.ru/get.php?file=QIPHistoryToDB-Update';
-  PlugCheck_Ver      : WideString = '2.4.0.0';
+  PlugCheck_Ver      : WideString = '2.5.0.0';
   // End
   PluginName: WideString = 'QIPHistoryToDB';
   PluginSpecContactName: WideString = 'QIP HistoryToDB';

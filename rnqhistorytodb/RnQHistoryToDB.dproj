@@ -5,7 +5,7 @@
         <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
         <DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
         <DCC_DependencyCheckOutputName>RnQHistoryToDB.dll</DCC_DependencyCheckOutputName>
-        <ProjectVersion>14.3</ProjectVersion>
+        <ProjectVersion>14.4</ProjectVersion>
         <Config Condition="'$(Config)'==''">Release</Config>
         <Base>True</Base>
         <AppType>Library</AppType>
@@ -61,7 +61,7 @@
         <GenDll>true</GenDll>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win32)'!=''">
-        <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;Bde;$(DCC_Namespace)</DCC_Namespace>
+        <DCC_Namespace>System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;Bde;$(DCC_Namespace)</DCC_Namespace>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <Manifest_File>None</Manifest_File>
@@ -94,18 +94,22 @@
         <DCC_Define>RELEASE;$(DCC_Define)</DCC_Define>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win32)'!=''">
+        <DCC_Define>madExcept;$(DCC_Define)</DCC_Define>
+        <DCC_LocalDebugSymbols>true</DCC_LocalDebugSymbols>
         <DCC_DcuOutput>.\$(Platform)\$(Config)</DCC_DcuOutput>
         <DCC_ExeOutput>.\$(Platform)\$(Config)</DCC_ExeOutput>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_AutoIncVersion>true</VerInfo_AutoIncVersion>
-        <VerInfo_Keys>CompanyName=http://www.im-history.ru;FileDescription=RnQHistoryToDB;FileVersion=2.4.0.0;InternalName=RnQHistoryToDB;LegalCopyright=Michael Grigorev;LegalTrademarks=http://www.im-history.ru;OriginalFilename=RnQHistoryToDB.dll;ProductName=RnQHistoryToDB;ProductVersion=2.4.0.0;Comments=http://www.im-history.ru</VerInfo_Keys>
+        <VerInfo_Keys>CompanyName=http://www.im-history.ru;FileDescription=RnQHistoryToDB;FileVersion=2.5.0.0;InternalName=RnQHistoryToDB;LegalCopyright=Michael Grigorev;LegalTrademarks=http://www.im-history.ru;OriginalFilename=RnQHistoryToDB.dll;ProductName=RnQHistoryToDB;ProductVersion=2.5.0.0;Comments=http://www.im-history.ru</VerInfo_Keys>
         <VerInfo_Build>0</VerInfo_Build>
         <VerInfo_Release>0</VerInfo_Release>
         <VerInfo_MajorVer>2</VerInfo_MajorVer>
-        <VerInfo_MinorVer>4</VerInfo_MinorVer>
+        <VerInfo_MinorVer>5</VerInfo_MinorVer>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win64)'!=''">
+        <DCC_Define>madExcept;$(DCC_Define)</DCC_Define>
+        <DCC_LocalDebugSymbols>true</DCC_LocalDebugSymbols>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <DCC_ExeOutput>.\$(Platform)\$(Config)</DCC_ExeOutput>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>

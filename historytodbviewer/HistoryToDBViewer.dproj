@@ -1,7 +1,7 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
         <ProjectGuid>{BDF08E95-9850-4BF0-98F7-173D8BFAD526}</ProjectGuid>
-        <ProjectVersion>14.3</ProjectVersion>
+        <ProjectVersion>14.4</ProjectVersion>
         <MainSource>HistoryToDBViewer.dpr</MainSource>
         <Base>True</Base>
         <Config Condition="'$(Config)'==''">Release</Config>
@@ -61,7 +61,7 @@
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win32)'!=''">
         <Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
-        <Icon_MainIcon>HistoryToDBViewer_Icon1.ico</Icon_MainIcon>
+        <Icon_MainIcon>HistoryToDBViewer_Icon.ico</Icon_MainIcon>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <DCC_Namespace>Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;Bde;$(DCC_Namespace)</DCC_Namespace>
         <VerInfo_Locale>1033</VerInfo_Locale>
@@ -70,7 +70,7 @@
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win64)'!=''">
         <Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
-        <Icon_MainIcon>HistoryToDBViewer_Icon1.ico</Icon_MainIcon>
+        <Icon_MainIcon>HistoryToDBViewer_Icon.ico</Icon_MainIcon>
         <DCC_Namespace>Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;$(DCC_Namespace)</DCC_Namespace>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
@@ -89,22 +89,28 @@
         <DCC_SymbolReferenceInfo>0</DCC_SymbolReferenceInfo>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win32)'!=''">
+        <DCC_LocalDebugSymbols>true</DCC_LocalDebugSymbols>
+        <DCC_DebugInformation>true</DCC_DebugInformation>
+        <DCC_MapFile>3</DCC_MapFile>
+        <DCC_Define>madExcept;$(DCC_Define)</DCC_Define>
         <DCC_DcuOutput>.\$(Platform)\$(Config)</DCC_DcuOutput>
-        <VerInfo_MinorVer>0</VerInfo_MinorVer>
-        <VerInfo_MajorVer>1</VerInfo_MajorVer>
+        <VerInfo_MinorVer>5</VerInfo_MinorVer>
         <DCC_ExeOutput>.\$(Platform)\$(Config)</DCC_ExeOutput>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <VerInfo_Build>0</VerInfo_Build>
-        <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
+        <VerInfo_Keys>CompanyName=http://www.im-history.ru;FileDescription=HistoryToDBViewer;FileVersion=2.5.0.0;InternalName=HistoryToDBViewer;LegalCopyright=Michael Grigorev;LegalTrademarks=http://www.im-history.ru;OriginalFilename=HistoryToDBViewer.exe;ProductName=HistoryToDBViewer;ProductVersion=2.5.0.0;Comments=http://www.im-history.ru</VerInfo_Keys>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win64)'!=''">
+        <DCC_LocalDebugSymbols>true</DCC_LocalDebugSymbols>
+        <DCC_DebugInformation>true</DCC_DebugInformation>
+        <DCC_MapFile>3</DCC_MapFile>
+        <DCC_Define>madExcept;$(DCC_Define)</DCC_Define>
         <DCC_DcuOutput>.\$(Platform)\$(Config)</DCC_DcuOutput>
-        <VerInfo_MinorVer>0</VerInfo_MinorVer>
-        <VerInfo_MajorVer>1</VerInfo_MajorVer>
+        <VerInfo_MinorVer>5</VerInfo_MinorVer>
         <DCC_ExeOutput>.\$(Platform)\$(Config)</DCC_ExeOutput>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <VerInfo_Build>0</VerInfo_Build>
-        <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
+        <VerInfo_Keys>CompanyName=http://www.im-history.ru;FileDescription=HistoryToDBViewer;FileVersion=2.5.0.0;InternalName=HistoryToDBViewer;LegalCopyright=Michael Grigorev;LegalTrademarks=http://www.im-history.ru;OriginalFilename=HistoryToDBViewer.exe;ProductName=HistoryToDBViewer;ProductVersion=2.5.0.0;Comments=http://www.im-history.ru</VerInfo_Keys>
     </PropertyGroup>
     <ItemGroup>
         <DelphiCompile Include="$(MainSource)">
@@ -166,7 +172,10 @@
                     <VersionInfoKeys Name="ProductVersion">2.4.0.0</VersionInfoKeys>
                     <VersionInfoKeys Name="Comments">http://www.im-history.ru</VersionInfoKeys>
                 </VersionInfoKeys>
-                <Excluded_Packages/>
+                <Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dcloffice2k170.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dclofficexp170.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
+                </Excluded_Packages>
                 <Source>
                     <Source Name="MainSource">HistoryToDBViewer.dpr</Source>
                 </Source>
