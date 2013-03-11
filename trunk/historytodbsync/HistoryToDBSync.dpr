@@ -11,6 +11,11 @@
 program HistoryToDBSync;
 
 uses
+  madExcept,
+  madLinkDisAsm,
+  madListHardware,
+  madListProcesses,
+  madListModules,
   Forms,
   Main in 'Main.pas' {MainSyncForm},
   Global in 'Global.pas',

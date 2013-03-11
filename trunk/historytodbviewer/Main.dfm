@@ -141,7 +141,6 @@ object MainForm: TMainForm
         AsyncDrawing = True
         Animate = True
         Center = True
-        FrameIndex = 3
         Image.Data = {
           9802000047494638396110001000A20000FFFFFF000000C2C2C2424242000000
           62626282828292929221FF0B4E45545343415045322E30030100000021FE1A43
@@ -520,7 +519,6 @@ object MainForm: TMainForm
         AsyncDrawing = True
         Animate = True
         Center = True
-        FrameIndex = 2
         Image.Data = {
           9802000047494638396110001000A20000FFFFFF000000C2C2C2424242000000
           62626282828292929221FF0B4E45545343415045322E30030100000021FE1A43

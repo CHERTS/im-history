@@ -394,8 +394,8 @@ begin
       LSkypeStatus.Hint := 'HistoryToDBSyncSkypeOff';
     end;
     // Обрабатываем все исключения сами
-    if not EnableDebug then
-      Forms.Application.OnException := IMExcept;
+    //if not EnableDebug then
+    //  Forms.Application.OnException := IMExcept;
     // MMF
     if SyncMethod = 0 then
       FMap := TMapStream.CreateEx('HistoryToDB for ' + IMClientType + ' (' + MyAccount + ')',MAXDWORD,2000);

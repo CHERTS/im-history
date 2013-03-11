@@ -7,7 +7,7 @@
         <AppType>Application</AppType>
         <FrameworkType>VCL</FrameworkType>
         <DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
-        <ProjectVersion>14.3</ProjectVersion>
+        <ProjectVersion>14.4</ProjectVersion>
         <Platform Condition="'$(Platform)'==''">Win32</Platform>
         <TargetedPlatforms>3</TargetedPlatforms>
     </PropertyGroup>
@@ -85,24 +85,26 @@
         <DCC_SymbolReferenceInfo>0</DCC_SymbolReferenceInfo>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win32)'!=''">
+        <VerInfo_MinorVer>5</VerInfo_MinorVer>
         <DCC_LocalDebugSymbols>true</DCC_LocalDebugSymbols>
         <DCC_Define>madExcept;$(DCC_Define)</DCC_Define>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <DCC_ExeOutput>.\$(Platform)\$(Config)</DCC_ExeOutput>
         <DCC_DcuOutput>.\$(Platform)\$(Config)</DCC_DcuOutput>
-        <VerInfo_Keys>CompanyName=http://www.im-history.ru;FileDescription=HistoryToDBSync;FileVersion=2.4.0.0;InternalName=HistoryToDBSync;LegalCopyright=Michael Grigorev;LegalTrademarks=http://www.im-history.ru;OriginalFilename=HistoryToDBSync.exe;ProductName=HistoryToDBSync;ProductVersion=2.4.0.0;Comments=http://www.im-history.ru</VerInfo_Keys>
+        <VerInfo_Keys>CompanyName=http://www.im-history.ru;FileDescription=HistoryToDBSync;FileVersion=2.5.0.0;InternalName=HistoryToDBSync;LegalCopyright=Michael Grigorev;LegalTrademarks=http://www.im-history.ru;OriginalFilename=HistoryToDBSync.exe;ProductName=HistoryToDBSync;ProductVersion=2.5.0.0;Comments=http://www.im-history.ru</VerInfo_Keys>
         <VerInfo_Build>0</VerInfo_Build>
-        <Icon_MainIcon>HistoryToDBSync.ico</Icon_MainIcon>
+        <Icon_MainIcon>HistoryToDBSync_Icon.ico</Icon_MainIcon>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win64)'!=''">
+        <VerInfo_MinorVer>5</VerInfo_MinorVer>
         <DCC_LocalDebugSymbols>true</DCC_LocalDebugSymbols>
         <DCC_Define>madExcept;$(DCC_Define)</DCC_Define>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <DCC_DcuOutput>.\$(Platform)\$(Config)</DCC_DcuOutput>
         <DCC_ExeOutput>.\$(Platform)\$(Config)</DCC_ExeOutput>
-        <VerInfo_Keys>CompanyName=http://www.im-history.ru;FileDescription=HistoryToDBSync;FileVersion=2.4.0.0;InternalName=HistoryToDBSync;LegalCopyright=Michael Grigorev;LegalTrademarks=http://www.im-history.ru;OriginalFilename=HistoryToDBSync.exe;ProductName=HistoryToDBSync;ProductVersion=2.4.0.0;Comments=http://www.im-history.ru</VerInfo_Keys>
+        <VerInfo_Keys>CompanyName=http://www.im-history.ru;FileDescription=HistoryToDBSync;FileVersion=2.5.0.0;InternalName=HistoryToDBSync;LegalCopyright=Michael Grigorev;LegalTrademarks=http://www.im-history.ru;OriginalFilename=HistoryToDBSync.exe;ProductName=HistoryToDBSync;ProductVersion=2.5.0.0;Comments=http://www.im-history.ru</VerInfo_Keys>
         <VerInfo_Build>0</VerInfo_Build>
-        <Icon_MainIcon>HistoryToDBSync.ico</Icon_MainIcon>
+        <Icon_MainIcon>HistoryToDBSync_Icon.ico</Icon_MainIcon>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2)'!=''">
         <DCC_DebugDCUs>true</DCC_DebugDCUs>
@@ -182,6 +184,10 @@
                 <Parameters>
                     <Parameters Name="LoadAllSymbols">False</Parameters>
                 </Parameters>
+                <Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dcloffice2k170.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dclofficexp170.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
+                </Excluded_Packages>
             </Delphi.Personality>
             <Platforms>
                 <Platform value="Win32">True</Platform>

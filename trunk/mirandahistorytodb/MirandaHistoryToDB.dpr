@@ -13,6 +13,11 @@ library MirandaHistoryToDB;
 {$I Global.inc}
 
 uses
+  madExcept,
+  madLinkDisAsm,
+  madListHardware,
+  madListProcesses,
+  madListModules,
   m_globaldefs,
   m_api,
   Windows,
@@ -784,6 +789,12 @@ begin
     end
     else
       MsgInf(htdPluginShortName, Format(GetLangStr('ERR_NO_FOUND_UPDATER'), [PluginPath + 'HistoryToDBUpdater.exe']));
+  end
+  else
+  begin
+    // Проверяем значения флага обновления
+    if GetDBInt(htdDBName, 'FirstRun.RunUpdateDoneV'+IntToStr(htdVersion), 0) = 0 then
+      WriteDBInt(htdDBName, 'FirstRun.RunUpdateDoneV'+IntToStr(htdVersion), 1); // Пишем данные в базу
   end;
   // Показать окно экспорта
   if StartExport then

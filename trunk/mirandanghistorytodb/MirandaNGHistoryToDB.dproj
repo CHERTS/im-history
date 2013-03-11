@@ -7,7 +7,7 @@
         <AppType>Library</AppType>
         <FrameworkType>None</FrameworkType>
         <DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
-        <ProjectVersion>14.3</ProjectVersion>
+        <ProjectVersion>14.4</ProjectVersion>
         <Platform Condition="'$(Platform)'==''">Win32</Platform>
         <TargetedPlatforms>3</TargetedPlatforms>
     </PropertyGroup>
@@ -82,6 +82,13 @@
         <DCC_SymbolReferenceInfo>0</DCC_SymbolReferenceInfo>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win32)'!=''">
+        <DCC_LocalDebugSymbols>true</DCC_LocalDebugSymbols>
+        <DCC_Define>madExcept;$(DCC_Define)</DCC_Define>
+        <DCC_MapFile>3</DCC_MapFile>
+        <DCC_DebugInformation>true</DCC_DebugInformation>
+        <VerInfo_MajorVer>2</VerInfo_MajorVer>
+        <VerInfo_MinorVer>5</VerInfo_MinorVer>
+        <VerInfo_Keys>CompanyName=http://www.im-history.ru;FileDescription=MirandaNGHistoryToDB;FileVersion=2.5.0.0;InternalName=MirandaNGHistoryToDB;LegalCopyright=Michael Grigorev;LegalTrademarks=http://www.im-history.ru;OriginalFilename=MirandaNGHistoryToDB.dll;ProductName=MirandaNGHistoryToDB;ProductVersion=2.5.0.0;Comments=http://www.im-history.ru</VerInfo_Keys>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <Manifest_File>None</Manifest_File>
         <VerInfo_Locale>1033</VerInfo_Locale>
@@ -89,6 +96,13 @@
         <DCC_ExeOutput>.\$(Platform)\$(Config)</DCC_ExeOutput>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win64)'!=''">
+        <DCC_LocalDebugSymbols>true</DCC_LocalDebugSymbols>
+        <DCC_Define>madExcept;$(DCC_Define)</DCC_Define>
+        <DCC_MapFile>3</DCC_MapFile>
+        <DCC_DebugInformation>true</DCC_DebugInformation>
+        <VerInfo_MajorVer>2</VerInfo_MajorVer>
+        <VerInfo_MinorVer>5</VerInfo_MinorVer>
+        <VerInfo_Keys>CompanyName=http://www.im-history.ru;FileDescription=MirandaNGHistoryToDB;FileVersion=2.5.0.0;InternalName=MirandaNGHistoryToDB;LegalCopyright=Michael Grigorev;LegalTrademarks=http://www.im-history.ru;OriginalFilename=MirandaNGHistoryToDB.dll;ProductName=MirandaNGHistoryToDB;ProductVersion=2.5.0.0;Comments=http://www.im-history.ru</VerInfo_Keys>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <Manifest_File>None</Manifest_File>
         <VerInfo_Locale>1033</VerInfo_Locale>
@@ -170,25 +184,8 @@
                     <Parameters Name="DebugCWD">C:\Program Files\QIP Infium\</Parameters>
                 </Parameters>
                 <Excluded_Packages>
-                    <Excluded_Packages Name="C:\Documents and Settings\All Users\Документы\RAD Studio\10.0\Bpl\JvMMDesign170.bpl">JVCL Multimedia and Image Components</Excluded_Packages>
-                    <Excluded_Packages Name="C:\Documents and Settings\All Users\Документы\RAD Studio\10.0\Bpl\JvNetDesign170.bpl">JVCL Network Components</Excluded_Packages>
-                    <Excluded_Packages Name="C:\Documents and Settings\All Users\Документы\RAD Studio\10.0\Bpl\JvAppFrmDesign170.bpl">JVCL Application and Form Components</Excluded_Packages>
-                    <Excluded_Packages Name="C:\Documents and Settings\All Users\Документы\RAD Studio\10.0\Bpl\JvBandsDesign170.bpl">JVCL Band Objects</Excluded_Packages>
-                    <Excluded_Packages Name="C:\Documents and Settings\All Users\Документы\RAD Studio\10.0\Bpl\JvBDEDesign170.bpl">JVCL BDE Components</Excluded_Packages>
-                    <Excluded_Packages Name="C:\Documents and Settings\All Users\Документы\RAD Studio\10.0\Bpl\JvDBDesign170.bpl">JVCL Database Components</Excluded_Packages>
-                    <Excluded_Packages Name="C:\Documents and Settings\All Users\Документы\RAD Studio\10.0\Bpl\JvCmpDesign170.bpl">JVCL Non-Visual Components</Excluded_Packages>
-                    <Excluded_Packages Name="C:\Documents and Settings\All Users\Документы\RAD Studio\10.0\Bpl\JvControlsDesign170.bpl">JVCL Visual Controls</Excluded_Packages>
-                    <Excluded_Packages Name="C:\Documents and Settings\All Users\Документы\RAD Studio\10.0\Bpl\JvDlgsDesign170.bpl">JVCL Dialog Components</Excluded_Packages>
-                    <Excluded_Packages Name="C:\Documents and Settings\All Users\Документы\RAD Studio\10.0\Bpl\JvCryptDesign170.bpl">JVCL Encryption and Compression</Excluded_Packages>
-                    <Excluded_Packages Name="C:\Documents and Settings\All Users\Документы\RAD Studio\10.0\Bpl\JvCustomDesign170.bpl">JVCL Custom Controls</Excluded_Packages>
-                    <Excluded_Packages Name="C:\Documents and Settings\All Users\Документы\RAD Studio\10.0\Bpl\JvDockingDesign170.bpl">JVCL Docking Components</Excluded_Packages>
-                    <Excluded_Packages Name="C:\Documents and Settings\All Users\Документы\RAD Studio\10.0\Bpl\JvDotNetCtrlsDesign170.bpl">JVCL DotNet Controls</Excluded_Packages>
-                    <Excluded_Packages Name="C:\Documents and Settings\All Users\Документы\RAD Studio\10.0\Bpl\JvGlobusDesign170.bpl">JVCL Globus Components</Excluded_Packages>
-                    <Excluded_Packages Name="C:\Documents and Settings\All Users\Документы\RAD Studio\10.0\Bpl\JvHMIDesign170.bpl">JVCL HMI Controls</Excluded_Packages>
-                    <Excluded_Packages Name="C:\Documents and Settings\All Users\Документы\RAD Studio\10.0\Bpl\JvJansDesign170.bpl">JVCL Jans Components</Excluded_Packages>
-                    <Excluded_Packages Name="C:\Documents and Settings\All Users\Документы\RAD Studio\10.0\Bpl\JvManagedThreadsDesign170.bpl">JVCL Managed Threads</Excluded_Packages>
-                    <Excluded_Packages Name="C:\Documents and Settings\All Users\Документы\RAD Studio\10.0\Bpl\JvPageCompsDesign170.bpl">JVCL Page Style Components</Excluded_Packages>
-                    <Excluded_Packages Name="C:\Documents and Settings\All Users\Документы\RAD Studio\10.0\Bpl\JvPascalInterpreterDesign170.bpl">JVCL Interpreter Components</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dcloffice2k170.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dclofficexp170.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
                 </Excluded_Packages>
             </Delphi.Personality>
             <Platforms>

@@ -20,7 +20,7 @@ type
   TCopyDataType = (cdtString = 0, cdtImage = 1, cdtRecord = 2);
 
 const
-  PluginVersion = '2.4';
+  PluginVersion = '2.5';
   PluginName = 'RnQHistoryToDB';
   DefaultDBAddres = 'db01.im-history.ru';
   DefaultDBName = 'imhistory';

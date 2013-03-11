@@ -11,6 +11,11 @@
 library QIPHistoryToDB;
 
 uses
+  madExcept,
+  madLinkDisAsm,
+  madListHardware,
+  madListProcesses,
+  madListModules,
   u_qip_plugin in 'u_qip_plugin.pas',
   u_common in 'SDK\u_common.pas',
   u_plugin_info in 'SDK\u_plugin_info.pas',

@@ -1,7 +1,7 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
         <ProjectGuid>{2C2C25F6-5D6D-4132-800D-CB122D6D30EF}</ProjectGuid>
-        <ProjectVersion>14.3</ProjectVersion>
+        <ProjectVersion>14.4</ProjectVersion>
         <MainSource>HistoryToDBUpdater.dpr</MainSource>
         <Base>True</Base>
         <Config Condition="'$(Config)'==''">Release</Config>
@@ -89,26 +89,30 @@
         <DCC_DebugInformation>false</DCC_DebugInformation>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win32)'!=''">
+        <DCC_Define>madExcept;$(DCC_Define)</DCC_Define>
+        <Icon_MainIcon>HistoryToDBUpdater_Icon.ico</Icon_MainIcon>
+        <VerInfo_MinorVer>5</VerInfo_MinorVer>
         <DCC_DebugInformation>true</DCC_DebugInformation>
         <DCC_LocalDebugSymbols>true</DCC_LocalDebugSymbols>
-        <DCC_Define>madExcept;$(DCC_Define)</DCC_Define>
         <DCC_MapFile>3</DCC_MapFile>
         <VerInfo_Build>0</VerInfo_Build>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <DCC_ExeOutput>.\$(Platform)\$(Config)</DCC_ExeOutput>
         <DCC_DcuOutput>.\$(Platform)\$(Config)</DCC_DcuOutput>
-        <VerInfo_Keys>CompanyName=http://www.im-history.ru;FileDescription=HistoryToDBUpdater;FileVersion=2.4.0.0;InternalName=HistoryToDBUpdater;LegalCopyright=Michael Grigorev;LegalTrademarks=http://www.im-history.ru;OriginalFilename=HistoryToDBUpdater.exe;ProductName=HistoryToDBUpdater;ProductVersion=2.4.0.0;Comments=http://www.im-history.ru</VerInfo_Keys>
+        <VerInfo_Keys>CompanyName=http://www.im-history.ru;FileDescription=HistoryToDBUpdater;FileVersion=2.5.0.0;InternalName=HistoryToDBUpdater;LegalCopyright=Michael Grigorev;LegalTrademarks=http://www.im-history.ru;OriginalFilename=HistoryToDBUpdater.exe;ProductName=HistoryToDBUpdater;ProductVersion=2.5.0.0;Comments=http://www.im-history.ru</VerInfo_Keys>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win64)'!=''">
+        <DCC_Define>madExcept;$(DCC_Define)</DCC_Define>
+        <Icon_MainIcon>HistoryToDBUpdater_Icon.ico</Icon_MainIcon>
+        <VerInfo_MinorVer>5</VerInfo_MinorVer>
         <DCC_DebugInformation>true</DCC_DebugInformation>
         <DCC_LocalDebugSymbols>true</DCC_LocalDebugSymbols>
-        <DCC_Define>madExcept;$(DCC_Define)</DCC_Define>
         <DCC_MapFile>3</DCC_MapFile>
         <VerInfo_Build>0</VerInfo_Build>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <DCC_DcuOutput>.\$(Platform)\$(Config)</DCC_DcuOutput>
         <DCC_ExeOutput>.\$(Platform)\$(Config)</DCC_ExeOutput>
-        <VerInfo_Keys>CompanyName=http://www.im-history.ru;FileDescription=HistoryToDBUpdater;FileVersion=2.4.0.0;InternalName=HistoryToDBUpdater;LegalCopyright=Michael Grigorev;LegalTrademarks=http://www.im-history.ru;OriginalFilename=HistoryToDBUpdater.exe;ProductName=HistoryToDBUpdater;ProductVersion=2.4.0.0;Comments=http://www.im-history.ru</VerInfo_Keys>
+        <VerInfo_Keys>CompanyName=http://www.im-history.ru;FileDescription=HistoryToDBUpdater;FileVersion=2.5.0.0;InternalName=HistoryToDBUpdater;LegalCopyright=Michael Grigorev;LegalTrademarks=http://www.im-history.ru;OriginalFilename=HistoryToDBUpdater.exe;ProductName=HistoryToDBUpdater;ProductVersion=2.5.0.0;Comments=http://www.im-history.ru</VerInfo_Keys>
     </PropertyGroup>
     <ItemGroup>
         <DelphiCompile Include="$(MainSource)">
@@ -164,7 +168,10 @@
                     <VersionInfoKeys Name="ProductVersion">2.4.0.0</VersionInfoKeys>
                     <VersionInfoKeys Name="Comments">http://www.im-history.ru</VersionInfoKeys>
                 </VersionInfoKeys>
-                <Excluded_Packages/>
+                <Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dcloffice2k170.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dclofficexp170.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
+                </Excluded_Packages>
                 <Source>
                     <Source Name="MainSource">HistoryToDBUpdater.dpr</Source>
                 </Source>

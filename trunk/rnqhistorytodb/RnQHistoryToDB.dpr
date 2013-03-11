@@ -18,6 +18,11 @@ library RnQHistoryToDB;
 {$ENDIF COMPILER_14_UP}
 
 uses
+  madExcept,
+  madLinkDisAsm,
+  madListHardware,
+  madListProcesses,
+  madListModules,
   Classes,
   Windows,
   Messages,

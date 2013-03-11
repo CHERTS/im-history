@@ -62,7 +62,7 @@ object SettingsForm: TSettingsForm
     Top = 6
     Width = 622
     Height = 346
-    ActivePage = EncryptionTabSheet
+    ActivePage = AboutTabSheet
     TabOrder = 1
     object MainTabSheet: TTabSheet
       Caption = #1041#1072#1079#1072' '#1076#1072#1085#1085#1099#1093
@@ -1191,7 +1191,7 @@ object SettingsForm: TSettingsForm
         Top = 32
         Width = 130
         Height = 13
-        Caption = 'Copyright '#169' 2011-2012 by'
+        Caption = 'Copyright '#169' 2011-2013 by'
       end
       object LabelAuthor: TLabel
         Left = 227
