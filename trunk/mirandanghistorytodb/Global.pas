@@ -24,6 +24,7 @@ type
     lpData: Pointer;
   end;
   //TByteArr = Array of Byte;
+  TArrayOfInteger = Array of Integer;
 
 const
   htdPluginShortName = 'MirandaNGHistoryToDB';
@@ -164,6 +165,7 @@ function Utf8ToWideChar(Dest: PWideChar; MaxDestChars: Integer; Source: PAnsiCha
 function StrContactProtoToInt(Proto: AnsiString): Integer;
 function UnixToLocalTime(tUnix :Longint): TDateTime;
 function GetUserTempPath: WideString;
+function BinarySearch(var A: Array of Integer; D: Integer): Integer;
 procedure IMDelay(Value: Cardinal);
 procedure EncryptInit;
 procedure EncryptFree;
@@ -1239,6 +1241,35 @@ begin
   GetLongPathName(PChar(UserPath), PChar(UserPath), MAX_PATH);
   SetLength(UserPath, StrLen(PChar(UserPath)));
   Result := UserPath;
+end;
+
+{ Функция поиска по массиву }
+function BinarySearch(var A: Array of Integer; D: Integer): Integer;
+var
+  iStart,iEnd,iMid: Integer;
+begin
+  if Length(A) > 0 then
+  begin
+    iStart := 0;
+    iEnd := High(A);
+    while iEnd - iStart > 1 do
+    begin
+      iMid := (iStart+iEnd) div 2;
+      if D >= A[iMid] then
+        iStart := iMid
+      else
+        iEnd := iMid;
+    end;
+    if D = A[iEnd] then
+      Result := iEnd
+    else
+      if D = A[iStart] then
+        Result := iStart
+      else
+        Result := -1;
+  end
+  else
+    Result := -1;
 end;
 
 begin
