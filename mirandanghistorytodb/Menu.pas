@@ -168,7 +168,12 @@ var
   ContactProto, ContactID, ContactName, GroupName: AnsiString;
   ProtoCount: Integer;
   ProtoName: ^PPROTOCOLDESCRIPTOR;
+  ProtoArray: TArrayOfInteger;
+  ProtoArrayCnt: Integer;
+  MyContactProto: String;
 begin
+  ProtoArrayCnt := 0;
+  SetLength(ProtoArray, ProtoArrayCnt);
   // Получаем список контактов
   hContact := CallService(MS_DB_CONTACT_FINDFIRST, 0, 0);
   while hContact <> 0 do
@@ -183,25 +188,24 @@ begin
       ContactID := 'NoContactID';
     //GetDBStr(hContact, 'Protocol', 'p', 'NoProto')
     if not MatchStrings(LowerCase(ContactProto), 'skype*') then
+    begin
       //WriteInLog(ProfilePath, Format('%s;%s;%s;%d', [ContactID, ContactName, GetLangStr('ContactNotInTheList'), StrContactProtoToInt(GetDBStr(hContact, 'Protocol', 'p', 'NoProto'))]), 3);
       WriteInLog(ProfilePath, Format('%s;%s;%s;%d', [ContactID, ContactName, GroupName, StrContactProtoToInt(ContactProto)]), 3);
+      if BinarySearch(ProtoArray, StrContactProtoToInt(ContactProto)) = -1 then
+      begin
+        Inc(ProtoArrayCnt);
+        SetLength(ProtoArray, ProtoArrayCnt);
+        ProtoArray[ProtoArrayCnt-1] := StrContactProtoToInt(ContactProto);
+        MyContactProto := Copy(ContactProto, 0, Pos('_', ContactProto)-1);
+        WriteInLog(ProfilePath, Format('%s;%s;%d;%s;%s;%s', [MyContactProto, GetMyContactID(ContactProto), StrContactProtoToInt(ContactProto), GetMyContactDisplayName(ContactProto), '', '']), 4);
+      end;
+    end;
     hContact := CallService(MS_DB_CONTACT_FINDNEXT, hContact, 0);
   end;
   if ContactListLogOpened then
     CloseLogFile(3);
-  // Получаем список протоколов
-  if (CallService(MS_PROTO_ENUMPROTOCOLS, Integer(@ProtoCount), Integer(@ProtoName)) = 0) and (ProtoCount <> 0) then
-  begin
-    while ProtoCount > 0 do
-    begin
-      if ProtoName^._type = PROTOTYPE_PROTOCOL then
-        WriteInLog(ProfilePath, Format('%s;%s;%d;%s;%s;%s', [ProtoName^.szName, GetMyContactID(ProtoName^.szName), StrContactProtoToInt(ProtoName^.szName), GetMyContactDisplayName(ProtoName^.szName), '', '']), 4);
-      Inc(ProtoName);
-      Dec(ProtoCount);
-    end;
-    if ProtoListLogOpened then
-      CloseLogFile(4);
-  end;
+  if ProtoListLogOpened then
+    CloseLogFile(4);
   Result := 0;
   MsgInf(htdPluginShortName, GetLangStr('SaveContactListCompleted'));
 end;
