@@ -196,8 +196,8 @@ begin
         Inc(ProtoArrayCnt);
         SetLength(ProtoArray, ProtoArrayCnt);
         ProtoArray[ProtoArrayCnt-1] := StrContactProtoToInt(ContactProto);
-        MyContactProto := Copy(ContactProto, 0, Pos('_', ContactProto)-1);
-        WriteInLog(ProfilePath, Format('%s;%s;%d;%s;%s;%s', [MyContactProto, GetMyContactID(ContactProto), StrContactProtoToInt(ContactProto), GetMyContactDisplayName(ContactProto), '', '']), 4);
+        //MyContactProto := Copy(ContactProto, 0, Pos('_', ContactProto)-1);
+        WriteInLog(ProfilePath, Format('%s;%s;%d;%s;%s;%s', [ContactProto, GetMyContactID(ContactProto), StrContactProtoToInt(ContactProto), GetMyContactDisplayName(ContactProto), '', '']), 4);
       end;
     end;
     hContact := CallService(MS_DB_CONTACT_FINDNEXT, hContact, 0);
