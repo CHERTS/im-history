@@ -111,6 +111,7 @@ const
 type
   PMUUID = ^TMUUID;
   MUUID  = System.TGUID;
+
   TMUUID = MUUID;
 {
   MUUID = record
@@ -134,8 +135,10 @@ type
     authorEmail:PAnsiChar;
     copyright  :PAnsiChar;
     homepage   :PAnsiChar;
-    flags      :Byte;  // right now the only flag, UNICODE_AWARE, is recognized here
-    uuid       :MUUID; // plugin's unique identifier
+    flags      :byte;  // right now the only flag, UNICODE_AWARE, is recognized here
+    case boolean of
+      false: (dummy:longword);
+      true : (uuid :MUUID); // plugin's unique identifier
   end;
 
 //----- Fork enchancement -----
@@ -238,6 +241,8 @@ var
   {$include m_toptoolbar.inc}
   {$include m_msg_buttonsbar.inc}
   {$include m_json.inc}
+  {$include m_xstatus.inc}
+  {$include m_zlib.inc}
 {$define M_API_UNIT}
   {$include m_helpers.inc}
   {$include m_clistint.inc}
