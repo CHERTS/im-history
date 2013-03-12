@@ -234,6 +234,7 @@
   <AutoRunHistoryToDBSync>HistoryToDBSync run at Windows startup</AutoRunHistoryToDBSync>
   <RunningSkypeOnStartup>Start Skype with HistoryToDBSync</RunningSkypeOnStartup>
   <ExitSkypeOnEnd>Shutdown Skype when you close HistoryToDBSync</ExitSkypeOnEnd>
+  <UpdateServerInServiceMode>Update server is down for maintenance.%sTry to start the procedure to check for updates later.</UpdateServerInServiceMode>
 
   <AboutButton>About</AboutButton>
   <AboutFormCaption>About</AboutFormCaption>
