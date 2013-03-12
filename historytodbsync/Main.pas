@@ -1370,7 +1370,7 @@ procedure TMainSyncForm.ShowBalloonHint(BalloonTitle, BalloonMsg: WideString);
 var
   DA: TJvDesktopAlert;
 begin
-  if AniEvents then
+  if (AniEvents) and (not CloseRequest) then
   begin
     DA := TJvDesktopAlert.Create(Self);
     DA.AutoFree := True;
