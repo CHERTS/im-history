@@ -235,6 +235,7 @@
   <AutoRunHistoryToDBSync>Запускать HistoryToDBSync при загрузке Windows</AutoRunHistoryToDBSync>
   <RunningSkypeOnStartup>Запускать Skype при запуске HistoryToDBSync</RunningSkypeOnStartup>
   <ExitSkypeOnEnd>Выходить из Skype при закрытии HistoryToDBSync</ExitSkypeOnEnd>
+  <UpdateServerInServiceMode>Сервер обновлений находится на сервисном обслуживании.%sПопробуйте запустить процедуру проверки обновлений позже.</UpdateServerInServiceMode>
 
   <AboutButton>О плагине</AboutButton>
   <AboutFormCaption>О плагине</AboutFormCaption>
