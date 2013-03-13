@@ -1404,7 +1404,22 @@ begin
     RunIMClient('rnq.exe', RnQProcessInfo);
   end;
   if IMClientType = 'Skype' then
-    RunIMClient('skype.exe', SkypeProcessInfo);
+  begin
+    if SystemLang = 'Russian' then
+    begin
+      if FileExists(PluginPath + 'installupdater-ru.cmd') then
+        ShellExecute(0, 'open', PWideChar(PluginPath + 'installupdater-ru.cmd'), nil, nil, SW_HIDE)
+      else
+        RunIMClient('skype.exe', SkypeProcessInfo);
+    end
+    else
+    begin
+      if FileExists(PluginPath + 'installupdater-en.cmd') then
+        ShellExecute(0, 'open', PWideChar(PluginPath + 'installupdater-en.cmd'), nil, nil, SW_HIDE)
+      else
+        RunIMClient('skype.exe', SkypeProcessInfo);
+    end;
+  end;
   // Запуск Dropbox
   {if not IsProcessRun('Dropbox.exe') then
     RunIMClient('Dropbox.exe', DropboxProcessInfo);}
