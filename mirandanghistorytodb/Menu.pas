@@ -168,7 +168,7 @@ var
   ContactProto, ContactID, ContactName, GroupName: AnsiString;
   ProtoCount: Integer;
   ProtoName: ^PPROTOCOLDESCRIPTOR;
-  ProtoArray: TArrayOfInteger;
+  ProtoArray: TArrayOfString;
   ProtoArrayCnt: Integer;
   MyContactProto: String;
 begin
@@ -191,17 +191,31 @@ begin
     begin
       //WriteInLog(ProfilePath, Format('%s;%s;%s;%d', [ContactID, ContactName, GetLangStr('ContactNotInTheList'), StrContactProtoToInt(GetDBStr(hContact, 'Protocol', 'p', 'NoProto'))]), 3);
       WriteInLog(ProfilePath, Format('%s;%s;%s;%d', [ContactID, ContactName, GroupName, StrContactProtoToInt(ContactProto)]), 3);
-      if BinarySearch(ProtoArray, StrContactProtoToInt(ContactProto)) = -1 then
+      MyContactProto := Format('%s;%s;%d;%s;%s;%s', [ContactProto, GetMyContactID(ContactProto), StrContactProtoToInt(ContactProto), GetMyContactDisplayName(ContactProto), '', '']);
+      // Проверяем УПОРЯДОЧЕНЫЙ массив протоколов на наличие нового,
+      // если в последней позиции нет такого протокола, добавляем его
+      if ProtoArrayCnt > 0 then
+      begin
+        if ProtoArray[High(ProtoArray)] <> MyContactProto then
+        begin
+          Inc(ProtoArrayCnt);
+          SetLength(ProtoArray, ProtoArrayCnt);
+          ProtoArray[ProtoArrayCnt-1] := MyContactProto;
+        end;
+      end
+      else
       begin
         Inc(ProtoArrayCnt);
         SetLength(ProtoArray, ProtoArrayCnt);
-        ProtoArray[ProtoArrayCnt-1] := StrContactProtoToInt(ContactProto);
-        //MyContactProto := Copy(ContactProto, 0, Pos('_', ContactProto)-1);
-        WriteInLog(ProfilePath, Format('%s;%s;%d;%s;%s;%s', [ContactProto, GetMyContactID(ContactProto), StrContactProtoToInt(ContactProto), GetMyContactDisplayName(ContactProto), '', '']), 4);
+        ProtoArray[ProtoArrayCnt-1] := MyContactProto;
       end;
     end;
     hContact := CallService(MS_DB_CONTACT_FINDNEXT, hContact, 0);
   end;
+  // Выгружаем массив протоколов в файл ProtoList.csv
+  for ProtoArrayCnt := 0 to High(ProtoArray) do
+    WriteInLog(ProfilePath, ProtoArray[ProtoArrayCnt], 4);
+  // Закрываем файлы
   if ContactListLogOpened then
     CloseLogFile(3);
   if ProtoListLogOpened then
