@@ -135,9 +135,9 @@ begin
   MyContactName := GetMyContactDisplayName(ContactProto);
   MyContactID := GetMyContactID(ContactProto);
   if ContactID = '' then
-    ContactID := 'NoContactID';
+    ContactID := TranslateW('Unknown Contact');
   if ContactName = '' then
-    ContactName := 'NoContactName';
+    ContactName := TranslateW('Unknown Contact');
   if MyContactID = '' then
     MyContactID := 'NoMyContactID';
   if MyContactName = '' then
@@ -210,9 +210,9 @@ begin
     ContactID := GetContactID(awParam, ContactProto);
     ContactName := GetContactDisplayName(awParam, '', True);
     if ContactName = '' then
-      ContactName := 'NoContactName';
+      ContactName := TranslateW('Unknown Contact');
     if ContactID = '' then
-      ContactID := 'NoContactID';
+      ContactID := TranslateW('Unknown Contact');
     // Доп. проверка протокола
     if ContactProto = MyAccount then
       ContactProto := 'ICQ';
@@ -231,9 +231,9 @@ begin
       ContactID := GetContactID(awParam, ContactProto);
       ContactName := GetContactDisplayName(awParam, '', True);
       if ContactName = '' then
-        ContactName := 'NoContactName';
+        ContactName := TranslateW('Unknown Contact');
       if ContactID = '' then
-        ContactID := 'NoContactID';
+        ContactID := TranslateW('Unknown Contact');
       // Доп. проверка протокола
       if ContactProto = MyAccount then
         ContactProto := 'ICQ';
@@ -305,6 +305,10 @@ begin
     hContact := wParam;
     ContactProto := GetContactProto(hContact);
     ProtoType := StrContactProtoToInt(ContactProto);
+    // Если сообщение от метаконтакта, то не пишем его в БД
+    // т.к. оно отправляется итак в БД через нужный протокол
+    if ProtoType = 15 then
+      Exit;
     // Данные собеседника
     ContactID := GetContactID(hContact, ContactProto);
     ContactName := GetContactDisplayName(hContact, '', True);
@@ -317,13 +321,19 @@ begin
     ProtoType := StrContactProtoToInt(ContactProto);
     // End
     if ContactID = '' then
-      ContactID := 'NoContactID';
+      ContactID := TranslateW('Unknown Contact');
     if ContactName = '' then
-      ContactName := 'NoContactName';
+      ContactName := TranslateW('Unknown Contact');
     if MyContactID = '' then
-      MyContactID := 'NoMyContactID';
+      MyContactID := TranslateW('Unknown Contact');
     if MyContactName = '' then
-      MyContactName := 'NoMyContactName';
+      MyContactName := TranslateW('Unknown Contact');
+    // Корректируем MyContactID и ContactName если приходят и
+    // отправляются сообщения для Метаконтакта
+    {if (ProtoType = 15) and (MyContactID = TranslateW('Unknown Contact')) and (MyContactName <> TranslateW('Unknown Contact')) then
+      MyContactID := MyContactName;
+    if (ProtoType = 15) and (ContactName = TranslateW('Unknown Contact')) and (ContactID <> TranslateW('Unknown Contact')) then
+      ContactName := ContactID;}
     // Экранирование, перекодирование и т.п.
     Msg_SenderNick := PrepareString(pWideChar(AnsiToWideString(MyContactName, CP_ACP)));
     Msg_SenderAcc := PrepareString(pWideChar(AnsiToWideString(MyContactID, CP_ACP)));

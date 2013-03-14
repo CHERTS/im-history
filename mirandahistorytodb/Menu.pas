@@ -178,12 +178,10 @@ begin
     ContactName := GetContactDisplayName(hContact, '', True);
 		GroupName := GetDBStr(hContact , 'CList' , 'Group' , GetLangStr('ContactNotInTheList'));
     if ContactName = '' then
-      ContactName := 'NoContactName';
+      ContactName := TranslateW('Unknown Contact');
     if ContactID = '' then
-      ContactID := 'NoContactID';
-    //GetDBStr(hContact, 'Protocol', 'p', 'NoProto')
-    if not MatchStrings(LowerCase(ContactProto), 'skype*') then
-      //WriteInLog(ProfilePath, Format('%s;%s;%s;%d', [ContactID, ContactName, GetLangStr('ContactNotInTheList'), StrContactProtoToInt(GetDBStr(hContact, 'Protocol', 'p', 'NoProto'))]), 3);
+      ContactID := TranslateW('Unknown Contact');
+    if not ((MatchStrings(LowerCase(ContactProto), 'skype*')) or (ContactID = TranslateW('Unknown Contact')) or MatchStrings(LowerCase(ContactProto), 'metacontacts*')) then
       WriteInLog(ProfilePath, Format('%s;%s;%s;%d', [ContactID, ContactName, GroupName, StrContactProtoToInt(ContactProto)]), 3);
     hContact := PluginLink^.CallService(MS_DB_CONTACT_FINDNEXT, hContact, 0);
   end;
@@ -199,11 +197,14 @@ begin
       Inc(ProtoName);
       Dec(ProtoCount);
     end;
-    if ProtoListLogOpened then
-      CloseLogFile(4);
   end;
+  if ProtoListLogOpened then
+    CloseLogFile(4);
   Result := 0;
-  MsgInf(htdPluginShortName, GetLangStr('SaveContactListCompleted'));
+  if (FileExists(ProfilePath + ContactListName)) and (FileExists(ProfilePath + ProtoListName)) then
+    MsgInf(htdPluginShortName, GetLangStr('SaveContactListCompleted'))
+  else
+    MsgInf(htdPluginShortName, GetLangStr('SaveContactListErr'));
 end;
 
 { Запустить перерасчет MD5-хешей }

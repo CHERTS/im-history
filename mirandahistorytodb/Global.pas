@@ -1059,7 +1059,8 @@ begin
     12 - YAHOO
     13 - GADU
     14 - SKYPE
-    15 - Unknown
+    15 - MetaContacts
+    16 - Unknown
   }
   if MatchStrings(LowerCase(Proto), 'icq*') then
     ProtoType := 0
@@ -1095,8 +1096,10 @@ begin
     ProtoType := 13
   else if MatchStrings(LowerCase(Proto), 'skype*') then
     ProtoType := 14
+  else if MatchStrings(LowerCase(Proto), 'metacontacts*') then
+    ProtoType := 15
   else
-    ProtoType := 15;
+    ProtoType := 16;
   Result := ProtoType;
 end;
 
