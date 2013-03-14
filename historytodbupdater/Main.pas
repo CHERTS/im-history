@@ -420,7 +420,7 @@ begin
         LogMemo.Lines.Add(Format(GetLangStr('EndProcess'), ['qip.exe']));
         QIPProcessInfo := EndProcess('qip.exe', 0, True);
       end;
-      if (IMClientType = 'Miranda') or (IMClientType = 'MirandaNG') then
+      if IMClientType = 'Miranda' then
       begin
         if IMClientPlatformType = 'x86' then
         begin
@@ -431,6 +431,19 @@ begin
         begin
           LogMemo.Lines.Add(Format(GetLangStr('EndProcess'), ['miranda64.exe']));
           MirandaProcessInfo := EndProcess('miranda64.exe', 1, True);
+        end;
+      end;
+      if IMClientType = 'MirandaNG' then
+      begin
+        if IMClientPlatformType = 'x86' then
+        begin
+          LogMemo.Lines.Add(Format(GetLangStr('EndProcess'), ['miranda32.exe']));
+          MirandaProcessInfo := EndProcess('miranda32.exe', 0, True);
+        end
+        else
+        begin
+          LogMemo.Lines.Add(Format(GetLangStr('EndProcess'), ['miranda64.exe']));
+          MirandaProcessInfo := EndProcess('miranda64.exe', 0, True);
         end;
       end;
       if IMClientType = 'RnQ' then
