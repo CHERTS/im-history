@@ -1653,6 +1653,7 @@ procedure TMainSyncForm.CheckDBUpdate(PluginDllPath: String);
 var
   Query: TZQuery;
   SQLVersion, SQLClientType, TempProgramsVer: String;
+  DBPrefix: String;
 begin
   if DBUserName <> 'username' then
     ConnectDB; // Подключаемся к базе
@@ -1693,287 +1694,114 @@ begin
           SQLVersion := '2.2'
       end;
       // End
+      // Префикс файла БД
       if MatchStrings(DBType, 'mysql*') then
-      begin
-        {if (SQLVersion = '1.0') and (ProgramsVer = '1.1.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'mysql-update-10-to-11.sql');
-        if (SQLVersion = '1.0') and (ProgramsVer = '1.2.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'mysql-update-10-to-12.sql');}
-        if (SQLVersion = '1.0') and (ProgramsVer = '2.0.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'mysql-update-10-to-20.sql');
-        {if (SQLVersion = '1.1') and (ProgramsVer = '1.2.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'mysql-update-11-to-12.sql');}
-        if (SQLVersion = '1.1') and (ProgramsVer = '2.0.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'mysql-update-11-to-20.sql');
-        if (SQLVersion = '1.2') and (ProgramsVer = '2.0.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'mysql-update-12-to-20.sql');
-        if (SQLVersion = '1.3') and (ProgramsVer = '2.0.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'mysql-update-13-to-20.sql');
-        if (SQLVersion = '2.0') and (ProgramsVer = '2.1.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'mysql-update-20-to-21.sql');
-        if (SQLVersion = '2.0') and (ProgramsVer = '2.2.0.0') then
-        begin
-          DBUpdate(PluginDllPath + 'update\' + 'mysql-update-20-to-21.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'mysql-update-21-to-22.sql');
-        end;
-        if (SQLVersion = '2.0') and (ProgramsVer = '2.3.0.0') then
-        begin
-          DBUpdate(PluginDllPath + 'update\' + 'mysql-update-20-to-21.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'mysql-update-21-to-22.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'mysql-update-22-to-23.sql');
-        end;
-        if (SQLVersion = '2.0') and (ProgramsVer = '2.4.0.0') then
-        begin
-          DBUpdate(PluginDllPath + 'update\' + 'mysql-update-20-to-21.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'mysql-update-21-to-22.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'mysql-update-22-to-23.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'mysql-update-23-to-24.sql');
-        end;
-        if (SQLVersion = '2.1') and (ProgramsVer = '2.3.0.0') then
-        begin
-          DBUpdate(PluginDllPath + 'update\' + 'mysql-update-21-to-22.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'mysql-update-22-to-23.sql');
-        end;
-        if (SQLVersion = '2.1') and (ProgramsVer = '2.4.0.0') then
-        begin
-          DBUpdate(PluginDllPath + 'update\' + 'mysql-update-21-to-22.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'mysql-update-22-to-23.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'mysql-update-23-to-24.sql');
-        end;
-        if (SQLVersion = '2.1') and (ProgramsVer = '2.2.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'mysql-update-21-to-22.sql');
-        if (SQLVersion = '2.2') and (ProgramsVer = '2.3.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'mysql-update-22-to-23.sql');
-        if (SQLVersion = '2.2') and (ProgramsVer = '2.4.0.0') then
-        begin
-          DBUpdate(PluginDllPath + 'update\' + 'mysql-update-22-to-23.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'mysql-update-23-to-24.sql');
-        end;
-        if (SQLVersion = '2.3') and (ProgramsVer = '2.4.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'mysql-update-23-to-24.sql');
-      end
+        DBPrefix := 'mysql'
       else if MatchStrings(DBType, 'postgresql*') then
-      begin
-        {if (SQLVersion = '1.0') and (ProgramsVer = '1.1.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'postgresql-update-10-to-11.sql');
-        if (SQLVersion = '1.0') and (ProgramsVer = '1.2.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'postgresql-update-10-to-12.sql');}
-        if (SQLVersion = '1.0') and (ProgramsVer = '2.0.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'postgresql-update-10-to-20.sql');
-        {if (SQLVersion = '1.1') and (ProgramsVer = '1.2.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'postgresql-update-11-to-12.sql');}
-        if (SQLVersion = '1.1') and (ProgramsVer = '2.0.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'postgresql-update-11-to-20.sql');
-        if (SQLVersion = '1.2') and (ProgramsVer = '2.0.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'postgresql-update-12-to-20.sql');
-        if (SQLVersion = '1.3') and (ProgramsVer = '2.0.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'postgresql-update-13-to-20.sql');
-        if (SQLVersion = '2.0') and (ProgramsVer = '2.1.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'postgresql-update-20-to-21.sql');
-        if (SQLVersion = '2.0') and (ProgramsVer = '2.2.0.0') then
-        begin
-          DBUpdate(PluginDllPath + 'update\' + 'postgresql-update-20-to-21.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'postgresql-update-21-to-22.sql');
-        end;
-        if (SQLVersion = '2.0') and (ProgramsVer = '2.3.0.0') then
-        begin
-          DBUpdate(PluginDllPath + 'update\' + 'postgresql-update-20-to-21.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'postgresql-update-21-to-22.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'postgresql-update-22-to-23.sql');
-        end;
-        if (SQLVersion = '2.0') and (ProgramsVer = '2.4.0.0') then
-        begin
-          DBUpdate(PluginDllPath + 'update\' + 'postgresql-update-20-to-21.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'postgresql-update-21-to-22.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'postgresql-update-22-to-23.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'postgresql-update-23-to-24.sql');
-        end;
-        if (SQLVersion = '2.1') and (ProgramsVer = '2.3.0.0') then
-        begin
-          DBUpdate(PluginDllPath + 'update\' + 'postgresql-update-21-to-22.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'postgresql-update-22-to-23.sql');
-        end;
-        if (SQLVersion = '2.1') and (ProgramsVer = '2.4.0.0') then
-        begin
-          DBUpdate(PluginDllPath + 'update\' + 'postgresql-update-21-to-22.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'postgresql-update-22-to-23.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'postgresql-update-23-to-24.sql');
-        end;
-        if (SQLVersion = '2.1') and (ProgramsVer = '2.2.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'postgresql-update-21-to-22.sql');
-        if (SQLVersion = '2.2') and (ProgramsVer = '2.3.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'postgresql-update-22-to-23.sql');
-        if (SQLVersion = '2.2') and (ProgramsVer = '2.4.0.0') then
-        begin
-          DBUpdate(PluginDllPath + 'update\' + 'postgresql-update-22-to-23.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'postgresql-update-23-to-24.sql');
-        end;
-        if (SQLVersion = '2.3') and (ProgramsVer = '2.4.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'postgresql-update-23-to-24.sql');
-      end
+        DBPrefix := 'postgresql'
       else if MatchStrings(DBType, 'oracle*') then
-      begin
-        {if (SQLVersion = '1.0') and (ProgramsVer = '1.1.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'oracle-update-10-to-11.sql');
-        if (SQLVersion = '1.0') and (ProgramsVer = '1.2.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'oracle-update-10-to-12.sql');}
-        if (SQLVersion = '1.0') and (ProgramsVer = '2.0.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'oracle-update-10-to-20.sql');
-        {if (SQLVersion = '1.1') and (ProgramsVer = '1.2.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'oracle-update-11-to-12.sql');}
-        if (SQLVersion = '1.1') and (ProgramsVer = '2.0.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'oracle-update-11-to-20.sql');
-        if (SQLVersion = '1.2') and (ProgramsVer = '2.0.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'oracle-update-12-to-20.sql');
-        if (SQLVersion = '1.3') and (ProgramsVer = '2.0.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'oracle-update-13-to-20.sql');
-        if (SQLVersion = '2.0') and (ProgramsVer = '2.1.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'oracle-update-20-to-21.sql');
-        if (SQLVersion = '2.0') and (ProgramsVer = '2.2.0.0') then
-        begin
-          DBUpdate(PluginDllPath + 'update\' + 'oracle-update-20-to-21.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'oracle-update-21-to-22.sql');
-        end;
-        if (SQLVersion = '2.0') and (ProgramsVer = '2.3.0.0') then
-        begin
-          DBUpdate(PluginDllPath + 'update\' + 'oracle-update-20-to-21.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'oracle-update-21-to-22.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'oracle-update-22-to-23.sql');
-        end;
-        if (SQLVersion = '2.0') and (ProgramsVer = '2.4.0.0') then
-        begin
-          DBUpdate(PluginDllPath + 'update\' + 'oracle-update-20-to-21.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'oracle-update-21-to-22.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'oracle-update-22-to-23.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'oracle-update-23-to-24.sql');
-        end;
-        if (SQLVersion = '2.1') and (ProgramsVer = '2.3.0.0') then
-        begin
-          DBUpdate(PluginDllPath + 'update\' + 'oracle-update-21-to-22.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'oracle-update-22-to-23.sql');
-        end;
-        if (SQLVersion = '2.1') and (ProgramsVer = '2.4.0.0') then
-        begin
-          DBUpdate(PluginDllPath + 'update\' + 'oracle-update-21-to-22.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'oracle-update-22-to-23.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'oracle-update-23-to-24.sql');
-        end;
-        if (SQLVersion = '2.1') and (ProgramsVer = '2.2.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'oracle-update-21-to-22.sql');
-        if (SQLVersion = '2.2') and (ProgramsVer = '2.3.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'oracle-update-22-to-23.sql');
-        if (SQLVersion = '2.2') and (ProgramsVer = '2.4.0.0') then
-        begin
-          DBUpdate(PluginDllPath + 'update\' + 'oracle-update-22-to-23.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'oracle-update-23-to-24.sql');
-        end;
-        if (SQLVersion = '2.3') and (ProgramsVer = '2.4.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'oracle-update-23-to-24.sql');
-      end
+        DBPrefix := 'oracle'
       else if MatchStrings(DBType, 'sqlite*') then
-      begin
-        {if (SQLVersion = '1.0') and (ProgramsVer = '1.1.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'sqlite-update-10-to-11.sql');
-        if (SQLVersion = '1.0') and (ProgramsVer = '1.2.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'sqlite-update-10-to-12.sql');}
-        if (SQLVersion = '1.0') and (ProgramsVer = '2.0.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'sqlite-update-10-to-20.sql');
-        {if (SQLVersion = '1.1') and (ProgramsVer = '1.2.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'sqlite-update-11-to-12.sql');}
-        if (SQLVersion = '1.1') and (ProgramsVer = '2.0.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'sqlite-update-11-to-20.sql');
-        if (SQLVersion = '1.2') and (ProgramsVer = '2.0.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'sqlite-update-12-to-20.sql');
-        if (SQLVersion = '1.3') and (ProgramsVer = '2.0.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'sqlite-update-13-to-20.sql');
-        if (SQLVersion = '2.0') and (ProgramsVer = '2.1.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'sqlite-update-20-to-21.sql');
-        if (SQLVersion = '2.0') and (ProgramsVer = '2.2.0.0') then
-        begin
-          DBUpdate(PluginDllPath + 'update\' + 'sqlite-update-20-to-21.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'sqlite-update-21-to-22.sql');
-        end;
-        if (SQLVersion = '2.0') and (ProgramsVer = '2.3.0.0') then
-        begin
-          DBUpdate(PluginDllPath + 'update\' + 'sqlite-update-20-to-21.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'sqlite-update-21-to-22.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'sqlite-update-22-to-23.sql');
-        end;
-        if (SQLVersion = '2.0') and (ProgramsVer = '2.4.0.0') then
-        begin
-          DBUpdate(PluginDllPath + 'update\' + 'sqlite-update-20-to-21.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'sqlite-update-21-to-22.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'sqlite-update-22-to-23.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'sqlite-update-23-to-24.sql');
-        end;
-        if (SQLVersion = '2.1') and (ProgramsVer = '2.3.0.0') then
-        begin
-          DBUpdate(PluginDllPath + 'update\' + 'sqlite-update-21-to-22.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'sqlite-update-22-to-23.sql');
-        end;
-        if (SQLVersion = '2.1') and (ProgramsVer = '2.4.0.0') then
-        begin
-          DBUpdate(PluginDllPath + 'update\' + 'sqlite-update-21-to-22.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'sqlite-update-22-to-23.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'sqlite-update-23-to-24.sql');
-        end;
-        if (SQLVersion = '2.1') and (ProgramsVer = '2.2.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'sqlite-update-21-to-22.sql');
-        if (SQLVersion = '2.2') and (ProgramsVer = '2.3.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'sqlite-update-22-to-23.sql');
-        if (SQLVersion = '2.2') and (ProgramsVer = '2.4.0.0') then
-        begin
-          DBUpdate(PluginDllPath + 'update\' + 'sqlite-update-22-to-23.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'sqlite-update-23-to-24.sql');
-        end;
-        if (SQLVersion = '2.3') and (ProgramsVer = '2.4.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'sqlite-update-23-to-24.sql');
-      end
+        DBPrefix := 'sqlite'
       else if MatchStrings(DBType, 'firebird*') then
+        DBPrefix := 'firebird';
+      // Запуск обновления БД
+      if (SQLVersion = '1.0') and (ProgramsVer = '2.0.0.0') then
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-10-to-20.sql');
+      if (SQLVersion = '1.1') and (ProgramsVer = '2.0.0.0') then
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-11-to-20.sql');
+      if (SQLVersion = '1.2') and (ProgramsVer = '2.0.0.0') then
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-12-to-20.sql');
+      if (SQLVersion = '1.3') and (ProgramsVer = '2.0.0.0') then
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-13-to-20.sql');
+      if (SQLVersion = '2.0') and (ProgramsVer = '2.1.0.0') then
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-20-to-21.sql');
+      if (SQLVersion = '2.0') and (ProgramsVer = '2.2.0.0') then
       begin
-        if (SQLVersion = '2.0') and (ProgramsVer = '2.1.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'firebird-update-20-to-21.sql');
-        if (SQLVersion = '2.0') and (ProgramsVer = '2.2.0.0') then
-        begin
-          DBUpdate(PluginDllPath + 'update\' + 'firebird-update-20-to-21.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'firebird-update-21-to-22.sql');
-        end;
-        if (SQLVersion = '2.0') and (ProgramsVer = '2.3.0.0') then
-        begin
-          DBUpdate(PluginDllPath + 'update\' + 'firebird-update-20-to-21.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'firebird-update-21-to-22.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'firebird-update-22-to-23.sql');
-        end;
-        if (SQLVersion = '2.0') and (ProgramsVer = '2.4.0.0') then
-        begin
-          DBUpdate(PluginDllPath + 'update\' + 'firebird-update-20-to-21.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'firebird-update-21-to-22.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'firebird-update-22-to-23.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'firebird-update-23-to-24.sql');
-        end;
-        if (SQLVersion = '2.1') and (ProgramsVer = '2.3.0.0') then
-        begin
-          DBUpdate(PluginDllPath + 'update\' + 'firebird-update-21-to-22.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'firebird-update-22-to-23.sql');
-        end;
-        if (SQLVersion = '2.1') and (ProgramsVer = '2.4.0.0') then
-        begin
-          DBUpdate(PluginDllPath + 'update\' + 'firebird-update-21-to-22.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'firebird-update-22-to-23.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'firebird-update-23-to-24.sql');
-        end;
-        if (SQLVersion = '2.1') and (ProgramsVer = '2.2.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'firebird-update-21-to-22.sql');
-        if (SQLVersion = '2.2') and (ProgramsVer = '2.3.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'firebird-update-22-to-23.sql');
-        if (SQLVersion = '2.2') and (ProgramsVer = '2.4.0.0') then
-        begin
-          DBUpdate(PluginDllPath + 'update\' + 'firebird-update-22-to-23.sql');
-          DBUpdate(PluginDllPath + 'update\' + 'firebird-update-23-to-24.sql');
-        end;
-        if (SQLVersion = '2.3') and (ProgramsVer = '2.4.0.0') then
-          DBUpdate(PluginDllPath + 'update\' + 'firebird-update-23-to-24.sql');
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-20-to-21.sql');
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-21-to-22.sql');
       end;
+      if (SQLVersion = '2.0') and (ProgramsVer = '2.3.0.0') then
+      begin
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-20-to-21.sql');
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-21-to-22.sql');
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-22-to-23.sql');
+      end;
+      if (SQLVersion = '2.0') and (ProgramsVer = '2.4.0.0') then
+      begin
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-20-to-21.sql');
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-21-to-22.sql');
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-22-to-23.sql');
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-23-to-24.sql');
+      end;
+      if (SQLVersion = '2.0') and (ProgramsVer = '2.5.0.0') then
+      begin
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-20-to-21.sql');
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-21-to-22.sql');
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-22-to-23.sql');
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-23-to-24.sql');
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-24-to-25.sql');
+      end;
+      if (SQLVersion = '2.1') and (ProgramsVer = '2.3.0.0') then
+      begin
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-21-to-22.sql');
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-22-to-23.sql');
+      end;
+      if (SQLVersion = '2.1') and (ProgramsVer = '2.4.0.0') then
+      begin
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-21-to-22.sql');
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-22-to-23.sql');
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-23-to-24.sql');
+      end;
+      if (SQLVersion = '2.1') and (ProgramsVer = '2.5.0.0') then
+      begin
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-21-to-22.sql');
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-22-to-23.sql');
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-23-to-24.sql');
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-24-to-25.sql');
+      end;
+      if (SQLVersion = '2.1') and (ProgramsVer = '2.2.0.0') then
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-21-to-22.sql');
+      if (SQLVersion = '2.1') and (ProgramsVer = '2.3.0.0') then
+      begin
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-21-to-22.sql');
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-22-to-23.sql');
+      end;
+      if (SQLVersion = '2.1') and (ProgramsVer = '2.4.0.0') then
+      begin
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-21-to-22.sql');
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-22-to-23.sql');
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-23-to-24.sql');
+      end;
+      if (SQLVersion = '2.1') and (ProgramsVer = '2.5.0.0') then
+      begin
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-21-to-22.sql');
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-22-to-23.sql');
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-23-to-24.sql');
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-24-to-25.sql');
+      end;
+      if (SQLVersion = '2.2') and (ProgramsVer = '2.3.0.0') then
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-22-to-23.sql');
+      if (SQLVersion = '2.2') and (ProgramsVer = '2.4.0.0') then
+      begin
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-22-to-23.sql');
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-23-to-24.sql');
+      end;
+      if (SQLVersion = '2.2') and (ProgramsVer = '2.5.0.0') then
+      begin
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-22-to-23.sql');
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-23-to-24.sql');
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-24-to-25.sql');
+      end;
+      if (SQLVersion = '2.3') and (ProgramsVer = '2.4.0.0') then
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-23-to-24.sql');
+      if (SQLVersion = '2.3') and (ProgramsVer = '2.5.0.0') then
+      begin
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-23-to-24.sql');
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-24-to-25.sql');
+      end;
+      if (SQLVersion = '2.4') and (ProgramsVer = '2.5.0.0') then
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-24-to-25.sql');
     finally
       Query.Free;
     end;
