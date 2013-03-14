@@ -166,14 +166,12 @@ function MainMenuGetContactList(wParam: wParam; lParam: lParam; lParam1: integer
 var
   hContact: Cardinal;
   ContactProto, ContactID, ContactName, GroupName: AnsiString;
-  ProtoCount: Integer;
-  ProtoName: ^PPROTOCOLDESCRIPTOR;
-  ProtoArray: TArrayOfString;
-  ProtoArrayCnt: Integer;
-  MyContactProto: String;
+  AccountCount: Integer;
+  AccountName: ^PPROTOACCOUNT;
+  MyContactAccount: TChar;
+  MyContactAccountNameTemp, MyContactAccountNameW: String;
+  MyContactAccountL: Cardinal;
 begin
-  ProtoArrayCnt := 0;
-  SetLength(ProtoArray, ProtoArrayCnt);
   // Получаем список контактов
   hContact := CallService(MS_DB_CONTACT_FINDFIRST, 0, 0);
   while hContact <> 0 do
@@ -186,42 +184,32 @@ begin
       ContactName := 'NoContactName';
     if ContactID = '' then
       ContactID := 'NoContactID';
-    //GetDBStr(hContact, 'Protocol', 'p', 'NoProto')
     if not MatchStrings(LowerCase(ContactProto), 'skype*') then
-    begin
-      //WriteInLog(ProfilePath, Format('%s;%s;%s;%d', [ContactID, ContactName, GetLangStr('ContactNotInTheList'), StrContactProtoToInt(GetDBStr(hContact, 'Protocol', 'p', 'NoProto'))]), 3);
       WriteInLog(ProfilePath, Format('%s;%s;%s;%d', [ContactID, ContactName, GroupName, StrContactProtoToInt(ContactProto)]), 3);
-      MyContactProto := Format('%s;%s;%d;%s;%s;%s', [ContactProto, GetMyContactID(ContactProto), StrContactProtoToInt(ContactProto), GetMyContactDisplayName(ContactProto), '', '']);
-      // Проверяем УПОРЯДОЧЕНЫЙ массив протоколов на наличие нового,
-      // если в последней позиции нет такого протокола, добавляем его
-      if ProtoArrayCnt > 0 then
-      begin
-        if ProtoArray[High(ProtoArray)] <> MyContactProto then
-        begin
-          Inc(ProtoArrayCnt);
-          SetLength(ProtoArray, ProtoArrayCnt);
-          ProtoArray[ProtoArrayCnt-1] := MyContactProto;
-        end;
-      end
-      else
-      begin
-        Inc(ProtoArrayCnt);
-        SetLength(ProtoArray, ProtoArrayCnt);
-        ProtoArray[ProtoArrayCnt-1] := MyContactProto;
-      end;
-    end;
     hContact := CallService(MS_DB_CONTACT_FINDNEXT, hContact, 0);
   end;
-  // Выгружаем массив протоколов в файл ProtoList.csv
-  for ProtoArrayCnt := 0 to High(ProtoArray) do
-    WriteInLog(ProfilePath, ProtoArray[ProtoArrayCnt], 4);
+  AccountCount := 0;
+  // Выгружаем список протоколов в файл ProtoList.csv
+  if (CallService(MS_PROTO_ENUMACCOUNTS, Integer(@AccountCount), Integer(@AccountName)) = 0) and (AccountCount <> 0) then
+  begin
+    while AccountCount > 0 do
+    begin
+      if AccountName^.szModuleName <> 'MetaContacts' then
+        WriteInLog(ProfilePath, Format('%s;%s;%d;%s;%s;%s', [AccountName^.szModuleName, GetMyContactID(AccountName^.szModuleName), StrContactProtoToInt(AccountName^.szProtoName), GetMyContactDisplayName(AccountName^.szModuleName), '', '']), 4);
+      Inc(AccountName);
+      Dec(AccountCount);
+    end;
+  end;
   // Закрываем файлы
   if ContactListLogOpened then
     CloseLogFile(3);
   if ProtoListLogOpened then
     CloseLogFile(4);
   Result := 0;
-  MsgInf(htdPluginShortName, GetLangStr('SaveContactListCompleted'));
+  if (FileExists(ProfilePath + ContactListName)) and (FileExists(ProfilePath + ProtoListName)) then
+    MsgInf(htdPluginShortName, GetLangStr('SaveContactListCompleted'))
+  else
+    MsgInf(htdPluginShortName, GetLangStr('SaveContactListErr'));
 end;
 
 { Запустить перерасчет MD5-хешей }

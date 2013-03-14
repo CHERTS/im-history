@@ -124,27 +124,29 @@ begin
       cgs.szModule := PAnsiChar(Proto);
       cgs.szSetting := uid;
       cgs.pValue := @dbv;
-      if CallService(MS_DB_CONTACT_GETSETTING, hContact, LPARAM(@cgs)) = 0 then
-      begin
-        case dbv._type of
-          DBVT_BYTE:
-            Result := AnsiString(intToStr(dbv.bVal));
-          DBVT_WORD:
-            Result := AnsiString(intToStr(dbv.wVal));
-          DBVT_DWORD:
-            Result := AnsiString(intToStr(dbv.dVal));
-          DBVT_ASCIIZ:
-            Result := AnsiString(dbv.szVal.a);
-          DBVT_UTF8:
-            begin
-              tmp := AnsiToWideString(dbv.szVal.a, CP_UTF8);
-              Result := WideToAnsiString(tmp, hppCodepage);
-            end;
-          DBVT_WCHAR:
-            Result := WideToAnsiString(dbv.szVal.w, hppCodepage);
+      try
+        if CallService(MS_DB_CONTACT_GETSETTING, hContact, LPARAM(@cgs)) = 0 then
+        begin
+          case dbv._type of
+            DBVT_BYTE:
+              Result := AnsiString(intToStr(dbv.bVal));
+            DBVT_WORD:
+              Result := AnsiString(intToStr(dbv.wVal));
+            DBVT_DWORD:
+              Result := AnsiString(intToStr(dbv.dVal));
+            DBVT_ASCIIZ:
+              Result := AnsiString(dbv.szVal.a);
+            DBVT_UTF8:
+              begin
+                tmp := AnsiToWideString(dbv.szVal.a, CP_UTF8);
+                Result := WideToAnsiString(tmp, hppCodepage);
+              end;
+            DBVT_WCHAR:
+              Result := WideToAnsiString(dbv.szVal.w, hppCodepage);
+          end;
+          DBFreeVariant(@dbv);
         end;
-        // free variant
-        DBFreeVariant(@dbv);
+      except
       end;
     end;
   end;
