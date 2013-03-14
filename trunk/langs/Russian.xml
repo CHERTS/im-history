@@ -166,7 +166,8 @@
   <GetContactListButton>Сохранить список контактов</GetContactListButton>
   <UpdateContactListButton>Обновить данные контактов в БД</UpdateContactListButton>
   <CheckUpdateButton>Проверить наличие обновлений</CheckUpdateButton>
-  <SaveContactListCompleted>Список контактов сохранен.</SaveContactListCompleted>
+  <SaveContactListCompleted>Список контактов и протоколов сохранен.</SaveContactListCompleted>
+  <SaveContactListErr>Ошибка! Список контактов и протоколов не сохранен или сохранен частично.</SaveContactListErr>
   <SendUpdateContactListCompleted>Отправлен запрос на обновление списка контактов в БД.</SendUpdateContactListCompleted>
   <SendUpdateContactListErr>Файл %s для обновления списка контактов не найден. Запрос на обновление не отправлен.</SendUpdateContactListErr>
   <ContactNotInTheList>Не в списке</ContactNotInTheList>
