@@ -254,7 +254,7 @@ begin
     if FileExists(Path) then
     begin
       try
-        DeleteFile(Path)
+        DeleteFile(Path);
       except
       end;
     end;
@@ -265,7 +265,7 @@ begin
     if FileExists(Path) then
     begin
       try
-        DeleteFile(Path)
+        DeleteFile(Path);
       except
       end;
     end;
