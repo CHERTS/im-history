@@ -168,9 +168,6 @@ var
   ContactProto, ContactID, ContactName, GroupName: AnsiString;
   AccountCount: Integer;
   AccountName: ^PPROTOACCOUNT;
-  MyContactAccount: TChar;
-  MyContactAccountNameTemp, MyContactAccountNameW: String;
-  MyContactAccountL: Cardinal;
 begin
   // Получаем список контактов
   hContact := CallService(MS_DB_CONTACT_FINDFIRST, 0, 0);
@@ -181,10 +178,10 @@ begin
     ContactName := GetContactDisplayName(hContact, '', True);
 		GroupName := GetDBStr(hContact , 'CList' , 'Group' , GetLangStr('ContactNotInTheList'));
     if ContactName = '' then
-      ContactName := 'NoContactName';
+      ContactName := TranslateW('Unknown Contact');
     if ContactID = '' then
-      ContactID := 'NoContactID';
-    if not MatchStrings(LowerCase(ContactProto), 'skype*') then
+      ContactID := TranslateW('Unknown Contact');
+    if not ((MatchStrings(LowerCase(ContactProto), 'skype*')) or (ContactID = TranslateW('Unknown Contact')) or MatchStrings(LowerCase(ContactProto), 'metacontacts*')) then
       WriteInLog(ProfilePath, Format('%s;%s;%s;%d', [ContactID, ContactName, GroupName, StrContactProtoToInt(ContactProto)]), 3);
     hContact := CallService(MS_DB_CONTACT_FINDNEXT, hContact, 0);
   end;
@@ -194,7 +191,8 @@ begin
   begin
     while AccountCount > 0 do
     begin
-      if AccountName^.szModuleName <> 'MetaContacts' then
+      if not((AccountName^.szModuleName = 'MetaContacts') or (MatchStrings(LowerCase(AccountName^.szModuleName), 'skype*'))) then
+      //if not MatchStrings(LowerCase(AccountName^.szModuleName), 'skype*') then
         WriteInLog(ProfilePath, Format('%s;%s;%d;%s;%s;%s', [AccountName^.szModuleName, GetMyContactID(AccountName^.szModuleName), StrContactProtoToInt(AccountName^.szProtoName), GetMyContactDisplayName(AccountName^.szModuleName), '', '']), 4);
       Inc(AccountName);
       Dec(AccountCount);
