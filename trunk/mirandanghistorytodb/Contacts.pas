@@ -171,12 +171,12 @@ begin
     RetPWideChar := ci.retval.szVal.w;
     UW := TranslateW('Unknown Contact');
     if WideCompareText(RetPWideChar, UW) = 0 then
-      Result := 'NoContactName'
+      Result := TranslateW('Unknown Contact')
     else
       Result := RetPWideChar;
   end
   else
-      Result := 'NoContactName';
+      Result := TranslateW('Unknown Contact');
 end;
 
 function GetMyContactID(Proto: AnsiString): String;
@@ -194,18 +194,18 @@ begin
     RetPWideChar := ci.retval.szVal.w;
     UW := TranslateW('Unknown Contact');
     if WideCompareText(RetPWideChar, UW) = 0 then
-      Result := 'NoContactID'
+      Result := TranslateW('Unknown Contact')
     else
     begin
       TmpContactID := GetContactID(ci.hContact, Proto);
       if TmpContactID <> '' then
         Result := TmpContactID
       else
-        Result := 'NoContactID';
+        Result := TranslateW('Unknown Contact');
     end;
   end
   else
-      Result := 'NoContactID';
+      Result := TranslateW('Unknown Contact');
 end;
 
 end.
