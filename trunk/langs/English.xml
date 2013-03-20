@@ -328,6 +328,7 @@
   <HistoryToDBSyncSkypeAttachAvailable>Skype API is available</HistoryToDBSyncSkypeAttachAvailable>
   <HistoryToDBSyncSkypeErrCreate>Error creating an instance of Skype</HistoryToDBSyncSkypeErrCreate>
   <HistoryToDBSyncSkypeErrDelete>Error deleting an instance of Skype</HistoryToDBSyncSkypeErrDelete>
+  <HistoryToDBSyncSkypeErrAttach>Error connecting to an instance of Skype</HistoryToDBSyncSkypeErrAttach>
   <HistoryToDBSyncSkypeRun>We are trying to run Skype...</HistoryToDBSyncSkypeRun>
   <HistoryToDBSyncSkypeRunErr>Error when starting Skype</HistoryToDBSyncSkypeRunErr>
   <HistoryToDBSyncSkypeInitErr>Error creating interface Skype</HistoryToDBSyncSkypeInitErr>
@@ -484,6 +485,8 @@
   <UpdateSettingsFileNotFound>Update settings file not found</UpdateSettingsFileNotFound>
   <UpdateLangFile>Start update localization file %s...</UpdateLangFile>
   <UpdateLangFileDone>Update localization file %s completed.</UpdateLangFileDone>
+  <UpdateSQLFile>Start update sql-file %s...</UpdateSQLFile>
+  <UpdateSQLFileDone>Update sql-file %s completed.</UpdateSQLFileDone>
   <UpdateFile>Start update file %s...</UpdateFile>
   <UpdateFileDone>Update file %s completed.</UpdateFileDone>
   <InMemoryFoundProcess>In the memory of the process found %s (PID: %s)</InMemoryFoundProcess>
