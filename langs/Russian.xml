@@ -329,6 +329,7 @@
   <HistoryToDBSyncSkypeAttachAvailable>Skype API доступно</HistoryToDBSyncSkypeAttachAvailable>
   <HistoryToDBSyncSkypeErrCreate>Ошибка создания экземпляра Skype</HistoryToDBSyncSkypeErrCreate>
   <HistoryToDBSyncSkypeErrDelete>Ошибка при удалении экземпляра Skype</HistoryToDBSyncSkypeErrDelete>
+  <HistoryToDBSyncSkypeErrAttach>Ошибка при подключении к экземпляру Skype</HistoryToDBSyncSkypeErrAttach>
   <HistoryToDBSyncSkypeRun>Пытаемся запустить Skype...</HistoryToDBSyncSkypeRun>
   <HistoryToDBSyncSkypeRunErr>Ошибка при запуске Skype</HistoryToDBSyncSkypeRunErr>
   <HistoryToDBSyncSkypeInitErr>Ошибка при создании интерфейса Skype</HistoryToDBSyncSkypeInitErr>
@@ -485,6 +486,8 @@
   <UpdateSettingsFileNotFound>Не найден файл настроек обновления</UpdateSettingsFileNotFound>
   <UpdateLangFile>Начинаем обновление файла локализации %s...</UpdateLangFile>
   <UpdateLangFileDone>Обновление файла локализации %s выполнено.</UpdateLangFileDone>
+  <UpdateSQLFile>Начинаем обновление sql-файла %s...</UpdateSQLFile>
+  <UpdateSQLFileDone>Обновление sql-файла %s выполнено.</UpdateSQLFileDone>
   <UpdateFile>Начинаем обновление файла %s...</UpdateFile>
   <UpdateFileDone>Обновление файла %s выполнено.</UpdateFileDone>
   <InMemoryFoundProcess>В памяти найден процесс %s (PID: %s)</InMemoryFoundProcess>
