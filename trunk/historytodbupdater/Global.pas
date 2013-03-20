@@ -48,6 +48,7 @@ const
   // Для мультиязыковой поддержки
   WM_LANGUAGECHANGED = WM_USER + 1;
   dirLangs = 'langs\';
+  dirSQLUpdate = 'update\';
   defaultLangFile = 'English.xml';
   // End
   WM_MSGBOX = WM_USER + 2;

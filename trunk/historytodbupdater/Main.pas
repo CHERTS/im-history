@@ -797,6 +797,22 @@ begin
           LogMemo.Lines.Add(Format(GetLangStr('UpdateLangFileDone'), [SR.Name]));
         end;
       end;
+      if MatchStrings(SR.Name, '*.sql') then
+      begin
+        LStatus.Caption := Format(GetLangStr('UpdateSQLFile'), [SR.Name]);
+        LStatus.Hint := 'UpdateSQLFile';
+        LStatus.Repaint;
+        LogMemo.Lines.Add(Format(GetLangStr('UpdateSQLFile'), [SR.Name]));
+        if not DirectoryExists(PluginPath + dirSQLUpdate) then
+          CreateDir(PluginPath + dirSQLUpdate);
+        if FileExists(PluginPath + dirSQLUpdate + SR.Name) then
+          DeleteFile(PluginPath + dirSQLUpdate + SR.Name);
+        if CopyFileEx(PChar(SavePath + SR.Name), PChar(PluginPath + dirSQLUpdate + SR.Name), nil, nil, nil, COPY_FILE_FAIL_IF_EXISTS) then
+        begin
+          DeleteFile(SavePath + SR.Name);
+          LogMemo.Lines.Add(Format(GetLangStr('UpdateSQLFileDone'), [SR.Name]));
+        end;
+      end;
       if MatchStrings(SR.Name, '*.exe') then
       begin
         LStatus.Caption := Format(GetLangStr('UpdateFile'), [SR.Name]);
