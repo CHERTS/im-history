@@ -3543,10 +3543,21 @@ begin
     Skype.Attach(SkypeProtocol, False);
   if Status = apiAttachSuccess Then
   begin
-    Skype.Application[ProgramsName].Create;
-    LSkypeStatus.Caption := Skype.CurrentUser.FullName + ' (' + Skype.CurrentUser.Handle + ')';
-    LSkypeStatus.Hint := '';
-    if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Подключено: ' + Skype.CurrentUser.FullName + ' (' + Skype.CurrentUser.Handle + ')', 4);
+    try
+      Skype.Application[ProgramsName].Create;
+      LSkypeStatus.Caption := Skype.CurrentUser.FullName + ' (' + Skype.CurrentUser.Handle + ')';
+      LSkypeStatus.Hint := '';
+      if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Подключено: ' + Skype.CurrentUser.FullName + ' (' + Skype.CurrentUser.Handle + ')', 4);
+    except
+      on e :
+        Exception do
+        begin
+          LSkypeStatus.Caption := GetLangStr('HistoryToDBSyncSkypeErrAttach');
+          LSkypeStatus.Hint := 'HistoryToDBSyncSkypeErrAttach';
+          if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура SkypeAttachmentStatus: Class - ' + E.ClassName + ' | Ошибка - ' + Trim(e.Message), 4);
+          Exit;
+        end;
+    end;
   end;
 end;
 
@@ -3652,14 +3663,14 @@ begin
   end
   else if (TotalRecNo >= 100000) and (TotalRecNo < 1000000) then
   begin
-    if Round(CurRecNo/10000) = CurRecNo/10000 then
+    if Round(CurRecNo/5000) = CurRecNo/5000 then
       Result := True
     else
       Result := False;
   end
   else
   begin
-    if Round(CurRecNo/100000) = CurRecNo/100000 then
+    if Round(CurRecNo/10000) = CurRecNo/10000 then
       Result := True
     else
       Result := False;
