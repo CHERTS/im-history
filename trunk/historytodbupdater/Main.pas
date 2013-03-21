@@ -176,6 +176,9 @@ begin
   end;
   if FileExists(INISavePath) then
     DeleteFile(INISavePath);
+  // ѕишем все в лог
+  if EnableDebug then
+    LogMemo.Lines.SaveToFile(ProfilePath + DebugLogName);
 end;
 
 procedure TMainForm.FormCreate(Sender: TObject);
@@ -739,8 +742,10 @@ begin
       if (UpdateURL <> '') and (CurrStep <= MaxStep) then
       begin
         LogMemo.Lines.Add(GetLangStr('FileToUpdate') + ' = ' + UpdateURL);
-        if MatchStrings(UpdateURL, '*file=Russian*') or MatchStrings(UpdateURL, '*file=English*') then
+        if MatchStrings(UpdateURL, '*file=*Lang') then
           IMDownloader1.DirPath := PluginPath + dirLangs
+        else if MatchStrings(UpdateURL, '*file=*-update-*-to-*') then
+          IMDownloader1.DirPath := PluginPath + dirSQLUpdate
         else
           IMDownloader1.DirPath := PluginPath;
         IMDownloader1.URL := UpdateURL;
