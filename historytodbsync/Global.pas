@@ -137,6 +137,7 @@ procedure IMDelay(Value: Cardinal);
 // Для мультиязыковой поддержки
 procedure MsgDie(Caption, Msg: WideString);
 procedure MsgInf(Caption, Msg: WideString);
+procedure MsgInfGlobal(Caption, Msg: WideString);
 function GetLangStr(StrID: String): WideString;
 
 implementation
@@ -622,17 +623,31 @@ end;
 // Для мультиязыковой поддержки
 procedure MsgDie(Caption, Msg: WideString);
 begin
+  if not HideSyncIcon then
+  begin
+    if AlphaBlendEnable then
+      PostMessage(GetForegroundWindow, WM_USER + 2, 0, 0);
+    MessageBoxW(GetForegroundWindow, PWideChar(Msg), PWideChar(Caption), MB_ICONERROR);
+  end;
+end;
+
+// Для мультиязыковой поддержки
+procedure MsgInfGlobal(Caption, Msg: WideString);
+begin
   if AlphaBlendEnable then
     PostMessage(GetForegroundWindow, WM_USER + 2, 0, 0);
-  MessageBoxW(GetForegroundWindow, PWideChar(Msg), PWideChar(Caption), MB_ICONERROR);
+  MessageBoxW(GetForegroundWindow, PWideChar(Msg), PWideChar(Caption), MB_ICONINFORMATION);
 end;
 
 // Для мультиязыковой поддержки
 procedure MsgInf(Caption, Msg: WideString);
 begin
-  if AlphaBlendEnable then
-    PostMessage(GetForegroundWindow, WM_USER + 2, 0, 0);
-  MessageBoxW(GetForegroundWindow, PWideChar(Msg), PWideChar(Caption), MB_ICONINFORMATION);
+  if not HideSyncIcon then
+  begin
+    if AlphaBlendEnable then
+      PostMessage(GetForegroundWindow, WM_USER + 2, 0, 0);
+    MessageBoxW(GetForegroundWindow, PWideChar(Msg), PWideChar(Caption), MB_ICONINFORMATION);
+  end;
 end;
 
 // Для мультиязыковой поддержки
