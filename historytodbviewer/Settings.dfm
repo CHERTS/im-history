@@ -62,7 +62,7 @@ object SettingsForm: TSettingsForm
     Top = 6
     Width = 622
     Height = 346
-    ActivePage = AboutTabSheet
+    ActivePage = SyncTabSheet
     TabOrder = 1
     object MainTabSheet: TTabSheet
       Caption = #1041#1072#1079#1072' '#1076#1072#1085#1085#1099#1093
@@ -389,6 +389,7 @@ object SettingsForm: TSettingsForm
           Caption = #1047#1072#1087#1091#1089#1082#1072#1090#1100' Skype '#1087#1088#1080' '#1079#1072#1087#1091#1089#1082#1077' HistoryToDBSync'
           Enabled = False
           TabOrder = 3
+          OnClick = CBRunSkypeClick
         end
         object CBExitSkype: TCheckBox
           Left = 16

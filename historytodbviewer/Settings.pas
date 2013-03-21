@@ -236,6 +236,7 @@ type
     procedure CBSkypeSupportEnableClick(Sender: TObject);
     procedure FindLangFile;
     function DBParamCheck: Boolean;
+    procedure CBRunSkypeClick(Sender: TObject);
   private
     { Private declarations }
     SHeaderFontInTitle    : TFont;
@@ -851,7 +852,12 @@ begin
         if not CheckCurrentUserAutorun('HistoryToDBSync for ' + IMClientType + ' (' + MyAccount + ')') then
         begin
           if FileExists(PluginPath+'HistoryToDBSync.exe') then
-            AddCurrentUserAutorun('HistoryToDBSync for ' + IMClientType + ' (' + MyAccount + ')', '"'+PluginPath+'HistoryToDBSync.exe" "'+PluginPath+'" "'+ProfilePath+'"');
+          begin
+            if IMClientType = 'Skype' then
+              AddCurrentUserAutorun('HistoryToDBSync for ' + IMClientType + ' (' + MyAccount + ')', '"'+PluginPath+'HistoryToDBSync.exe" "'+PluginPath+'" "'+ProfilePath+'" 0')
+            else
+              AddCurrentUserAutorun('HistoryToDBSync for ' + IMClientType + ' (' + MyAccount + ')', '"'+PluginPath+'HistoryToDBSync.exe" "'+PluginPath+'" "'+ProfilePath+'"');
+          end;
         end;
       end
       else
@@ -1448,6 +1454,20 @@ begin
   DefaultLanguage := CBLang.Items[CBLang.ItemIndex];
   MainForm.CoreLanguageChanged;
   MainForm.JvTreeViewMake;
+end;
+
+procedure TSettingsForm.CBRunSkypeClick(Sender: TObject);
+begin
+  {if CBRunSkype.Checked then
+  begin
+    CBExitSkype.Enabled := True;
+    CBExitSkype.Checked := Global_ExitSkypeOnEnd;
+  end
+  else
+  begin
+    CBExitSkype.Enabled := False;
+    CBExitSkype.Checked := False;
+  end;}
 end;
 
 procedure TSettingsForm.SetHotKeyButtonClick(Sender: TObject);
