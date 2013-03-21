@@ -272,7 +272,7 @@ begin
     Result := P;
   end
   else
-    Result := 'MD5';
+    Result := '';
 end;
 
 // LogType = 0 - сообщени€ добавл€ютс€ в файл MesLogName

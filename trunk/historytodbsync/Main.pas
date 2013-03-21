@@ -1212,7 +1212,7 @@ begin
   begin
     ZConnection1.HostName := '';
     ZConnection1.Port := 0;
-    ZConnection1.User := '';
+    ZConnection1.User := DBUserName;
     ZConnection1.Password := '';
     ZConnection1.Properties.Clear;
   end
@@ -1370,26 +1370,29 @@ procedure TMainSyncForm.ShowBalloonHint(BalloonTitle, BalloonMsg: WideString);
 var
   DA: TJvDesktopAlert;
 begin
-  if (AniEvents) and (not CloseRequest) then
+  if not HideSyncIcon then
   begin
-    DA := TJvDesktopAlert.Create(Self);
-    DA.AutoFree := True;
-    DA.Image := PopupImage.Picture;
-    DA.HeaderText := Format('%s (%d)', [BalloonTitle, FCount]);
-    DA.MessageText := BalloonMsg;
-    DA.OnShow := DoAlertShow;
-    DA.OnClose := DoAlertClose;
-    DA.Location.AlwaysResetPosition := False;
-    DA.Location.Position := dapBottomRight;
-    DA.Location.Width := 350;
-    DA.Location.Height := 80;
-    DA.AlertStyle := asFade;
-    DA.StyleHandler.StartInterval := 25;
-    DA.StyleHandler.StartSteps := 10;
-    DA.StyleHandler.DisplayDuration  := 1400;
-    DA.StyleHandler.EndInterval := 50;
-    DA.StyleHandler.EndSteps := 10;
-    DA.Execute;
+    if (AniEvents) and (not CloseRequest) then
+    begin
+      DA := TJvDesktopAlert.Create(Self);
+      DA.AutoFree := True;
+      DA.Image := PopupImage.Picture;
+      DA.HeaderText := Format('%s (%d)', [BalloonTitle, FCount]);
+      DA.MessageText := BalloonMsg;
+      DA.OnShow := DoAlertShow;
+      DA.OnClose := DoAlertClose;
+      DA.Location.AlwaysResetPosition := False;
+      DA.Location.Position := dapBottomRight;
+      DA.Location.Width := 350;
+      DA.Location.Height := 80;
+      DA.AlertStyle := asFade;
+      DA.StyleHandler.StartInterval := 25;
+      DA.StyleHandler.StartSteps := 10;
+      DA.StyleHandler.DisplayDuration  := 1400;
+      DA.StyleHandler.EndInterval := 50;
+      DA.StyleHandler.EndSteps := 10;
+      DA.Execute;
+    end;
   end;
 end;
 
@@ -1651,12 +1654,14 @@ end;
 { Процедура проверки версии БД и её обновления }
 procedure TMainSyncForm.CheckDBUpdate(PluginDllPath: String);
 var
-  Query: TZQuery;
+  UQuery: TZQuery;
   SQLVersion, SQLClientType, TempProgramsVer: String;
   DBPrefix: String;
 begin
   if DBUserName <> 'username' then
-    ConnectDB; // Подключаемся к базе
+    ConnectDB // Подключаемся к базе
+  else
+    Exit;
   if ZConnection1.Connected then
   begin
     HistoryToDBSyncTray.IconIndex := 3;
@@ -1677,15 +1682,28 @@ begin
       ShowBalloonHint(MainSyncForm.Caption, GetLangStr('HistoryToDBSyncUnknownIMClient'));
       Exit;
     end;
-    Query := TZQuery.Create(nil);
-    Query.Connection := ZConnection1;
-    Query.ParamCheck := False;
+    UQuery := TZQuery.Create(nil);
+    UQuery.Connection := ZConnection1;
+    UQuery.ParamCheck := False;
     try
-      Query.SQL.Clear;
-      Query.SQL.Text := 'select config_value from config where config_name = '''+SQLClientType+'''';
-      Query.Open;
-      SQLVersion := Query.FieldByName('config_value').AsString;
-      Query.Close;
+      UQuery.SQL.Clear;
+      UQuery.SQL.Text := 'select config_value from config where config_name = '''+SQLClientType+'''';
+      try
+        UQuery.Open;
+      except
+        on e :
+          Exception do
+          begin
+            if WriteErrLog then
+              WriteInLog(ProfilePath, Format(ERR_READ_DB_CONNECT_ERR, [FormatDateTime('dd.mm.yy hh:mm:ss', Now), Trim(e.Message)]), 1);
+            if not HideSyncIcon then
+              MsgInf(MainSyncForm.Caption + ' - ' + GetLangStr('ErrCaption'), 'Procedure CheckDBUpdate' + #13 + GetLangStr('ErrSQLQuery') + #13 + Trim(e.Message));
+            if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Exception в процедуре CheckDBUpdate: ' + Trim(e.Message), 2);
+            Exit;
+          end;
+      end;
+      SQLVersion := UQuery.FieldByName('config_value').AsString;
+      UQuery.Close;
       // Обновление структуры БД для Skype с версии ниже 2.3.0.0
       TempProgramsVer := StringReplace(ProgramsVer, '.', '', [RFReplaceall]);
       if IsNumber(TempProgramsVer) then
@@ -1803,7 +1821,7 @@ begin
       if (SQLVersion = '2.4') and (ProgramsVer = '2.5.0.0') then
         DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-24-to-25.sql');
     finally
-      Query.Free;
+      UQuery.Free;
     end;
     HistoryToDBSyncTray.IconIndex := 0;
   end;
@@ -3100,6 +3118,7 @@ end;
 { Подключенгие к БД с обработкой ошибок }
 procedure TMainSyncForm.ConnectDB;
 begin
+  if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура ConnectDB: Protocol = ' + ZConnection1.Protocol + ', HostName = ' + ZConnection1.HostName + ', Port = ' + IntToStr(ZConnection1.Port) + ', Database = ' + ZConnection1.Database + ', User = ' + ZConnection1.User + ', Password = ' + EncryptMD5(ZConnection1.Password), 2);
   // Подключаемся к базе
   if not ZConnection1.Connected then
   begin
@@ -3221,7 +3240,9 @@ begin
         if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Пытаемся запустить Skype...', 4);
         Skype.Client.Start(True, True);
       end;
-    end;
+    end
+    else
+      if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Запуск Skype при старте HistoryToDBSync отключен.', 4);
   except
     on e :
       Exception do
@@ -3258,11 +3279,16 @@ begin
   if (not Skype.Client.IsRunning) and (not SkypeRunDone) and (IMClientType = 'Skype') then
   begin
     try
-      LSkypeStatus.Caption := GetLangStr('HistoryToDBSyncSkypeRun');
-      LSkypeStatus.Hint := 'HistoryToDBSyncSkypeRun';
-      if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Пытаемся запустить Skype...', 4);
-      Skype.Client.Start(True, False);
-      SkypeRunDone := True;
+      if Global_RunningSkypeOnStartup then
+      begin
+        LSkypeStatus.Caption := GetLangStr('HistoryToDBSyncSkypeRun');
+        LSkypeStatus.Hint := 'HistoryToDBSyncSkypeRun';
+        if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Пытаемся запустить Skype...', 4);
+        Skype.Client.Start(True, False);
+        SkypeRunDone := True;
+      end
+      else
+        if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Запуск Skype при старте HistoryToDBSync отключен.', 4);
     except
       on e :
         Exception do
