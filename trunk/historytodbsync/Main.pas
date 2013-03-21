@@ -258,6 +258,7 @@ var
 begin
   RunAppDone := False;
   CloseRequest := False;
+  HideSyncIcon := False;
   // Для мультиязыковой поддержки
   MainFormHandle := Handle;
   SetWindowLong(Handle, GWL_HWNDPARENT, 0);
@@ -289,7 +290,7 @@ begin
   if ParamCount < 2 then
   begin
     HistoryMainFormHidden := True;
-    MsgInf(ProgramsName, CmdHelpStr);
+    MsgInfGlobal(ProgramsName, CmdHelpStr);
     Exit;
   end
   else
@@ -322,7 +323,7 @@ begin
       else
       begin
         HistoryMainFormHidden := True;
-        MsgInf(ProgramsName, CmdHelpStr);
+        MsgInfGlobal(ProgramsName, CmdHelpStr);
         Exit;
       end;
     end;
@@ -341,7 +342,7 @@ begin
         CmdHelpStr := 'Файл локализации ' + PluginPath + dirLangs + defaultLangFile + ' не найден.'
       else
         CmdHelpStr := 'The localization file ' + PluginPath + dirLangs + defaultLangFile + ' is not found.';
-      MsgInf(ProgramsName, CmdHelpStr);
+      MsgInfGlobal(ProgramsName, CmdHelpStr);
       // Освобождаем ресурсы
       EncryptFree;
       Exit;
@@ -382,9 +383,9 @@ begin
         CmdHelpStr := GetLangStr('HistoryToDBSyncSkypeInitErr') + #13 +
           GetLangStr('HistoryToDBSyncSkypeNotFound');
         if IMClientType <> 'Unknown' then
-          MsgInf(ProgramsName + ' for ' + IMClientType, CmdHelpStr)
+          MsgInfGlobal(ProgramsName + ' for ' + IMClientType, CmdHelpStr)
         else
-          MsgInf(ProgramsName, CmdHelpStr);
+          MsgInfGlobal(ProgramsName, CmdHelpStr);
         Exit;
       end;
     end
@@ -1253,8 +1254,7 @@ begin
           begin
             if WriteErrLog then
               WriteInLog(ProfilePath, Format(ERR_READ_DB_CONNECT_ERR, [FormatDateTime('dd.mm.yy hh:mm:ss', Now), Trim(e.Message)]), 1);
-            if not HideSyncIcon then
-              MsgInf(MainSyncForm.Caption + ' - ' + GetLangStr('ErrCaption'), GetLangStr('ErrSQLQuery') + #13 + Trim(e.Message));
+            MsgInf(MainSyncForm.Caption + ' - ' + GetLangStr('ErrCaption'), GetLangStr('ErrSQLQuery') + #13 + Trim(e.Message));
           end;
       end;
     end;
@@ -1285,8 +1285,7 @@ begin
           begin
             if WriteErrLog then
               WriteInLog(ProfilePath, Format(ERR_READ_DB_CONNECT_ERR, [FormatDateTime('dd.mm.yy hh:mm:ss', Now), Trim(e.Message)]), 1);
-            if not HideSyncIcon then
-              MsgInf(MainSyncForm.Caption + ' - ' + GetLangStr('ErrCaption'), GetLangStr('ErrSQLQuery') + #13 + Trim(e.Message));
+            MsgInf(MainSyncForm.Caption + ' - ' + GetLangStr('ErrCaption'), GetLangStr('ErrSQLQuery') + #13 + Trim(e.Message));
           end;
         end;
     end;
@@ -1323,8 +1322,7 @@ begin
               ZConnection1.Rollback;
             if WriteErrLog then
               WriteInLog(ProfilePath, Format(ERR_READ_DB_CONNECT_ERR, [FormatDateTime('dd.mm.yy hh:mm:ss', Now), Trim(e.Message)]), 1);
-            if not HideSyncIcon then
-              MsgInf(MainSyncForm.Caption + ' - ' + GetLangStr('ErrCaption'), GetLangStr('ErrSQLExecQuery') + #13 + Trim(e.Message));
+            MsgInf(MainSyncForm.Caption + ' - ' + GetLangStr('ErrCaption'), GetLangStr('ErrSQLExecQuery') + #13 + Trim(e.Message));
           end;
         end;
       if MatchStrings(DBType, 'firebird*') then
@@ -1696,9 +1694,9 @@ begin
           begin
             if WriteErrLog then
               WriteInLog(ProfilePath, Format(ERR_READ_DB_CONNECT_ERR, [FormatDateTime('dd.mm.yy hh:mm:ss', Now), Trim(e.Message)]), 1);
-            if not HideSyncIcon then
-              MsgInf(MainSyncForm.Caption + ' - ' + GetLangStr('ErrCaption'), 'Procedure CheckDBUpdate' + #13 + GetLangStr('ErrSQLQuery') + #13 + Trim(e.Message));
             if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Exception в процедуре CheckDBUpdate: ' + Trim(e.Message), 2);
+            ShowBalloonHint(MainSyncForm.Caption, 'DBUpdate' + #13 + GetLangStr('ErrSQLQuery') + #13 + Trim(e.Message));
+            HistoryToDBSyncTray.IconIndex := 0;
             Exit;
           end;
       end;
