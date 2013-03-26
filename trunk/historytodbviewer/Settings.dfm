@@ -66,6 +66,10 @@ object SettingsForm: TSettingsForm
     TabOrder = 1
     object MainTabSheet: TTabSheet
       Caption = #1041#1072#1079#1072' '#1076#1072#1085#1085#1099#1093
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       DesignSize = (
         614
         318)
@@ -405,6 +409,10 @@ object SettingsForm: TSettingsForm
     object InterfaceTabSheet: TTabSheet
       Caption = #1048#1085#1090#1077#1088#1092#1077#1081#1089
       ImageIndex = 9
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object GBAlphaBlend: TGroupBox
         Left = 3
         Top = 3
@@ -465,6 +473,10 @@ object SettingsForm: TSettingsForm
     object InformTabSheet: TTabSheet
       Caption = #1057#1086#1073#1099#1090#1080#1103
       ImageIndex = 2
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       DesignSize = (
         614
         318)
@@ -590,6 +602,10 @@ object SettingsForm: TSettingsForm
     object FontsTabSheet: TTabSheet
       Caption = #1064#1088#1080#1092#1090#1099' '#1080' '#1076#1088'.'
       ImageIndex = 4
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       DesignSize = (
         614
         318)
@@ -979,6 +995,10 @@ object SettingsForm: TSettingsForm
     object HotKeyTabSheet: TTabSheet
       Caption = #1043#1086#1088#1103#1095#1080#1077' '#1082#1083#1072#1074#1080#1096#1080
       ImageIndex = 6
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       DesignSize = (
         614
         318)
@@ -1057,6 +1077,10 @@ object SettingsForm: TSettingsForm
     object EncryptionTabSheet: TTabSheet
       Caption = #1064#1080#1092#1088#1086#1074#1072#1085#1080#1077' '#1080#1089#1090#1086#1088#1080#1080
       ImageIndex = 1
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       DesignSize = (
         614
         318)
@@ -1174,6 +1198,10 @@ object SettingsForm: TSettingsForm
     object AboutTabSheet: TTabSheet
       Caption = #1054' '#1087#1088#1086#1075#1088#1072#1084#1084#1077
       ImageIndex = 5
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object LProgramName: TLabel
         Left = 96
         Top = 16
@@ -1292,6 +1320,10 @@ object SettingsForm: TSettingsForm
     object EncryptKeyCreateTabSheet: TTabSheet
       Caption = #1057#1086#1079#1076#1072#1085#1080#1077' '#1082#1083#1102#1095#1072' '#1096#1080#1092#1088#1086#1074#1072#1085#1080#1103
       ImageIndex = 7
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       DesignSize = (
         614
         318)
@@ -1421,6 +1453,10 @@ object SettingsForm: TSettingsForm
     object KeyPasswordChangeTabSheet: TTabSheet
       Caption = #1057#1084#1077#1085#1072' '#1087#1072#1088#1086#1083#1103' '#1082#1083#1102#1095#1072
       ImageIndex = 8
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       DesignSize = (
         614
         318)
