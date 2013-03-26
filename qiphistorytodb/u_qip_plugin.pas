@@ -1,6 +1,6 @@
 { ############################################################################ }
 { #                                                                          # }
-{ #  QIP HistoryToDB Plugin v2.4                                             # }
+{ #  QIP HistoryToDB Plugin v2.5                                             # }
 { #                                                                          # }
 { #  License: GPLv3                                                          # }
 { #                                                                          # }
@@ -964,6 +964,15 @@ var
   ASize: {$IFDEF WIN32}Integer{$ELSE}NativeInt{$ENDIF};
 begin
   AQIPMsg := pQipMsgPlugin(PMSG.WParam);
+  // Проверка на пустышки
+  if (AnsiString(IntToStr(AQIPMsg^.MsgType)) = '13') then
+    Msg_Text_WriteFile :=  AQIPMsg^.OfflineMsg
+  else
+    Msg_Text_WriteFile :=  AQIPMsg^.MsgText;
+  if Msg_Text_WriteFile = '' then
+    Exit
+  else
+    Msg_Text_WriteFile := '';
   // Debug
   if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура AddMsgToLog: ' +
   'MsgType: ' + IntToStr(AQIPMsg^.MsgType) + ' | ' +
@@ -1136,6 +1145,9 @@ begin
   if (AnsiString(IntToStr(AQIPChatMsg^.MsgType)) = '1')
     or (AnsiString(IntToStr(AQIPChatMsg^.MsgType)) = '2') then
   begin
+    // Проверка на пустышки
+    if AQIPChatMsg^.MsgText = '' then
+      Exit;
     // Debug
     if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура AddChatMsgToLog: ' +
     'MsgType: ' + IntToStr(AQIPChatMsg^.MsgType) + ' | ' +
