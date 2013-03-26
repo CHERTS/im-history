@@ -14,9 +14,8 @@ interface
 
 uses
   Windows, Messages, Forms, Classes, SysUtils, IniFiles,
-  DCPcrypt2, DCPblockciphers, DCPsha1, DCPdes, DCPmd5,
-  TypInfo, XMLIntf, XMLDoc, ShlObj, ActiveX, Graphics,
-  Types, Registry, ZClasses, ZDbcIntfs;
+  DCPsha1, DCPdes, DCPmd5, TypInfo, XMLIntf, XMLDoc, ShlObj,
+  ActiveX, Graphics, Types, Registry;
 
 type
   TWinVersion = (wvUnknown,wv95,wv98,wvME,wvNT3,wvNT4,wvW2K,wvXP,wv2003,wvVista,wv7,wv2008);
@@ -312,7 +311,7 @@ begin
     Result := P;
   end
   else
-    Result := 'MD5';
+    Result := '';
 end;
 
 // LogType = 0 - сообщения добавляются в файл MesLogName
@@ -381,10 +380,6 @@ var
   Path: WideString;
   Temp: String;
   INI: TIniFile;
-  I, J: Integer;
-  Drivers: IZCollection;
-  Protocols: TStringDynArray;
-  DBTypeTrue: Boolean;
 begin
   // Проверяем наличие каталога
   if not DirectoryExists(INIPath) then
@@ -395,19 +390,6 @@ begin
     try
       INI := TIniFile.Create(Path);
       DBType := INI.ReadString('Main', 'DBType', 'mysql');  // mysql или postgresql
-      // Проверяем корректность драйвера БД
-      DBTypeTrue := False;
-      Drivers := DriverManager.GetDrivers;
-      for I := 0 to Drivers.Count - 1 do
-      begin
-        Protocols := (Drivers.Items[I] as IZDriver).GetSupportedProtocols;
-        for J := 0 to High(Protocols) do
-          if DBType = Protocols[J] then
-            DBTypeTrue := True;
-      end;
-      if not DBTypeTrue then
-        DBType := 'mysql';
-      // End
       DBAddress := INI.ReadString('Main', 'DBAddress', DefaultDBAddres);
       DBSchema := INI.ReadString('Main', 'DBSchema', 'username');
       DBPort := INI.ReadString('Main', 'DBPort', '3306');  // 3306 для mysql, 5432 для postgresql

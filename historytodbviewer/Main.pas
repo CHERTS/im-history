@@ -2015,12 +2015,13 @@ end;
 { Устанавливаем настройки подключения к БД }
 procedure TMainForm.LoadDBSettings;
 begin
+  if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура LoadDBSettings: DBType = ' + DBType + ', DBAddress = ' + DBAddress + ', DBPort = ' + DBPort + ', DBName = ' + DBName + ', DBUserName = ' + DBUserName + ', DBPasswd = ' + EncryptMD5(DBPasswd), 2);
   ZConnection1.Protocol := DBType;
   if (DBType = 'sqlite') or (DBType = 'sqlite-3') then
   begin
     ZConnection1.HostName := '';
     ZConnection1.Port := 0;
-    ZConnection1.User := '';
+    ZConnection1.User := DBUserName;
     ZConnection1.Password := '';
     ZConnection1.Properties.Clear;
   end
@@ -2041,6 +2042,7 @@ begin
   // End
   ZConnection1.Database := DBName;
   ZConnection1.LoginPrompt := false;
+  if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура LoadDBSettings: Protocol = ' + ZConnection1.Protocol + ', HostName = ' + ZConnection1.HostName + ', Port = ' + IntToStr(ZConnection1.Port) + ', Database = ' + ZConnection1.Database + ', User = ' + ZConnection1.User + ', Password = ' + EncryptMD5(ZConnection1.Password), 2);
 end;
 
 { Выполняется после ZConnection1.Connection
@@ -2426,7 +2428,7 @@ begin
     if ControlStr = '001' then
     begin
       // Читаем настройки
-      LoadINI(ProfilePath, true);
+      LoadINI(ProfilePath, True);
       // Устанавливаем настройки соединения с БД
       LoadDBSettings;
     end;
@@ -2672,6 +2674,7 @@ end;
 { Подключенгие к БД с обработкой ошибок }
 procedure TMainForm.ConnectDB;
 begin
+  if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура ConnectDB: Protocol = ' + ZConnection1.Protocol + ', HostName = ' + ZConnection1.HostName + ', Port = ' + IntToStr(ZConnection1.Port) + ', Database = ' + ZConnection1.Database + ', User = ' + ZConnection1.User + ', Password = ' + EncryptMD5(ZConnection1.Password), 2);
   // Подключаемся к базе
   if not ZConnection1.Connected then
   begin

@@ -1802,7 +1802,7 @@ begin
   begin
     MainForm.ZConnection1.HostName := '';
     MainForm.ZConnection1.Port := 0;
-    MainForm.ZConnection1.User := '';
+    MainForm.ZConnection1.User := EDBUserName.Text;
     MainForm.ZConnection1.Password := '';
   end
   else if (CBDBType.Items[CBDBType.ItemIndex] = 'oracle') or
