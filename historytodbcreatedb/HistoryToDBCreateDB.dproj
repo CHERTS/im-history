@@ -1,7 +1,7 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
         <ProjectGuid>{7C6478A1-FCD0-419A-A52B-21EDC845D4F8}</ProjectGuid>
-        <ProjectVersion>14.3</ProjectVersion>
+        <ProjectVersion>14.4</ProjectVersion>
         <MainSource>HistoryToDBCreateDB.dpr</MainSource>
         <Base>True</Base>
         <Config Condition="'$(Config)'==''">Release</Config>
@@ -91,15 +91,15 @@
         <DCC_ExeOutput>.\$(Platform)\$(Config)</DCC_ExeOutput>
         <DCC_DcuOutput>.\$(Platform)\$(Config)</DCC_DcuOutput>
         <VerInfo_Locale>1033</VerInfo_Locale>
-        <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
-        <VerInfo_MinorVer>0</VerInfo_MinorVer>
+        <VerInfo_Keys>CompanyName=http://www.im-history.ru;FileDescription=HistoryToDBCreateDB;FileVersion=1.8.0.0;InternalName=HistoryToDBCreateDB;LegalCopyright=Michael Grigorev;LegalTrademarks=http://www.im-history.ru;OriginalFilename=HistoryToDBCreateDB.exe;ProductName=HistoryToDBCreateDB;ProductVersion=1.8.0.0;Comments=http://www.im-history.ru</VerInfo_Keys>
+        <VerInfo_MinorVer>8</VerInfo_MinorVer>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win64)'!=''">
         <DCC_ExeOutput>.\$(Platform)\$(Config)</DCC_ExeOutput>
         <DCC_DcuOutput>.\$(Platform)\$(Config)</DCC_DcuOutput>
         <VerInfo_Locale>1033</VerInfo_Locale>
-        <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
-        <VerInfo_MinorVer>0</VerInfo_MinorVer>
+        <VerInfo_Keys>CompanyName=http://www.im-history.ru;FileDescription=HistoryToDBCreateDB;FileVersion=1.8.0.0;InternalName=HistoryToDBCreateDB;LegalCopyright=Michael Grigorev;LegalTrademarks=http://www.im-history.ru;OriginalFilename=HistoryToDBCreateDB.exe;ProductName=HistoryToDBCreateDB;ProductVersion=1.8.0.0;Comments=http://www.im-history.ru</VerInfo_Keys>
+        <VerInfo_MinorVer>8</VerInfo_MinorVer>
     </PropertyGroup>
     <ItemGroup>
         <DelphiCompile Include="$(MainSource)">
@@ -158,7 +158,10 @@
                     <VersionInfoKeys Name="ProductVersion">1.6.0.0</VersionInfoKeys>
                     <VersionInfoKeys Name="Comments">http://www.im-history.ru</VersionInfoKeys>
                 </VersionInfoKeys>
-                <Excluded_Packages/>
+                <Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dcloffice2k170.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dclofficexp170.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
+                </Excluded_Packages>
                 <Source>
                     <Source Name="MainSource">HistoryToDBCreateDB.dpr</Source>
                 </Source>
