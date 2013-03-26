@@ -1,8 +1,8 @@
 @echo off
 
 set prg_name=QIPHistoryToDB.dll
-call %cert_path%\vars.cmd
 set cert_path=.\..\..\Cert
+call %cert_path%\vars.cmd
 call %cert_path%\cert.cmd
 
 if not exist .\..\..\Release\%ver%\x86 (
@@ -16,3 +16,5 @@ if exist %prg_name% (
   signtool.exe sign /f "%cert_path%\%cert_name%" /p %cert_pw% /t %cert_url% %prg_name%
   copy /Y %prg_name% .\..\..\Release\%ver%\x86
 )
+
+call clear.bat
