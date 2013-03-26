@@ -1,8 +1,8 @@
 @echo off
 
 set prg_name=RnQHistoryToDB.dll
-call %cert_path%\vars.cmd
 set cert_path=.\..\..\Cert
+call %cert_path%\vars.cmd
 call %cert_path%\cert.cmd
 
 if not exist .\..\..\Release\%ver%\x86 (
@@ -25,3 +25,5 @@ if exist Win64\Release\%prg_name% (
   signtool.exe sign /f "%cert_path%\%cert_name%" /p %cert_pw% /t %cert_url% Win64\Release\%prg_name%
   copy /Y Win64\Release\%prg_name% .\..\..\Release\%ver%\x64
 )
+
+call clear.bat

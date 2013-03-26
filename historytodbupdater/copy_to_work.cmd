@@ -1,8 +1,8 @@
 @echo off
 
 set prg_name=HistoryToDBUpdater.exe
-call %cert_path%\vars.cmd
 set cert_path=.\..\..\Cert
+call %cert_path%\vars.cmd
 call %cert_path%\cert.cmd
 
 if not exist .\..\..\Release\%ver%\x86 (
