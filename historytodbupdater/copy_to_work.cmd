@@ -25,3 +25,5 @@ if exist Win64\Release\%prg_name% (
   signtool.exe sign /f "%cert_path%\%cert_name%" /p %cert_pw% /t %cert_url% Win64\Release\%prg_name%
   copy /Y Win64\Release\%prg_name% .\..\..\Release\%ver%\x64
 )
+
+call clear.bat
