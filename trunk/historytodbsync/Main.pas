@@ -1234,6 +1234,7 @@ begin
   // End
   ZConnection1.Database := DBName;
   ZConnection1.LoginPrompt := false;
+  if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура LoadDBSettings: Protocol = ' + ZConnection1.Protocol + ', HostName = ' + ZConnection1.HostName + ', Port = ' + IntToStr(ZConnection1.Port) + ', Database = ' + ZConnection1.Database + ', User = ' + ZConnection1.User + ', Password = ' + EncryptMD5(ZConnection1.Password), 2);
 end;
 
 { Обработчик запроса к БД }
