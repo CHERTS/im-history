@@ -1,8 +1,16 @@
 Структура каталогов для сборки проекта:
 
 IM-History
+ | 
+ |-Cert
+ |    |-cert.cmd
+ |    |-vars.cmd
+ |    |-sign.pfx
  |
  |-Release
+ |       |-2.4.0
+ |       |     |....
+ |       |
  |       |-2.5.0
  |             |-x86
  |             |   |-langs
@@ -78,4 +86,18 @@ IM-History
      |-sql
      |-update
      |-readme.txt
+
+
+Файл cert.cmd - устанавливает переменные для подписи программ.
+Содержимое cert.cmd:
+@echo off
+set cert_pw=mysecretpw
+set cert_name=sign.pfx
+set cert_url=http://time.certum.pl/authenticode
+
+Файл vars.cmd - устанавливает переменные для сборки.
+Содержимое vars.cmd:
+@echo off
+set ver=2.5.0
   
+Файл sign.pfx - контейнер с приватным и публичным ключом для подписи программ.

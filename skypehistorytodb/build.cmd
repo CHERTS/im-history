@@ -1,6 +1,7 @@
 @echo off
 
-set prg_name=.\..\..\Release\2.5.0\SkypeHistoryToDB-Setup-2.5.0.exe
+call %cert_path%\vars.cmd
+set prg_name=.\..\..\Release\%ver%\SkypeHistoryToDB-Setup-%ver%.exe
 set cert_path=.\..\..\Cert
 call %cert_path%\cert.cmd
 
