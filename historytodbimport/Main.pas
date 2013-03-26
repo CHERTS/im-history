@@ -477,6 +477,7 @@ end;
 { Подключенгие к БД с обработкой ошибок }
 procedure TMainForm.ConnectDB;
 begin
+  if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура ConnectDB: Protocol = ' + MainZConnection.Protocol + ', HostName = ' + MainZConnection.HostName + ', Port = ' + IntToStr(MainZConnection.Port) + ', Database = ' + MainZConnection.Database + ', User = ' + MainZConnection.User + ', Password = ' + EncryptMD5(MainZConnection.Password), 2);
   // Подключаемся к базе
   if not MainZConnection.Connected then
   begin
@@ -534,7 +535,7 @@ begin
   begin
     MainZConnection.HostName := '';
     MainZConnection.Port := 0;
-    MainZConnection.User := '';
+    MainZConnection.User := DBUserName;
     MainZConnection.Password := '';
     MainZConnection.Properties.Clear;
   end
@@ -555,6 +556,7 @@ begin
   // End
   MainZConnection.Database := DBName;
   MainZConnection.LoginPrompt := false;
+  if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура LoadDBSettings: Protocol = ' + MainZConnection.Protocol + ', HostName = ' + MainZConnection.HostName + ', Port = ' + IntToStr(MainZConnection.Port) + ', Database = ' + MainZConnection.Database + ', User = ' + MainZConnection.User + ', Password = ' + EncryptMD5(MainZConnection.Password), 2);
 end;
 
 { Выполняется после MainZConnection.Connection

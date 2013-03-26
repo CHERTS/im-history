@@ -354,6 +354,10 @@ begin
   {$I+}
 end;
 
+// LogType = 0 - сообщени€ добавл€ютс€ в файл MesLogName
+// LogType = 1 - ошибки добавл€ютс€ в файл ErrLogName
+// LogType = 2 - сообщени€ добавл€ютс€ в файл DebugLogName
+// LogType = 3 - сообщени€ добавл€ютс€ в файл ImportLogName
 procedure WriteInLog(LogPath: String; TextString: String; LogType: Integer);
 var
   Path: WideString;
