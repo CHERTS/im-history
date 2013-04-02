@@ -78,7 +78,7 @@ object AboutForm: TAboutForm
     Top = 33
     Width = 124
     Height = 13
-    Caption = 'Copyright '#169' 2011-2012 by'
+    Caption = 'Copyright '#169' 2011-2013 by'
   end
   object LabelAuthor: TLabel
     Left = 143
