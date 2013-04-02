@@ -220,7 +220,7 @@ begin
   begin
     if ParamCount >= 1 then
     begin
-      ProfilePath := ParamStr(1);
+      ProfilePath := IncludeTrailingPathDelimiter(ParamStr(1));
     end
     else
     begin
