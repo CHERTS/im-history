@@ -261,8 +261,8 @@ begin
   else
   begin
     // Проверка входных параметров
-    PluginPath := ParamStr(1);
-    ProfilePath := ParamStr(2);
+    PluginPath := IncludeTrailingPathDelimiter(ParamStr(1));
+    ProfilePath := IncludeTrailingPathDelimiter(ParamStr(2));
     if IsNumber(ParamStr(3)) then
       if (StrToInt(ParamStr(3)) > 0) and (StrToInt(ParamStr(3)) < 5) then
         HistoryImportType := StrToInt(ParamStr(3))
