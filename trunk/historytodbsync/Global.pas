@@ -1,6 +1,6 @@
 { ############################################################################ }
 { #                                                                          # }
-{ #  Импорт истории HistoryToDBSync v2.4                                     # }
+{ #  HistoryToDBSync v2.5                                                    # }
 { #                                                                          # }
 { #  License: GPLv3                                                          # }
 { #                                                                          # }
@@ -213,7 +213,13 @@ begin
     Hash.Free;
   end;
   Cipher := TDCP_3des.Create(nil);
-  Cipher.Init(Digest,Sizeof(Digest)*8,nil);
+  try
+    Cipher.Init(Digest, Sizeof(Digest)*8, nil);
+  except
+    on e :
+      Exception do
+        MsgDie(ProgramsName, 'Exception in procedure EncryptInit.' +#13#10 + 'Unable to Cipher init.' + #13#10 + 'Please contact the application developers.');
+  end;
 end;
 
 // Освобождаем ресурсы
@@ -221,8 +227,14 @@ procedure EncryptFree;
 begin
   if Assigned(Cipher) then
   begin
-    Cipher.Burn;
-    Cipher.Free;
+    try
+      Cipher.Burn;
+      Cipher.Free;
+    except
+      on e :
+        Exception do
+          MsgDie(ProgramsName, 'Exception in procedure EncryptFree.' +#13#10 + 'Unable to Cipher free.' + #13#10 + 'Please contact the application developers.');
+    end;
   end;
 end;
 
@@ -232,8 +244,14 @@ begin
   Result := '';
   if Str <> '' then
   begin
-    Cipher.Reset;
-    Result := Cipher.EncryptString(Str);
+    try
+      Cipher.Reset;
+      Result := Cipher.EncryptString(Str);
+    except
+      on e :
+        Exception do
+          MsgDie(ProgramsName, 'Exception in function EncryptStr.' +#13#10 + 'Unable to encrypt password string.' + #13#10 + 'Please contact the application developers.');
+    end;
   end;
 end;
 
@@ -243,8 +261,14 @@ begin
   Result := '';
   if Str <> '' then
   begin
-    Cipher.Reset;
-    Result := Cipher.DecryptString(Str);;
+    try
+      Cipher.Reset;
+      Result := Cipher.DecryptString(Str);;
+    except
+      on e :
+        Exception do
+          MsgDie(ProgramsName, 'Exception in function DecryptStr.' +#13#10 + 'Unable to decrypt password string.' + #13#10 + 'Please contact the application developers.');
+    end;
   end;
 end;
 
@@ -327,18 +351,26 @@ end;
 // Загружаем настройки
 procedure LoadINI(INIPath: String; NotSettingsForm: Boolean);
 var
-  Path: WideString;
+  FullININame: WideString;
   Temp: String;
   INI: TIniFile;
 begin
   // Проверяем наличие каталога
   if not DirectoryExists(INIPath) then
-    CreateDir(INIPath);
-  Path := INIPath + ininame;
-  if FileExists(Path) then
   begin
     try
-      Ini := TIniFile.Create(Path);
+      CreateDir(INIPath);
+    except
+      on e :
+        Exception do
+          MsgDie(ProgramsName, 'Exception in procedure LoadINI.' +#13#10 + 'Unable to create directory ' + INIPath + #13#10 + 'Please contact the application developers.');
+    end;
+  end;
+  FullININame := INIPath + ININame;
+  if FileExists(FullININame) then
+  begin
+    INI := TIniFile.Create(FullININame);
+    try
       DBType := INI.ReadString('Main', 'DBType', 'mysql');  // mysql или postgresql
       DBAddress := INI.ReadString('Main', 'DBAddress', DefaultDBAddres);
       DBSchema := INI.ReadString('Main', 'DBSchema', 'username');
@@ -349,9 +381,9 @@ begin
       begin
         // Замена подстроки в строке DBName
         if MatchStrings(DBName,'<ProfilePluginPath>*') then
-          DBName := StringReplace(DBName,'<ProfilePluginPath>',ProfilePath,[RFReplaceall])
+          DBName := StringReplace(DBName,'<ProfilePluginPath>', ProfilePath, [RFReplaceall])
         else if MatchStrings(DBName,'<PluginPath>*') then
-          DBName := StringReplace(DBName,'<PluginPath>',ExtractFileDir(PluginPath),[RFReplaceall]);
+          DBName := StringReplace(DBName,'<PluginPath>', ExtractFileDir(PluginPath), [RFReplaceall]);
         // End
       end;
       ReconnectCount := INI.ReadInteger('Main', 'DBReconnectCount', 5);
@@ -437,8 +469,8 @@ begin
   end
   else
   begin
+    INI := TIniFile.Create(FullININame);
     try
-      INI := TIniFile.Create(path);
       // Значения по-умолчанию
       DBType := 'mysql';
       DBAddress := DefaultDBAddres;

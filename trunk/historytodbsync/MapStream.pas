@@ -1,6 +1,6 @@
 { ############################################################################ }
 { #                                                                          # }
-{ #  Импорт истории HistoryToDBSync v2.4                                     # }
+{ #  HistoryToDBSync v2.5                                                    # }
 { #                                                                          # }
 { #  License: GPLv3                                                          # }
 { #                                                                          # }
@@ -25,6 +25,7 @@
 //  this code.                                                     //
 //                                                                 //
 //*****************************************************************//
+
 unit MapStream;
 
 interface
@@ -33,7 +34,7 @@ uses Windows, SysUtils, Classes, SyncObjs;
 
 const MAXINTMINUS = MAXINT - 1;
 
-type TMapBytes = array[0..MAXINTMINUS] of Byte;
+type TMapBytes = Array[0..MAXINTMINUS] of Byte;
      PMapBytes = ^TMapBytes;
 
 type TMapStream = class(TObject)

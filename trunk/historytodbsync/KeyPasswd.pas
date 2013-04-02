@@ -1,6 +1,6 @@
 { ############################################################################ }
 { #                                                                          # }
-{ #  Импорт истории HistoryToDBSync v2.4                                     # }
+{ #  HistoryToDBSync v2.5                                                    # }
 { #                                                                          # }
 { #  License: GPLv3                                                          # }
 { #                                                                          # }
@@ -14,8 +14,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, Main, Global, StdCtrls, IniFiles,
-  DCPcrypt2, DCPblockciphers, DCPdes, DCPsha1, DCPbase64;
+  Dialogs, Main, Global, StdCtrls, IniFiles;
 
 type
   TKeyPasswdForm = class(TForm)
