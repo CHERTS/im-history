@@ -1,6 +1,6 @@
 { ############################################################################ }
 { #                                                                          # }
-{ #  Импорт истории HistoryToDBSync v2.4                                     # }
+{ #  HistoryToDBSync v2.5                                                    # }
 { #                                                                          # }
 { #  License: GPLv3                                                          # }
 { #                                                                          # }
@@ -295,8 +295,8 @@ begin
   end
   else
   begin
-    PluginPath := ParamStr(1);
-    ProfilePath := ParamStr(2);
+    PluginPath := IncludeTrailingPathDelimiter(ParamStr(1));
+    ProfilePath := IncludeTrailingPathDelimiter(ParamStr(2));
     // Проверяем наличие каталога и файла настройки
     if not DirectoryExists(ProfilePath) then
       CreateDir(ProfilePath);
