@@ -18,9 +18,12 @@
   <LHistory1>История переписки с </LHistory1>
   <LHistory2>по</LHistory2>
   <SearchHistoryButton>Показать</SearchHistoryButton>
+  <LSearch>Поиск текста: </LSearch>
   <SearchButton>Поиск</SearchButton>
+  <CBSearchCase>Учитывать регистр</CBSearchCase>
   <SearchCaption>Поиск</SearchCaption>
   <SearchMessage>Поиск закончен. Совпадений не найдено.</SearchMessage>
+  <SearchMessages>Текст "%s" не найден.</SearchMessages>
   <IMButtonCaption>История сообщений в %s</IMButtonCaption>
   <CHATButtonCaption>История чат-сообщений в %s</CHATButtonCaption>
   <InfoCaption>Информация</InfoCaption>

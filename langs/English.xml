@@ -18,9 +18,12 @@
   <LHistory1>History with </LHistory1>
   <LHistory2>to</LHistory2>
   <SearchHistoryButton>Show</SearchHistoryButton>
+  <LSearch>Search text: </LSearch>
   <SearchButton>Search</SearchButton>
+  <CBSearchCase>Match case</CBSearchCase>
   <SearchCaption>Search</SearchCaption>
   <SearchMessage>No matches found.</SearchMessage>
+  <SearchMessages>Text "%s" not found.</SearchMessages>
   <IMButtonCaption>Message history in %s</IMButtonCaption>
   <CHATButtonCaption>History of the chat messages in %s</CHATButtonCaption>
   <InfoCaption>Information</InfoCaption>
