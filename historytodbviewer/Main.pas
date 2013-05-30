@@ -2683,7 +2683,10 @@ begin
     except
       on e: Exception do
       begin
-        AddHistoryInList(Format(ERR_READ_DB_CONNECT_ERR, [FormatDateTime('dd.mm.yy hh:mm:ss', Now), Trim(e.Message)]), 0, 3);
+        if SettingsForm.Showing then
+          MsgDie(Caption, Format('%s'+#13+'%s', [GetLangStr('ErrDBConnect'), Trim(e.Message)]))
+        else
+          AddHistoryInList(Format(ERR_READ_DB_CONNECT_ERR, [FormatDateTime('dd.mm.yy hh:mm:ss', Now), Trim(e.Message)]), 0, 3);
         HistoryRichView.Refresh;
         if WriteErrLog then
           WriteInLog(ProfilePath, Format(ERR_READ_DB_CONNECT_ERR, [FormatDateTime('dd.mm.yy hh:mm:ss', Now), Trim(e.Message)]), 1);

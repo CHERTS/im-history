@@ -113,6 +113,7 @@ type
     INISavePath: String;
     SavePath: String;
     SystemLang: String;
+    IMCancelCopy: Boolean;
     DropboxProcessInfo: TProcessInfoArray;
     QIPProcessInfo: TProcessInfoArray;
     RnQProcessInfo: TProcessInfoArray;
@@ -121,8 +122,14 @@ type
     property CoreLanguage: WideString read FLanguage;
   end;
 
+function CopyProgressFunc(TotalFileSize: Int64; TotalBytesTransferred: Int64;
+  StreamSize: Int64; StreamBytesTransferred: Int64; dwStreamNumber: DWORD;
+  dwCallbackReason: DWORD; hSourceFile: THandle; hDestinationFile: THandle;
+  lpData: Pointer): DWORD; stdcall;
+
 var
   MainForm: TMainForm;
+
 
 implementation
 
@@ -384,6 +391,7 @@ procedure TMainForm.ButtonUpdateStartClick(Sender: TObject);
 var
   AllProcessEndErr: Integer;
 begin
+  IMCancelCopy := False;
   AllProcessEndErr := 0;
   if (DBType = 'Unknown') or (IMClientType  = 'Unknown') then
     MsgInf(Caption, GetLangStr('SelectDBTypeAndIMClient'))
@@ -782,11 +790,13 @@ begin
         LStatus.Hint := 'UpdateFile';
         LStatus.Repaint;
         LogMemo.Lines.Add(Format(GetLangStr('UpdateFile'), [SR.Name]));
-        if CopyFileEx(PChar(SavePath + SR.Name), PChar(PluginPath + 'HistoryToDBUpdater.upd'), nil, nil, nil, COPY_FILE_FAIL_IF_EXISTS) then
+        if CopyFileEx(PChar(SavePath + SR.Name), PChar(PluginPath + 'HistoryToDBUpdater.upd'), Addr(CopyProgressFunc), nil, Addr(IMCancelCopy), COPY_FILE_RESTARTABLE) then
         begin
           DeleteFile(SavePath + SR.Name);
           LogMemo.Lines.Add(Format(GetLangStr('UpdateFileDone'), [SR.Name]));
-        end;
+        end
+        else
+          LogMemo.Lines.Add(Format(GetLangStr('UpdateFileErr'), [SR.Name]));
       end;
       if MatchStrings(SR.Name, '*.xml') then
       begin
@@ -796,11 +806,13 @@ begin
         LogMemo.Lines.Add(Format(GetLangStr('UpdateLangFile'), [SR.Name]));
         if FileExists(PluginPath + dirLangs + SR.Name) then
           DeleteFile(PluginPath + dirLangs + SR.Name);
-        if CopyFileEx(PChar(SavePath + SR.Name), PChar(PluginPath + dirLangs + SR.Name), nil, nil, nil, COPY_FILE_FAIL_IF_EXISTS) then
+        if CopyFileEx(PChar(SavePath + SR.Name), PChar(PluginPath + dirLangs + SR.Name), Addr(CopyProgressFunc), nil, Addr(IMCancelCopy), COPY_FILE_RESTARTABLE) then
         begin
           DeleteFile(SavePath + SR.Name);
           LogMemo.Lines.Add(Format(GetLangStr('UpdateLangFileDone'), [SR.Name]));
-        end;
+        end
+        else
+          LogMemo.Lines.Add(Format(GetLangStr('UpdateFileErr'), [SR.Name]));
       end;
       if MatchStrings(SR.Name, '*.sql') then
       begin
@@ -812,11 +824,13 @@ begin
           CreateDir(PluginPath + dirSQLUpdate);
         if FileExists(PluginPath + dirSQLUpdate + SR.Name) then
           DeleteFile(PluginPath + dirSQLUpdate + SR.Name);
-        if CopyFileEx(PChar(SavePath + SR.Name), PChar(PluginPath + dirSQLUpdate + SR.Name), nil, nil, nil, COPY_FILE_FAIL_IF_EXISTS) then
+        if CopyFileEx(PChar(SavePath + SR.Name), PChar(PluginPath + dirSQLUpdate + SR.Name), Addr(CopyProgressFunc), nil, Addr(IMCancelCopy), COPY_FILE_RESTARTABLE) then
         begin
           DeleteFile(SavePath + SR.Name);
           LogMemo.Lines.Add(Format(GetLangStr('UpdateSQLFileDone'), [SR.Name]));
-        end;
+        end
+        else
+          LogMemo.Lines.Add(Format(GetLangStr('UpdateFileErr'), [SR.Name]));
       end;
       if MatchStrings(SR.Name, '*.exe') then
       begin
@@ -826,11 +840,13 @@ begin
         LogMemo.Lines.Add(Format(GetLangStr('UpdateFile'), [SR.Name]));
         if FileExists(PluginPath + SR.Name) then
           DeleteFile(PluginPath + SR.Name);
-        if CopyFileEx(PChar(SavePath + SR.Name), PChar(PluginPath + SR.Name), nil, nil, nil, COPY_FILE_FAIL_IF_EXISTS) then
+        if CopyFileEx(PChar(SavePath + SR.Name), PChar(PluginPath + SR.Name), nil, nil, Addr(IMCancelCopy), COPY_FILE_RESTARTABLE) then
         begin
           DeleteFile(SavePath + SR.Name);
           LogMemo.Lines.Add(Format(GetLangStr('UpdateFileDone'), [SR.Name]));
-        end;
+        end
+        else
+          LogMemo.Lines.Add(Format(GetLangStr('UpdateFileErr'), [SR.Name]));
       end;
       if MatchStrings(SR.Name, '*.dll') then
       begin
@@ -840,11 +856,13 @@ begin
         LogMemo.Lines.Add(Format(GetLangStr('UpdateFile'), [SR.Name]));
         if FileExists(PluginPath + SR.Name) then
           DeleteFile(PluginPath + SR.Name);
-        if CopyFileEx(PChar(SavePath + SR.Name), PChar(PluginPath + SR.Name), nil, nil, nil, COPY_FILE_FAIL_IF_EXISTS) then
+        if CopyFileEx(PChar(SavePath + SR.Name), PChar(PluginPath + SR.Name), Addr(CopyProgressFunc), nil, Addr(IMCancelCopy), COPY_FILE_RESTARTABLE) then
         begin
           DeleteFile(SavePath + SR.Name);
           LogMemo.Lines.Add(Format(GetLangStr('UpdateFileDone'), [SR.Name]));
-        end;
+        end
+        else
+          LogMemo.Lines.Add(Format(GetLangStr('UpdateFileErr'), [SR.Name]));
       end;
       if MatchStrings(SR.Name, '*.msg') then
       begin
@@ -854,11 +872,13 @@ begin
         LogMemo.Lines.Add(Format(GetLangStr('UpdateFile'), [SR.Name]));
         if FileExists(PluginPath + SR.Name) then
           DeleteFile(PluginPath + SR.Name);
-        if CopyFileEx(PChar(SavePath + SR.Name), PChar(PluginPath + SR.Name), nil, nil, nil, COPY_FILE_FAIL_IF_EXISTS) then
+        if CopyFileEx(PChar(SavePath + SR.Name), PChar(PluginPath + SR.Name), nil, nil, Addr(IMCancelCopy), COPY_FILE_RESTARTABLE) then
         begin
           DeleteFile(SavePath + SR.Name);
           LogMemo.Lines.Add(Format(GetLangStr('UpdateFileDone'), [SR.Name]));
-        end;
+        end
+        else
+          LogMemo.Lines.Add(Format(GetLangStr('UpdateFileErr'), [SR.Name]));
       end;
       if MatchStrings(SR.Name, '*.txt') then
       begin
@@ -868,11 +888,13 @@ begin
         LogMemo.Lines.Add(Format(GetLangStr('UpdateFile'), [SR.Name]));
         if FileExists(PluginPath + SR.Name) then
           DeleteFile(PluginPath + SR.Name);
-        if CopyFileEx(PChar(SavePath + SR.Name), PChar(PluginPath + SR.Name), nil, nil, nil, COPY_FILE_FAIL_IF_EXISTS) then
+        if CopyFileEx(PChar(SavePath + SR.Name), PChar(PluginPath + SR.Name), Addr(CopyProgressFunc), nil, Addr(IMCancelCopy), COPY_FILE_RESTARTABLE) then
         begin
           DeleteFile(SavePath + SR.Name);
           LogMemo.Lines.Add(Format(GetLangStr('UpdateFileDone'), [SR.Name]));
-        end;
+        end
+        else
+          LogMemo.Lines.Add(Format(GetLangStr('UpdateFileErr'), [SR.Name]));
       end;
     until FindNext(SR) <> 0;
     FindClose(SR);
@@ -1061,7 +1083,10 @@ end;
 
 procedure TMainForm.ButtonUpdateStopClick(Sender: TObject);
 begin
+  // Прерываем закачку
   IMDownloader1.BreakDownload;
+  //Останавливаем процесс копирования
+  IMCancelCopy := True;
 end;
 
 procedure TMainForm.CBUseProxyClick(Sender: TObject);
@@ -1457,6 +1482,16 @@ begin
   // Запуск Dropbox
   {if not IsProcessRun('Dropbox.exe') then
     RunIMClient('Dropbox.exe', DropboxProcessInfo);}
+end;
+
+function CopyProgressFunc(TotalFileSize: Int64; TotalBytesTransferred: Int64;
+  StreamSize: Int64; StreamBytesTransferred: Int64; dwStreamNumber: DWORD;
+  dwCallbackReason: DWORD; hSourceFile: THandle; hDestinationFile: THandle;
+  lpData: Pointer): DWORD; stdcall;
+begin
+  MainForm.ProgressBarDownloads.Position := 100 * TotalBytesTransferred div TotalFileSize;
+  Application.ProcessMessages;
+  CopyProgressFunc := PROGRESS_CONTINUE;
 end;
 
 end.

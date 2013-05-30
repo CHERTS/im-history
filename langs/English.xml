@@ -18,12 +18,9 @@
   <LHistory1>History with </LHistory1>
   <LHistory2>to</LHistory2>
   <SearchHistoryButton>Show</SearchHistoryButton>
-  <LSearch>Search text: </LSearch>
   <SearchButton>Search</SearchButton>
-  <CBSearchCase>Match case</CBSearchCase>
   <SearchCaption>Search</SearchCaption>
   <SearchMessage>No matches found.</SearchMessage>
-  <SearchMessages>Text "%s" not found.</SearchMessages>
   <IMButtonCaption>Message history in %s</IMButtonCaption>
   <CHATButtonCaption>History of the chat messages in %s</CHATButtonCaption>
   <InfoCaption>Information</InfoCaption>
@@ -489,6 +486,7 @@
   <UpdateSQLFileDone>Update sql-file %s completed.</UpdateSQLFileDone>
   <UpdateFile>Start update file %s...</UpdateFile>
   <UpdateFileDone>Update file %s completed.</UpdateFileDone>
+  <UpdateFileErr>File %s is not updated.</UpdateFileErr>
   <InMemoryFoundProcess>In the memory of the process found %s (PID: %s)</InMemoryFoundProcess>
   <SendExitCommand>Send the command to the end of the program...</SendExitCommand>
   <SearchProcessInMemory>Re looking for process %s in the memory...</SearchProcessInMemory>
