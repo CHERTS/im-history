@@ -18,12 +18,9 @@
   <LHistory1>История переписки с </LHistory1>
   <LHistory2>по</LHistory2>
   <SearchHistoryButton>Показать</SearchHistoryButton>
-  <LSearch>Поиск текста: </LSearch>
   <SearchButton>Поиск</SearchButton>
-  <CBSearchCase>Учитывать регистр</CBSearchCase>
   <SearchCaption>Поиск</SearchCaption>
   <SearchMessage>Поиск закончен. Совпадений не найдено.</SearchMessage>
-  <SearchMessages>Текст "%s" не найден.</SearchMessages>
   <IMButtonCaption>История сообщений в %s</IMButtonCaption>
   <CHATButtonCaption>История чат-сообщений в %s</CHATButtonCaption>
   <InfoCaption>Информация</InfoCaption>
@@ -490,6 +487,7 @@
   <UpdateSQLFileDone>Обновление sql-файла %s выполнено.</UpdateSQLFileDone>
   <UpdateFile>Начинаем обновление файла %s...</UpdateFile>
   <UpdateFileDone>Обновление файла %s выполнено.</UpdateFileDone>
+  <UpdateFileErr>Файл %s не обновлен.</UpdateFileErr>
   <InMemoryFoundProcess>В памяти найден процесс %s (PID: %s)</InMemoryFoundProcess>
   <SendExitCommand>Отправляем команду завершения...</SendExitCommand>
   <SearchProcessInMemory>Повторно ищем процесс %s в памяти...</SearchProcessInMemory>

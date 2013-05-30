@@ -3382,146 +3382,145 @@ var
   aMsgType, SkypeSearchID, SkypeChatListRowCount: Integer;
   aIsPrivate, ChatNameChange: Boolean;
 begin
-  if (pMessage.Chat.type_ = cmeCreatedChatWith) or (pMessage.Chat.type_ = cmeSetTopic) then
-  begin
-    ChatNameChange := False;
-    if pMessage.Chat.Topic = '' then
+  try
+    if (pMessage.Chat.type_ = cmeCreatedChatWith) or (pMessage.Chat.type_ = cmeSetTopic) then
     begin
-      {if pMessage.Chat.Members.Count <= 2 then}
-        ChatName := Skype.User[pMessage.Chat.DialogPartner].FullName;
+      ChatNameChange := False;
+      if pMessage.Chat.Topic = '' then
+      begin
+        {if pMessage.Chat.Members.Count <= 2 then}
+          ChatName := Skype.User[pMessage.Chat.DialogPartner].FullName;
+          if ChatName = '' then
+            ChatName := pMessage.Chat.DialogPartner;
+        {else
+          ChatName :=  'Групповой чат';}
+      end
+      else
+      begin
+        ChatName :=  pMessage.Chat.Topic;
         if ChatName = '' then
           ChatName := pMessage.Chat.DialogPartner;
-      {else
-        ChatName :=  'Групповой чат';}
-    end
-    else
-    begin
-      ChatName :=  pMessage.Chat.Topic;
-      if ChatName = '' then
-        ChatName := pMessage.Chat.DialogPartner;
-    end;
-
-    SkypeSearchID := SkypeChatList.Cols[0].IndexOf(pMessage.Chat.Name);
-    if SkypeSearchID <> -1 then // Нашли! SkypeSearchID - строка
-    begin
-      if SkypeChatList.Cells[1,SkypeSearchID] <> ChatName then
-      begin
-        if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура SkypeMessageStatus: Изменение имени чата: ID чата = ' + pMessage.Chat.Name + ' | Имя чата до = ' + SkypeChatList.Cells[1,SkypeSearchID] + ' | Имя чата после = ' + ChatName + ' | Количество участников = ' + IntToStr(pMessage.Chat.Members.Count), 4);
-        SkypeChatList.Cells[1,SkypeSearchID] := ChatName;
-        ChatNameChange := True;
       end;
-      if SkypeChatList.Cells[2,SkypeSearchID] <> IntToStr(pMessage.Chat.Members.Count) then
-      begin
-        if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура SkypeMessageStatus: Изменение кол. участников чата: ID чата = ' + pMessage.Chat.Name + ' | Имя чата = ' + ChatName + ' | Кол. участников до = ' + SkypeChatList.Cells[2,SkypeSearchID] + ' | Кол. участников после = ' + IntToStr(pMessage.Chat.Members.Count), 4);
-        SkypeChatList.Cells[2,SkypeSearchID] := IntToStr(pMessage.Chat.Members.Count);
-      end;
-    end
-    else
-    begin
-      SkypeChatListRowCount := SkypeChatList.RowCount-1;
-      SkypeChatList.Cells[0, SkypeChatListRowCount] := pMessage.Chat.Name;
-      SkypeChatList.Cells[1, SkypeChatListRowCount] := ChatName;
-      SkypeChatList.Cells[2, SkypeChatListRowCount] := IntToStr(pMessage.Chat.Members.Count);
-      SkypeChatList.RowCount := SkypeChatListRowCount+2;
-      if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура SkypeMessageStatus: Создан чат: ID чата = ' + pMessage.Chat.Name + ' | Имя чата = ' + ChatName + ' | Кол. учасников = ' + IntToStr(pMessage.Chat.Members.Count), 4);
-    end;
-    if EnableDebug then
-    begin
-      for Cnt := 0 to SkypeChatList.RowCount-2 do
-        WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура SkypeMessageStatus: SkypeChatList: ID чата = ' + SkypeChatList.Cells[0, Cnt] + ' | Имя чата = ' + SkypeChatList.Cells[1, Cnt] + ' | Кол. учасников = ' + SkypeChatList.Cells[2, Cnt], 4);
-      WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура SkypeMessageStatus: SkypeChatList: RowCount = ' + IntToStr(SkypeChatList.RowCount-1), 4);
-    end;
-  end
-  else
-  begin
-    if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура SkypeMessageStatus: ID чата = ' + pMessage.Chat.Name + ' | Имя чат = ' + pMessage.Chat.Topic  + ' | ChatMessageType = ' + Skype.Convert.ChatMessageTypeToText(pMessage.Chat.type_) + ' | Кол. учасников = ' + IntToStr(pMessage.Chat.Members.Count), 4);
-  end;
 
-  {if ((Status = cmsReceived) and (pMessage.Chat.Members.Count > 2) and (pMessage.Body <> '')) or ((Status = cmsSent)  and (pMessage.Chat.Members.Count > 2) and (pMessage.Body <> '')) then
-  begin
-    Log('Всего в чате: '+ IntToStr(pMessage.Chat.Members.Count));
-    for i:=1 to pMessage.Chat.Members.Count do
-    begin
-      Log('Участник №' + IntToStr(i) +': ' + pMessage.Chat.Members.Item[i].FullName + ' (' + pMessage.Chat.Members.Item[i].Handle + ')');
-    end;
-    Log('===');
-  end;}
-  if pMessage.Body <> '' then
-  begin
-   case Status of
-    cmsReceived :
-    begin
-      if pMessage.Chat.Members.Count <= 2 then
+      SkypeSearchID := SkypeChatList.Cols[0].IndexOf(pMessage.Chat.Name);
+      if SkypeSearchID <> -1 then // Нашли! SkypeSearchID - строка
       begin
-        if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Принято от ' + pMessage.FromDisplayName + ' (' + pMessage.FromHandle + ') (' + FormatDateTime('dd.mm.yy hh:mm:ss', pMessage.Timestamp) + ')', 4);
-        aNickName := WideStringToUTF8(PrepareString(pWideChar(pMessage.FromDisplayName + ' (' + pMessage.FromHandle + ')')));
-        aIsPrivate := True;
+        if SkypeChatList.Cells[1,SkypeSearchID] <> ChatName then
+        begin
+          if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура SkypeMessageStatus: Изменение имени чата: ID чата = ' + pMessage.Chat.Name + ' | Имя чата до = ' + SkypeChatList.Cells[1,SkypeSearchID] + ' | Имя чата после = ' + ChatName + ' | Количество участников = ' + IntToStr(pMessage.Chat.Members.Count), 4);
+          SkypeChatList.Cells[1,SkypeSearchID] := ChatName;
+          ChatNameChange := True;
+        end;
+        if SkypeChatList.Cells[2,SkypeSearchID] <> IntToStr(pMessage.Chat.Members.Count) then
+        begin
+          if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура SkypeMessageStatus: Изменение кол. участников чата: ID чата = ' + pMessage.Chat.Name + ' | Имя чата = ' + ChatName + ' | Кол. участников до = ' + SkypeChatList.Cells[2,SkypeSearchID] + ' | Кол. участников после = ' + IntToStr(pMessage.Chat.Members.Count), 4);
+          SkypeChatList.Cells[2,SkypeSearchID] := IntToStr(pMessage.Chat.Members.Count);
+        end;
       end
       else
       begin
-        if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Принято от ' + pMessage.FromDisplayName + ' (' + pMessage.FromHandle + ') (' + FormatDateTime('dd.mm.yy hh:mm:ss', pMessage.Timestamp) + ')', 4);
-        aNickName := WideStringToUTF8(PrepareString(pWideChar(pMessage.FromDisplayName + ' (' + pMessage.FromHandle + ')')));
-        aIsPrivate := False;
+        SkypeChatListRowCount := SkypeChatList.RowCount-1;
+        SkypeChatList.Cells[0, SkypeChatListRowCount] := pMessage.Chat.Name;
+        SkypeChatList.Cells[1, SkypeChatListRowCount] := ChatName;
+        SkypeChatList.Cells[2, SkypeChatListRowCount] := IntToStr(pMessage.Chat.Members.Count);
+        SkypeChatList.RowCount := SkypeChatListRowCount+2;
+        if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура SkypeMessageStatus: Создан чат: ID чата = ' + pMessage.Chat.Name + ' | Имя чата = ' + ChatName + ' | Кол. учасников = ' + IntToStr(pMessage.Chat.Members.Count), 4);
       end;
-      aMsgType := 0;
-      aMsgText :=  WideStringToUTF8(PrepareString(pWideChar(pMessage.Body)));
-      MD5String := aNickName + FormatDateTime('YYYY-MM-DD HH:MM:SS', pMessage.Timestamp) + aMsgText;
-      aChatName := WideStringToUTF8(PrepareString(pWideChar(ChatName)));
-      aProtoAcc := 'Skype';
-      if (DBType = 'oracle') or (DBType = 'oracle-9i') then
-        Date_Str := FormatDateTime('DD.MM.YYYY HH:MM:SS', pMessage.Timestamp)
-      else
-        Date_Str := FormatDateTime('YYYY-MM-DD HH:MM:SS', pMessage.Timestamp);
-      if not ChatNameChange then
+      if EnableDebug then
       begin
-        if (MatchStrings(DBType, 'oracle*')) then // Если Oracle, то пишем SQL-лог в формате CHAT_MSG_LOG_ORACLE
-          WriteInLog(ProfilePath, Format(SKYPE_CHAT_MSG_LOG_ORACLE, [DBUserName, IntToStr(aMsgType), 'to_date('''+Date_Str+''', ''dd.mm.yyyy hh24:mi:ss'')', aChatName, aProtoAcc, aNickName, BoolToIntStr(aIsPrivate), '0', '0', aMsgText, EncryptMD5(MD5String)]), 0)
-        else
-          WriteInLog(ProfilePath, Format(SKYPE_CHAT_MSG_LOG, [DBUserName, IntToStr(aMsgType), Date_Str, aChatName, aProtoAcc, aNickName, BoolToIntStr(aIsPrivate), '0', '0', aMsgText, EncryptMD5(MD5String)]), 0);
-        if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Принято для ' + Skype.User[Skype.CurrentUserHandle].FullName + ' (' + Skype.CurrentUserHandle + ') (' + FormatDateTime('dd.mm.yy hh:mm:ss', pMessage.Timestamp) + '): ' + pMessage.Body, 4);
+        for Cnt := 0 to SkypeChatList.RowCount-2 do
+          WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура SkypeMessageStatus: SkypeChatList: ID чата = ' + SkypeChatList.Cells[0, Cnt] + ' | Имя чата = ' + SkypeChatList.Cells[1, Cnt] + ' | Кол. учасников = ' + SkypeChatList.Cells[2, Cnt], 4);
+        WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура SkypeMessageStatus: SkypeChatList: RowCount = ' + IntToStr(SkypeChatList.RowCount-1), 4);
       end;
-      ChatNameChange := False;
-      //SkypeStrList.Add(SkypeMsgStr);
-    end;
-    cmsSent :
+    end
+    else
     begin
-      if pMessage.Chat.Members.Count <= 2 then
-      begin
-        DialogPartnerFullName := Skype.User[pMessage.Chat.DialogPartner].FullName;
-        if DialogPartnerFullName = '' then
-          DialogPartnerFullName := Skype.User[pMessage.Chat.DialogPartner].DisplayName;
-        if DialogPartnerFullName = '' then
-          DialogPartnerFullName := pMessage.Chat.DialogPartner;
-        if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Отправлено для ' + DialogPartnerFullName + ' (' + pMessage.Chat.DialogPartner + ') (' + FormatDateTime('dd.mm.yy hh:mm:ss', pMessage.Timestamp) + ')', 4);
-        aNickName := WideStringToUTF8(PrepareString(pWideChar(DialogPartnerFullName + ' (' + pMessage.Chat.DialogPartner + ')')));
-        aIsPrivate := True;
-      end
-      else
-      begin
-        if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Отправлено для чата ' + ChatName + ' (' + pMessage.FromHandle + ') (' + FormatDateTime('dd.mm.yy hh:mm:ss', pMessage.Timestamp) + ')', 4);
-        aNickName := WideStringToUTF8(PrepareString(pWideChar(pMessage.FromDisplayName + ' (' + pMessage.FromHandle + ')')));
-        aIsPrivate := False;
-      end;
-      aMsgType := 1;
-      aMsgText :=  WideStringToUTF8(PrepareString(pWideChar(pMessage.Body)));
-      MD5String := aNickName + FormatDateTime('YYYY-MM-DD HH:MM:SS', pMessage.Timestamp) + aMsgText;
-      aChatName := WideStringToUTF8(PrepareString(pWideChar(ChatName)));
-      aProtoAcc := 'Skype';
-      if (DBType = 'oracle') or (DBType = 'oracle-9i') then
-        Date_Str := FormatDateTime('DD.MM.YYYY HH:MM:SS', pMessage.Timestamp)
-      else
-        Date_Str := FormatDateTime('YYYY-MM-DD HH:MM:SS', pMessage.Timestamp);
-      if not ChatNameChange then
-      begin
-        if (MatchStrings(DBType, 'oracle*')) then // Если Oracle, то пишем SQL-лог в формате CHAT_MSG_LOG_ORACLE
-          WriteInLog(ProfilePath, Format(SKYPE_CHAT_MSG_LOG_ORACLE, [DBUserName, IntToStr(aMsgType), 'to_date('''+Date_Str+''', ''dd.mm.yyyy hh24:mi:ss'')', aChatName, aProtoAcc, aNickName, BoolToIntStr(aIsPrivate), '0', '0', aMsgText, EncryptMD5(MD5String)]), 0)
-        else
-          WriteInLog(ProfilePath, Format(SKYPE_CHAT_MSG_LOG, [DBUserName, IntToStr(aMsgType), Date_Str, aChatName, aProtoAcc, aNickName, BoolToIntStr(aIsPrivate), '0', '0', aMsgText, EncryptMD5(MD5String)]), 0);
-        if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Отправлено от ' + pMessage.FromDisplayName + ' (' + pMessage.FromHandle + ') (' + FormatDateTime('dd.mm.yy hh:mm:ss', pMessage.Timestamp) + '): ' + pMessage.Body, 4);
-      end;
-      ChatNameChange := False;
+      if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура SkypeMessageStatus: ID чата = ' + pMessage.Chat.Name + ' | Имя чат = ' + pMessage.Chat.Topic  + ' | ChatMessageType = ' + Skype.Convert.ChatMessageTypeToText(pMessage.Chat.type_) + ' | Кол. учасников = ' + IntToStr(pMessage.Chat.Members.Count), 4);
     end;
-   end;
+
+    if pMessage.Body <> '' then
+    begin
+     case Status of
+      cmsReceived :
+      begin
+        if pMessage.Chat.Members.Count <= 2 then
+        begin
+          if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Принято от ' + pMessage.FromDisplayName + ' (' + pMessage.FromHandle + ') (' + FormatDateTime('dd.mm.yy hh:mm:ss', pMessage.Timestamp) + ')', 4);
+          aNickName := WideStringToUTF8(PrepareString(pWideChar(pMessage.FromDisplayName + ' (' + pMessage.FromHandle + ')')));
+          aIsPrivate := True;
+        end
+        else
+        begin
+          if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Принято от ' + pMessage.FromDisplayName + ' (' + pMessage.FromHandle + ') (' + FormatDateTime('dd.mm.yy hh:mm:ss', pMessage.Timestamp) + ')', 4);
+          aNickName := WideStringToUTF8(PrepareString(pWideChar(pMessage.FromDisplayName + ' (' + pMessage.FromHandle + ')')));
+          aIsPrivate := False;
+        end;
+        aMsgType := 0;
+        aMsgText :=  WideStringToUTF8(PrepareString(pWideChar(pMessage.Body)));
+        MD5String := aNickName + FormatDateTime('YYYY-MM-DD HH:MM:SS', pMessage.Timestamp) + aMsgText;
+        aChatName := WideStringToUTF8(PrepareString(pWideChar(ChatName)));
+        aProtoAcc := 'Skype';
+        if (DBType = 'oracle') or (DBType = 'oracle-9i') then
+          Date_Str := FormatDateTime('DD.MM.YYYY HH:MM:SS', pMessage.Timestamp)
+        else
+          Date_Str := FormatDateTime('YYYY-MM-DD HH:MM:SS', pMessage.Timestamp);
+        if not ChatNameChange then
+        begin
+          if (MatchStrings(DBType, 'oracle*')) then // Если Oracle, то пишем SQL-лог в формате CHAT_MSG_LOG_ORACLE
+            WriteInLog(ProfilePath, Format(SKYPE_CHAT_MSG_LOG_ORACLE, [DBUserName, IntToStr(aMsgType), 'to_date('''+Date_Str+''', ''dd.mm.yyyy hh24:mi:ss'')', aChatName, aProtoAcc, aNickName, BoolToIntStr(aIsPrivate), '0', '0', aMsgText, EncryptMD5(MD5String)]), 0)
+          else
+            WriteInLog(ProfilePath, Format(SKYPE_CHAT_MSG_LOG, [DBUserName, IntToStr(aMsgType), Date_Str, aChatName, aProtoAcc, aNickName, BoolToIntStr(aIsPrivate), '0', '0', aMsgText, EncryptMD5(MD5String)]), 0);
+          if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Принято для ' + Skype.User[Skype.CurrentUserHandle].FullName + ' (' + Skype.CurrentUserHandle + ') (' + FormatDateTime('dd.mm.yy hh:mm:ss', pMessage.Timestamp) + '): ' + pMessage.Body, 4);
+        end;
+        ChatNameChange := False;
+        //SkypeStrList.Add(SkypeMsgStr);
+      end;
+      cmsSent :
+      begin
+        if pMessage.Chat.Members.Count <= 2 then
+        begin
+          DialogPartnerFullName := Skype.User[pMessage.Chat.DialogPartner].FullName;
+          if DialogPartnerFullName = '' then
+            DialogPartnerFullName := Skype.User[pMessage.Chat.DialogPartner].DisplayName;
+          if DialogPartnerFullName = '' then
+            DialogPartnerFullName := pMessage.Chat.DialogPartner;
+          if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Отправлено для ' + DialogPartnerFullName + ' (' + pMessage.Chat.DialogPartner + ') (' + FormatDateTime('dd.mm.yy hh:mm:ss', pMessage.Timestamp) + ')', 4);
+          aNickName := WideStringToUTF8(PrepareString(pWideChar(DialogPartnerFullName + ' (' + pMessage.Chat.DialogPartner + ')')));
+          aIsPrivate := True;
+        end
+        else
+        begin
+          if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Отправлено для чата ' + ChatName + ' (' + pMessage.FromHandle + ') (' + FormatDateTime('dd.mm.yy hh:mm:ss', pMessage.Timestamp) + ')', 4);
+          aNickName := WideStringToUTF8(PrepareString(pWideChar(pMessage.FromDisplayName + ' (' + pMessage.FromHandle + ')')));
+          aIsPrivate := False;
+        end;
+        aMsgType := 1;
+        aMsgText :=  WideStringToUTF8(PrepareString(pWideChar(pMessage.Body)));
+        MD5String := aNickName + FormatDateTime('YYYY-MM-DD HH:MM:SS', pMessage.Timestamp) + aMsgText;
+        aChatName := WideStringToUTF8(PrepareString(pWideChar(ChatName)));
+        aProtoAcc := 'Skype';
+        if (DBType = 'oracle') or (DBType = 'oracle-9i') then
+          Date_Str := FormatDateTime('DD.MM.YYYY HH:MM:SS', pMessage.Timestamp)
+        else
+          Date_Str := FormatDateTime('YYYY-MM-DD HH:MM:SS', pMessage.Timestamp);
+        if not ChatNameChange then
+        begin
+          if (MatchStrings(DBType, 'oracle*')) then // Если Oracle, то пишем SQL-лог в формате CHAT_MSG_LOG_ORACLE
+            WriteInLog(ProfilePath, Format(SKYPE_CHAT_MSG_LOG_ORACLE, [DBUserName, IntToStr(aMsgType), 'to_date('''+Date_Str+''', ''dd.mm.yyyy hh24:mi:ss'')', aChatName, aProtoAcc, aNickName, BoolToIntStr(aIsPrivate), '0', '0', aMsgText, EncryptMD5(MD5String)]), 0)
+          else
+            WriteInLog(ProfilePath, Format(SKYPE_CHAT_MSG_LOG, [DBUserName, IntToStr(aMsgType), Date_Str, aChatName, aProtoAcc, aNickName, BoolToIntStr(aIsPrivate), '0', '0', aMsgText, EncryptMD5(MD5String)]), 0);
+          if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Отправлено от ' + pMessage.FromDisplayName + ' (' + pMessage.FromHandle + ') (' + FormatDateTime('dd.mm.yy hh:mm:ss', pMessage.Timestamp) + '): ' + pMessage.Body, 4);
+        end;
+        ChatNameChange := False;
+      end;
+     end;
+    end;
+  except
+    on e: Exception do
+    begin
+      if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура SkypeMessageStatus: Class - ' + E.ClassName + ' | Ошибка - ' + Trim(e.Message), 4);
+      Exit;
+    end;
   end;
 end;
 
