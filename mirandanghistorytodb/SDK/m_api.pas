@@ -42,13 +42,12 @@ interface
 {$ENDIF}
 
 uses
-  Windows;//, FreeImage;
+  Windows,Messages;//, FreeImage;
 
 // often used
 const
   strCList:PAnsiChar = 'CList';
 const
-  WM_USER  = $0400; // from Messages
   NM_FIRST = 0;     // from CommCtrl
 
 // RichEdit definitions
@@ -67,7 +66,7 @@ type
   // delphi 64 must have these types anyway
   int_ptr   = integer;
   uint_ptr  = cardinal;
-  
+
   {$ENDIF}
   long      = longint;
   plong     = ^long;
@@ -106,6 +105,7 @@ type
 {-- start newpluginapi --}
 const
   UNICODE_AWARE = 1;
+  STATIC_PLUGIN = 2;
 
 // The UUID structure below is used to for plugin UUID's and module type definitions
 type
@@ -160,7 +160,7 @@ const
   ME_SYSTEM_MODULEUNLOAD:pAnsiChar = 'Miranda/System/UnloadModule';
 
 {
-  Each service mode plugin must implement MS_SERVICEMODE_LAUNCH 
+  Each service mode plugin must implement MS_SERVICEMODE_LAUNCH
    This service might return one of the following values:
 	SERVICE_CONTINUE - load Miranda normally, like there's no service plugins at all
 	SERVICE_ONLYDB - load database and then execute service plugin only
@@ -180,7 +180,7 @@ const
 var
   { has to be returned via MirandaPluginInfo and has to be statically allocated,
   this means only one module can return info, you shouldn't be merging them anyway! }
-  PLUGININFO: TPLUGININFOEX;
+  PluginInfo: TPLUGININFOEX;
 
   {$include m_database.inc}
   {$include m_db_int.inc}
@@ -252,8 +252,8 @@ var
 
 implementation
 
-const
-  hLangpack:THANDLE = 0;
+var
+  hLangpack:int = 0;
 
 {$undef M_API_UNIT}
   {$include m_helpers.inc}

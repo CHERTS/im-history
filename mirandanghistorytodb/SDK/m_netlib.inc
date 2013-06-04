@@ -282,14 +282,6 @@ type
     combinePackets   : int; // MIRANDA_VER >= 0x0900
   end;
 
-  PNETLIBBASE64 = ^TNETLIBBASE64;
-  TNETLIBBASE64 = record
-    pszEncoded: PAnsiChar;
-    cchEncoded: int;
-    pbDecoded : PByte;
-    cbDecoded : int;
-  end;
-
 type
   PNETLIBBUFFER = ^TNETLIBBUFFER;
   TNETLIBBUFFER = record
@@ -356,7 +348,7 @@ const
 {
   Assign a Netlib user handle a set of dynamic HTTP headers to be used with all
 
-  HTTP connections that enable the HTTP-use-sticky headers flag. 
+  HTTP connections that enable the HTTP-use-sticky headers flag.
   The headers persist until cleared with lParam=NULL.
 
   All memory should be allocated by the caller using malloc() from MS_SYSTEM_GET_MMI
@@ -501,49 +493,10 @@ const
     lParam : Pointer to a null terminated string
     Affects: URL-encodes a string for x-www-form-urlencoded (and other uses) -- see notes
     Returns: A pointer to a null terminated string, NULL(0) on failure
-    Notes  : The returned string must be freed after it's no longer needed,
-             to do this Miranda's process heap must be used (under the WINAPI), e.g.
-             HeapFree(GetProcessHeap(), 0, the_returned_string)
+    Notes  : The returned string must be freed after it's no longer needed using mir_free
     Errors : ERROR_INVALID_PARAMETER, ERROR_OUTOFMEMORY
   }
   MS_NETLIB_URLENCODE:PAnsiChar = 'Netlib/UrlEncode';
-
-  {
-    wParam : 0
-    lParam : Pointer to a TNETLIBBASE64 initialised structure
-    Affects: Decodes a Base64 null terminated string, see notes
-    Returns: [non zero] on success, NULL(0) on failure
-    Notes  : TNETLIBBASE64.pszEncoded and cchEncoded must contain a pointer to
-             a buffer to use as input, and it's length, the length
-             should not include space taken for null termination --
-             -
-             Output is placed in ..pbDecoded and ..cbDecoded for buffer and
-             length of buffer -- the maxiumum output for a given input can
-             be worked out with Netlib_GetBase64DecodedBufferSize() function
-             see below.
-             -
-             For more information on Base64 see rfc-1421.
-    Errors : ERROR_INVALID_PARAMETER, ERROR_INVALID_DATA, ERROR_BUFFER_OVERFLOW
-  }
-  MS_NETLIB_BASE64DECODE:PAnsiChar = 'Netlib/Base64Decode';
-
-  {
-    wParam : 0
-    lParam : Pointer to an initialised TNETLIBBASE64 structure
-    Affect : Base64 encode a string, see notes
-    Returns: [non zero] on success, NULL(0) on failure
-    Notes  : TNETLIBBASE64.pbDecode and TNETLIBBASE64.cbDecoded contain
-             the input buffer and it's length --
-             TNETLIBBASE64.pszEncoded and TNETLIBBASE64.cchEncoded contain the
-             buffer in which to put the output and it's length.
-             -
-             The maximum output size for a given input can be worked
-             out with the function Netlib_GetBase64EncodedBufferSize() below
-             .pszEncoded is null terminated, on return TNETLIBBASE64.cchEncoded
-             is set to the actual length excluding 0.
-    Errors : ERROR_INVALID_PARAMETER, ERROR_BUFFER_OVERFLOW
-  }
-  MS_NETLIB_BASE64ENCODE:PAnsiChar = 'Netlib/Base64Encode';
 
 {
   Converts string representation of IP and port into numerical SOCKADDR_INET
@@ -556,12 +509,12 @@ const
   MS_NETLIB_STARINGTOADDRESS:PAnsiChar = 'Netlib/StringToAddress';
 
 {
-  Converts numerical representation of IP in SOCKADDR_INET into string representation with IP and port 
+  Converts numerical representation of IP in SOCKADDR_INET into string representation with IP and port
   IPv4 will be supplied in formats address:port or address
   IPv6 will be supplied in formats [address]:port or [address]
   wParam=(WPARAM)(int) 0 - lParam - (SOCKADDR_INET*); 1 - lParam - (unsigned) in host byte order
   lParam=(LPARAM)(SOCKADDR_INET*) or (unsigned) numeric IP address structure
-  Returns pointer to the string or NULL if not successful 
+  Returns pointer to the string or NULL if not successful
 }
   MS_NETLIB_ADDRESSTOSTRING:PAnsiChar = 'Netlib/AddressToString';
 
@@ -580,7 +533,7 @@ const
   IPv6 will be supplied in formats [address]:port or [address]
   wParam=(WPARAM)(HANDLE)hConnection
   lParam=(LPARAM)(NETLIBCONNINFO*) pointer to the connection information structure to fill
-  Returns 0 if successful  
+  Returns 0 if successful
 }
   MS_NETLIB_GETCONNECTIONINFO:PAnsiChar = 'Netlib/GetConnectionInfo';
 
@@ -594,7 +547,7 @@ const
 {
   Get connection Information
   wParam=(WPARAM)IP filter 1 - return global only IPv6 address, 0 all IPs
-  Returns (INT_PTR)(NETLIBIPLIST*) numeric IP address address array 
+  Returns (INT_PTR)(NETLIBIPLIST*) numeric IP address address array
   the last element of the array is all 0s, 0 if not successful
 }
   MS_NETLIB_GETMYIP:PAnsiChar = 'Netlib/GetMyIP';
@@ -755,7 +708,7 @@ const
   Shutdown connection
   wParam=(WPARAM)(HANDLE)hConnection
   lParam=(LPARAM)0
-  Returns 0 
+  Returns 0
 }
   MS_NETLIB_SHUTDOWN:PAnsiChar = 'Netlib/Shutdown';
 
@@ -827,7 +780,7 @@ const
   MS_NETLIB_SETPOLLINGTIMEOUT:PAnsiChar = 'Netlib/SetPollingTimeout';
 
 {
-  Makes connection SSL 
+  Makes connection SSL
   wParam=(WPARAM)(HANDLE)hConn
   lParam=0
   Returns 0 on failure 1 on success

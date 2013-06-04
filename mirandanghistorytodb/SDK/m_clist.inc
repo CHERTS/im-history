@@ -89,7 +89,6 @@ const
   CMIF_ROOTHANDLE = 384; // means that hParentMenu member is set (since 0.8#26)
   CMIF_UNICODE    = 512; // will return TCHAR* instead of AnsiChar*
   CMIF_KEEPUNTRANSLATED = 1024; // don't translate a menu item
-  CMIF_ICONFROMICOLIB   = 2048; // use icolibName instead of hIcon
 
   CMIF_DEFAULT = 4096; // this menu item is the default one
 
@@ -146,6 +145,14 @@ const
     Version: v0.1.0.1+
   }
   MS_CLIST_MODIFYMENUITEM:PAnsiChar = 'CList/ModifyMenuItem';
+
+  {
+    wParam : (HGENMENU)hMenuItem
+    lParam : (BOOL) enable = TRUE, disable = FALSE
+    Notes  : changes menu item's visibility
+    Version: v0.94.2+
+  }
+  MS_CLIST_SHOWHIDEMENUITEM:PAnsiChar = 'CList/ShowHideMenuItem';
 
   {
     wParam : HCONTACT
@@ -262,7 +269,7 @@ const
 
   {
     wParam : HCONTACT
-    lParam : HDBEVENT
+    lParam : HANDLE
     Affect : Remove an event from the contact list queue
     Returns: 0 on success, [non zero] on failure
   }
@@ -374,11 +381,11 @@ const
     to ensure that WM_COMMAND was realy from clist menu not from other menu
     it is reserved range of menu ids from CLISTMENUIDMIN to CLISTMENUIDMAX
     the menu items with ids outside from such range will not be processed by service.
-    Moreover if you process WM_COMMAND youself and your window contains self menu 
+    Moreover if you process WM_COMMAND youself and your window contains self menu
     please be sure that you will not call service for non-clist menu items.
     The simplest way is to ensure that your menus are not use item ids from such range.
     Otherwise, you HAVE TO distinguish WM_COMMAND from clist menus and from your
-    internal menu and  DO NOT call MS_CLIST_MENUPROCESSCOMMAND for non clist menus. 
+    internal menu and  DO NOT call MS_CLIST_MENUPROCESSCOMMAND for non clist menus.
   }
   MPCF_CONTACTMENU = 1; // test commands from a contact menu
   MPCF_MAINMENU    = 2; // test commands from the main menu
@@ -467,8 +474,8 @@ const
 
 {
   sent when the group get modified (created, renamed or deleted)
-  or contact is moving from group to group 
-  wParam=hContact - NULL if operation on group 
+  or contact is moving from group to group
+  wParam=hContact - NULL if operation on group
   lParam=pointer to CLISTGROUPCHANGE
 }
 type

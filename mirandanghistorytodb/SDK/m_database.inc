@@ -242,7 +242,7 @@ const
 Registers the specified database event type, with module, id & description.
 When someone needs to retrieve an event's text, a service named Module/GetEventText<id>
 will be called. For example, for module named 'foo' and event id 2000 a service
-foo/GetEventText2000 should be defined to process this request. That handler should 
+foo/GetEventText2000 should be defined to process this request. That handler should
 decode a blob and return the event text in the required format, its prototype is identical
 to a call of MS_DB_EVENT_GETTEXT (see below)
   wParam=0
@@ -253,14 +253,14 @@ Always returns 0.
 type
   PDBEVENTTYPEDESCR = ^TDBEVENTTYPEDESCR;
   TDBEVENTTYPEDESCR = record
-    cbSize     :int;      // structure size in bytes
-    module     :PAnsiChar;    // event module name
-    eventType  :int;      // event id, unique for this module
-    descr      :PAnsiChar;    // event type description (i.e. "File Transfer")
-    textService:PAnsiChar;    // service name for MS_DB_EVENT_GETTEXT (0.8+, default Module+'/GetEventText'+EvtID)
-    iconService:PAnsiChar;    // service name for MS_DB_EVENT_GETICON (0.8+, default Module+'/GetEventIcon'+EvtID)
-    eventIcon  :THANDLE;  // icolib handle to eventicon (0.8+, default 'eventicon_'+Module+EvtID)
-    flags      :DWORD;    // flags, combination of the DETF_*
+    cbSize     :int;       // structure size in bytes
+    module     :PAnsiChar; // event module name
+    eventType  :int;       // event id, unique for this module (actually, word size)
+    descr      :PAnsiChar; // event type description (i.e. "File Transfer")
+    textService:PAnsiChar; // service name for MS_DB_EVENT_GETTEXT (0.8+, default Module+'/GetEventText'+EvtID)
+    iconService:PAnsiChar; // service name for MS_DB_EVENT_GETICON (0.8+, default Module+'/GetEventIcon'+EvtID)
+    eventIcon  :THANDLE;   // icolib handle to eventicon           (0.8+, default 'eventicon_'+Module+EvtID)
+    flags      :DWORD;     // flags, combination of the DETF_*
   end;
 
 const
@@ -303,7 +303,7 @@ const
     lParam : Pointer to TDBEVENTINFO initialised with data
     affect : Add's an event to the contact's event list, the TDBEVENTINFO
              structure should be filled with the event of message -- see notes
-    returns: a handle to a DB event (HDBEVENT), or NULL on error
+    returns: a handle to a DB event (HANDLE), or NULL on error
     notes  : Triggers DB/Event/Added event just before it returns,
              Events are sorted chronologically as they are entered,
              so you cannot guarantee that the new hEvent is the last event in the chain,
@@ -315,38 +315,12 @@ const
              modules are free to define their own, beginning at 2000
              DBEVENTINFO.timestamp is in GMT, as returned by time()
   }
-
-  DBEF_FIRST =  1; // internally only, do not use
-  DBEF_SENT  =  2; // if set, the event was sent by the user, otherwise it was received
-  DBEF_READ  =  4; // event has been read by the user -- only needed for history
-  DBEF_RTL   =  8; // event contains the right-to-left aligned text
-  DBEF_UTF   = 16; // event contains a text in utf-8
-
-  EVENTTYPE_MESSAGE     = 0;
-  EVENTTYPE_URL         = 1;
-  EVENTTYPE_CONTACTS    = 2;     // v0.1.2.2+
-  EVENTTYPE_ADDED       = 1000;  // v0.1.1.0+: these used to be module-
-  EVENTTYPE_AUTHREQUEST = 1001;  // specific codes, hence the module-
-  EVENTTYPE_FILE        = 1002;  // specific limit has been raised to 2000
-
-type
-  PDBEVENTINFO = ^TDBEVENTINFO;
-  TDBEVENTINFO = record
-    cbSize   : int;  // size of the structure
-    szModule : PAnsiChar; // module that 'owns' this event and controls the data format
-    timestamp: DWORD; // timestamp in UNIX time
-    flags    : DWORD; // the DBEF_* flags above
-    eventType: WORD;  // event type, such as message, can be module defined
-    cbBlob   : DWORD; // size in bytes of pBlob^
-    pBlob    : PByte; // pointer to buffer containing the module defined event data
-  end;
-
 const
   MS_DB_EVENT_ADD:PAnsiChar = 'DB/Event/Add';
 
   {
     wParam : Handle to the contact
-    lParam : HDBEVENT handle to delete
+    lParam : HANDLE handle to delete
     affects: Removes a single event from the database for the given contact
     returns: 0 on success, nonzero on failure
     notes  : Triggers DB/Event/Deleted just before the event *is* deleted
@@ -356,8 +330,8 @@ const
   {
     wParam : Handle to DB event
     lParam : 0
-    returns: Returns the space in bytes requried to store the blob in HDBEVENT
-             given by HDBEVENT(wParam) -- or -1 on error
+    returns: Returns the space in bytes requried to store the blob in HANDLE
+             given by HANDLE(wParam) -- or -1 on error
   }
   MS_DB_EVENT_GETBLOBSIZE:PAnsiChar = 'DB/Event/GetBlobSize';
 
@@ -394,7 +368,7 @@ type
     datatype:int; // DBVT_ASCIIZ, DBVT_WCHAR (DBVT_TCHAR)
     codepage:int;
   end;
-const  
+const
   MS_DB_EVENT_GETTEXT:PAnsiChar = 'DB/Event/GetText';
 
   { DB/Event/GetIcon (0.7.0.1+)
@@ -423,19 +397,19 @@ const
 
   {
     wParam : HCONTACT
-    lParam : HDBEVENT
+    lParam : HANDLE
     affect : Changes the flag for an event to mark it as read
     Returns: Returns the entire flag DWORD for the event after the change, or -1
-             if HDBEVENT is invalid, see notes
+             if HANDLE is invalid, see notes
     notes  : This iss one of the database write operations that does not trigger
              an event, modules should not save flagss states for any length of time.
   }
   MS_DB_EVENT_MARKREAD:PAnsiChar = 'DB/Event/MarkRead';
 
   {
-    wParam : HDBEVENT
+    wParam : HANDLE
     lParam : 0
-    Affect : Returns a handle to a contact that owns the HDBEVENT,
+    Affect : Returns a handle to a contact that owns the HANDLE,
              see notes
     Returns: Returns a handle if successful or HDBEEVENT(-1) on failure
     notes  : This service is very slow, only use wheen you have no other choice
@@ -458,7 +432,7 @@ const
     lParam : 0
     Affect : Retrieves a handle to the first unreead event in a chain for a HCONTACT
              see notes
-    Returns: Returns a HDBEVENT handle or NULL(0) if the HCONTACT is invalid
+    Returns: Returns a HANDLE handle or NULL(0) if the HCONTACT is invalid
              or all it's events have beeen read.
     Notes  : Events in a chain are sorted chronologically automatically,
              but this does not necessarily mean that all events after
@@ -478,19 +452,19 @@ const
   MS_DB_EVENT_FINDLAST:PAnsiChar = 'DB/Event/FindLast';
 
   {
-    wParam : HDBEVENT
+    wParam : HANDLE
     lParam : 0
-    Affects: Retrieves a handle to the next event in a chain after HDBEVENT
-    Returns: A handle to the next DB event or NULL(0) if HDBEVENT is invalid
+    Affects: Retrieves a handle to the next event in a chain after HANDLE
+    Returns: A handle to the next DB event or NULL(0) if HANDLE is invalid
              or the last event in the chain.
   }
   MS_DB_EVENT_FINDNEXT:PAnsiChar = 'DB/Event/FindNext';
 
   {
-    wParam : HDBEVENT
+    wParam : HANDLE
     lParam : 0
-    Affects: Retrieves a handle to the previous event in a chain before HDBEVENT
-    Returns: A handle to the previous HDBEVENT or NULL(0) if HDBEVENT is invalid
+    Affects: Retrieves a handle to the previous event in a chain before HANDLE
+    Returns: A handle to the previous HANDLE or NULL(0) if HANDLE is invalid
              or is the first event in the chain
   }
   MS_DB_EVENT_FINDPREV:PAnsiChar = 'DB/Event/FindPrev';
@@ -585,7 +559,7 @@ const
   MS_DB_SETSAFETYMODE:PAnsiChar = 'DB/SetSafetyMode';
 
 //*************************** Modules ******************************
-  
+
   {
     wParam : (caller defined data) will be passed to lParam of the call back
     lParam : function pointer to TDBMODULEENUMPROC
@@ -653,7 +627,7 @@ const
 
   {
     wParam : HCONTACT
-    lParam : HDBEVENT
+    lParam : HANDLE
     Affect : Called when an event is about to be deleted from the event chain
              for a contact, see notes
     notes  : Returning non zero from your hook will NOT stop the deletion,
