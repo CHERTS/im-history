@@ -1,20 +1,20 @@
-{  
-  Miranda IM: the free IM client for Microsoft  Windows 
-  
-  Copyright 2000-2003 Miranda ICQ/IM project, 
-  all portions of this codebase are copyrighted to the people 
+{
+  Miranda IM: the free IM client for Microsoft  Windows
+
+  Copyright 2000-2003 Miranda ICQ/IM project,
+  all portions of this codebase are copyrighted to the people
   listed in contributors.txt.
-  
+
   This program is free software; you can redistribute it and/or
   modify it under the terms of the GNU General Public License
   as published by the Free Software Foundation; either version 2
   of the License, or (at your option) any later version.
-  
+
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
@@ -70,18 +70,18 @@ type
   end;
 
 const
-  MS_MSG_GETWINDOWAPI:PAnsiChar = 'MessageAPI/WindowAPI';
   { wparam=0
     lparam=0
     Returns a dword with the current message api version
     Current version is 0,0,0,4
   }
+  MS_MSG_GETWINDOWAPI:PAnsiChar = 'MessageAPI/WindowAPI';
 
-  MS_MSG_GETWINDOWCLASS:PAnsiChar = 'MessageAPI/WindowClass';
   { wparam=(AnsiChar*)szBuf
     lparam=(int)cbSize size of buffer
     Sets the window class name in wParam (ex. "SRMM" for srmm.dll)
   }
+  MS_MSG_GETWINDOWCLASS:PAnsiChar = 'MessageAPI/WindowClass';
 
 type
   PMessageWindowInputData = ^TMessageWindowInputData;
@@ -113,20 +113,33 @@ type
   TMessageWindowData = TMessageWindowOutputData;
 
 const
-  MS_MSG_GETWINDOWDATA:PAnsiChar = 'MessageAPI/GetWindowData';
 { wparam=(MessageWindowInputData*)
   lparam=(MessageWindowOutputData*)
   returns 0 on success and returns non-zero (1) on error or if no window data
   exists for that hcontact
 }
+  MS_MSG_GETWINDOWDATA:PAnsiChar = 'MessageAPI/GetWindowData';
 
-  ME_MSG_WINDOWPOPUP:PAnsiChar = 'MessageAPI/WindowPopupRequested';
-{ wParam = 0
- lParam = (MessageWindowPopupData *)&MessageWindowPopupData;
- Fired to allow plugins to add itens to the msg window popup menu
- Always fired twice: once with MSG_WINDOWPOPUP_SHOWING and once with MSG_WINDOWPOPUP_SELECTED.
- This is done to allow cleaning of resources.
+{ wparam=(THANDLE)hContact
+  lparam=(pWideChar)ptszMessageText
+  Sets a status line text for the appropriate contact
 }
+  MS_MSG_SETSTATUSTEXT:PAnsiChar = 'MessageAPI/SetStatusText';
+
+{ wparam=0(unused)
+  lparam=(pMessageWindowEvent) event being written
+  fired before SRMM writes an entered message into the database
+}
+  ME_MSG_PRECREATEEVENT:PAnsiChar = 'MessageAPI/PreCreateEvent';
+
+{ wParam = 0
+  lParam = (MessageWindowPopupData *)&MessageWindowPopupData;
+  Fired to allow plugins to add itens to the msg window popup menu
+  Always fired twice: once with MSG_WINDOWPOPUP_SHOWING and once with MSG_WINDOWPOPUP_SELECTED.
+  This is done to allow cleaning of resources.
+}
+  ME_MSG_WINDOWPOPUP:PAnsiChar = 'MessageAPI/WindowPopupRequested';
+
   MSG_WINDOWPOPUP_SHOWING  = 1;
   MSG_WINDOWPOPUP_SELECTED = 2;
 
@@ -145,20 +158,31 @@ type
     selection:int;     // The menu control id or 0 if no one was selected
   end;
 
-// status icons - HICONs will be automatically destroyed when removed or when miranda exits
+type
+  pMessageWindowEvent = ^MessageWindowEvent;
+  MessageWindowEvent = record
+    cbSize   :int;
+    seq      :int;     // number returned by PSS_MESSAGE
+    hContact :THANDLE;
+    dbei     :pDbEventInfo; // database event written on the basis of message sent
+  end;
+
+// status icons
 const
   MBF_DISABLED = 1;
   MBF_HIDDEN   = 2;
+  MBF_UNICODE  = 4;
 
 type
-  StatusIconData = record
-    cbSize       :int;
+  pStatusIconData = ^tStatusIconData;
+  tStatusIconData = record
+    cbSize       :int;       // must be equal to sizeof(StatusIconData)
     szModule     :PAnsiChar; // used in combo with the dwId below to create a unique identifier
-    dwId         :DWORD;
+    dwId         :DWORD;     // uniquely defines a button inside a module
     hIcon,
     hIconDisabled:HICON;     // hIconDisabled is optional - if null, will use hIcon in the disabled state
     flags        :int;       // one of MBF_* above
-    szTooltip    :PAnsiChar;
+    szTooltip    :TChar;     // controlled by MBF_UNICODE
   end;
 
 const
@@ -166,7 +190,8 @@ const
                         // otherwize it was a left click
 
 type
-  StatusIconClickData = record
+  pStatusIconClickData = ^tStatusIconClickData;
+  tStatusIconClickData = record
     cbSize       :int;
     clickLocation:TPOINT;    // click location, in screen coordinates
     szModule     :PAnsiChar;
@@ -175,16 +200,27 @@ type
   end;
 
 const
-  MS_MSG_ADDICON:PAnsiChar = 'MessageAPI/AddIcon';
-// lParam = (StatusIconData *)&StatusIconData
-
-  MS_MSG_REMOVEICON:PAnsiChar = 'MessageAPI/RemoveIcon';
 {
- lParam = (StatusIconData *)&StatusIconData
- only szModule and szId are used
+  wParam = hLangpack
+  lParam = (StatusIconData *)&StatusIconData
 }
+  MS_MSG_ADDICON:PAnsiChar = 'MessageAPI/AddIcon';
 
-  MS_MSG_MODIFYICON:PAnsiChar = 'MessageAPI/ModifyIcon';
+{
+  wParam = 0
+  lParam = (StatusIconData *)&StatusIconData
+  only szModule and szId are used
+}
+  MS_MSG_REMOVEICON:PAnsiChar = 'MessageAPI/RemoveIcon';
+
+{
+  wParam = (HANDLE)hContact
+  lParam = (int)zero-based index of a visible icon
+  returns (StatusIconData*)icon description filled for the required contact
+  don't free this memory.
+}
+  MS_MSG_GETNTHICON:PAnsiChar = 'MessageAPI/GetNthIcon';
+
 {
  wParam = (HANDLE)hContact
  lParam = (StatusIconData *)&StatusIconData
@@ -192,11 +228,20 @@ const
  otherwise, only the flags field is valid
  if either hIcon, hIconDisabled or szTooltip is null, they will not be modified
 }
+  MS_MSG_MODIFYICON:PAnsiChar = 'MessageAPI/ModifyIcon';
 
-  ME_MSG_ICONPRESSED:PAnsiChar = 'MessageAPI/IconPressed';
 {
  wParam = (HANDLE)hContact;
  lParam = (StatusIconClickData *)&StatusIconClickData;
  catch to show a popup menu, etc.
 }
+  ME_MSG_ICONPRESSED:PAnsiChar = 'MessageAPI/IconPressed';
+
+{
+  wParam = (HANDLE)hContact;
+  lParam = (StatusIconkData*)pIcon
+  catch to be notified about the icon list's change.
+}
+  ME_MSG_ICONSCHANGED:PAnsiChar = 'MessageAPI/IconsChanged';
+
 {$ENDIF}
