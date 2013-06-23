@@ -45,6 +45,7 @@
   <DeleteAllHistory>History of all contacts and chat rooms will be deleted. Are you sure?</DeleteAllHistory>
   <Copy>Copy</Copy>
   <SelectAll>Select all</SelectAll>
+  <CBExportAllMsg>Export all types of messages</CBExportAllMsg>
   <DeSelectAll>Unselect all</DeSelectAll>
   <SendSyncQuery>[%s] HistoryToDBSync sent a request to synchronize history</SendSyncQuery>
   <ShowHistoryDay>Show history for the day</ShowHistoryDay>
