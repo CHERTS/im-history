@@ -1,7 +1,7 @@
 object ExportForm: TExportForm
   Left = 0
   Top = 0
-  ActiveControl = Page1
+  ActiveControl = PBTotalExport
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
   Caption = 'MirandaHistoryToDB - '#1069#1082#1089#1087#1086#1088#1090' '#1080#1089#1090#1086#1088#1080#1080
@@ -63,7 +63,7 @@ object ExportForm: TExportForm
     Top = 0
     Width = 561
     Height = 266
-    ActivePage = Page1
+    ActivePage = Page3
     ButtonBarHeight = 42
     ButtonStart.Caption = 'To &'#1055#1077#1088#1074#1072#1103' '#1089#1090#1088#1072#1085#1080#1094#1072
     ButtonStart.NumGlyphs = 1
@@ -4308,8 +4308,6 @@ object ExportForm: TExportForm
       Header.Subtitle.Font.Name = 'Tahoma'
       Header.Subtitle.Font.Style = []
       EnabledButtons = [bkBack, bkNext, bkFinish, bkCancel]
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object CBSelectAll: TCheckBox
         Left = 16
         Top = 199
@@ -4345,6 +4343,14 @@ object ExportForm: TExportForm
         OnChange = ContactListChange
         OnChanging = ContactListChanging
       end
+      object CBExportAllMsg: TCheckBox
+        Left = 152
+        Top = 199
+        Width = 257
+        Height = 17
+        Caption = #1069#1082#1089#1087#1086#1088#1090#1080#1088#1086#1074#1072#1090#1100' '#1074#1089#1077' '#1090#1080#1087#1099' '#1089#1086#1086#1073#1097#1077#1085#1080#1081
+        TabOrder = 2
+      end
     end
     object Page3: TJvWizardInteriorPage
       Header.Height = 50
@@ -4366,8 +4372,6 @@ object ExportForm: TExportForm
       Header.Subtitle.Font.Style = []
       EnabledButtons = [bkBack, bkNext, bkFinish, bkCancel]
       OnPage = Page3Page
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object LExportDesc: TLabel
         Left = 16
         Top = 77
@@ -4410,8 +4414,6 @@ object ExportForm: TExportForm
       Header.Subtitle.Font.Style = []
       EnabledButtons = [bkBack, bkFinish, bkCancel]
       VisibleButtons = [bkFinish]
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object LExportDone: TLabel
         Left = 16
         Top = 72

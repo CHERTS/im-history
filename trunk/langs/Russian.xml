@@ -45,6 +45,7 @@
   <DeleteAllHistory>История всех контактов и чатов будет полностью удалена из базы. Вы уверены?</DeleteAllHistory>
   <Copy>Копировать</Copy>
   <SelectAll>Выбрать все</SelectAll>
+  <CBExportAllMsg>Экспортировать все типы сообщений</CBExportAllMsg>
   <DeSelectAll>Снять выбор со всех</DeSelectAll>
   <SendSyncQuery>[%s] HistoryToDBSync отправлен запрос на синхронизацию истории</SendSyncQuery>
   <ShowHistoryDay>Показать за день</ShowHistoryDay>

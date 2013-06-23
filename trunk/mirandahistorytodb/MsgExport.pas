@@ -40,6 +40,7 @@ type
     LExportDesc2: TLabel;
     CBSyncRequest: TCheckBox;
     LExportDone: TLabel;
+    CBExportAllMsg: TCheckBox;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -185,6 +186,7 @@ var
   Date_Str, MsgStatus: String;
   ContactProto, ContactID, ContactName: AnsiString;
   MyContactName, MyContactID: AnsiString;
+  MyEventType: DWord;
 begin
   LExportDesc2.Caption := 'Export...';
   // Подсчитываем количество выделенных элементов
@@ -226,7 +228,11 @@ begin
             CloseLogFile(5);
           Exit;
         end;
-        if (PluginLink^.CallService(MS_DB_EVENT_GET, hDbEvent, Integer(@DBEventInfo)) = 0) and (DBEventInfo.eventType = EVENTTYPE_MESSAGE and EVENTTYPE_URL) then
+        if CBExportAllMsg.Checked then
+          MyEventType := EVENTTYPE_MESSAGE and EVENTTYPE_URL and EVENTTYPE_CONTACTS and EVENTTYPE_ADDED and EVENTTYPE_AUTHREQUEST and EVENTTYPE_FILE
+        else
+          MyEventType := EVENTTYPE_MESSAGE and EVENTTYPE_URL;
+        if (PluginLink^.CallService(MS_DB_EVENT_GET, hDbEvent, Integer(@DBEventInfo)) = 0) and (DBEventInfo.eventType = MyEventType) then
         begin
           // Получаем текст сообщения
           msgA := PAnsiChar(DBEventInfo.pBlob);
@@ -428,6 +434,8 @@ begin
   IMExportWizard.Pages.Items[3].Title.Text := GetLangStr('IMExportWizardPage3Title');
   IMExportWizard.Pages.Items[3].Subtitle.Text := GetLangStr('IMExportWizardPage3SubTitle');
   CBSelectAll.Caption := GetLangStr('SelectAll');
+  CBExportAllMsg.Caption := GetLangStr('CBExportAllMsg');
+  CBExportAllMsg.Left := CBSelectAll.Left + CBSelectAll.Width + 20;
   ContactList.Columns[0].Caption := GetLangStr('NickName');
   ContactList.Columns[1].Caption := GetLangStr('Protocol');
   ContactList.Columns[2].Caption := GetLangStr('Number');

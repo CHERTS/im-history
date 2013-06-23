@@ -13,11 +13,13 @@ library MirandaHistoryToDB;
 {$I Global.inc}
 
 uses
+  {$IFDEF DEBUG}
   madExcept,
   madLinkDisAsm,
   madListHardware,
   madListProcesses,
   madListModules,
+  {$ENDIF}
   m_globaldefs,
   m_api,
   Windows,
