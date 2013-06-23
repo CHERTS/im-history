@@ -1,7 +1,7 @@
 object ExportForm: TExportForm
   Left = 0
   Top = 0
-  ActiveControl = PBTotalExport
+  ActiveControl = Page1
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
   Caption = 'MirandaHistoryToDB - '#1069#1082#1089#1087#1086#1088#1090' '#1080#1089#1090#1086#1088#1080#1080
@@ -63,7 +63,7 @@ object ExportForm: TExportForm
     Top = 0
     Width = 561
     Height = 266
-    ActivePage = Page3
+    ActivePage = Page1
     ButtonBarHeight = 42
     ButtonStart.Caption = 'To &'#1055#1077#1088#1074#1072#1103' '#1089#1090#1088#1072#1085#1080#1094#1072
     ButtonStart.NumGlyphs = 1
