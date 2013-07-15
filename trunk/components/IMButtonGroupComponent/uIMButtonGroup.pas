@@ -320,7 +320,8 @@ begin
       end;
     end;
 
-    Canvas.Brush.Style := OldBrushStyle;
+    if gboShowCaptions in Self.ButtonOptions then
+      Canvas.Brush.Style := OldBrushStyle;
 
     if Assigned(OnAfterDrawButton) then
       OnAfterDrawButton(Self, Index, Canvas, OrgRect, State);

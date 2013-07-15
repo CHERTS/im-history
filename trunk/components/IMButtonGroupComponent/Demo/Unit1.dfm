@@ -15,6 +15,9 @@ object Form1: TForm1
   OldCreateOrder = False
   Position = poScreenCenter
   OnCreate = FormCreate
+  DesignSize = (
+    498
+    246)
   PixelsPerInch = 96
   TextHeight = 13
   object Button1: TButton
@@ -40,6 +43,7 @@ object Form1: TForm1
     Width = 328
     Height = 198
     ActivePage = TabSheet1
+    Anchors = [akLeft, akTop, akRight]
     MultiLine = True
     TabOrder = 2
     object TabSheet1: TTabSheet
@@ -104,7 +108,7 @@ object Form1: TForm1
     Height = 196
     BevelKind = bkTile
     BorderStyle = bsNone
-    ButtonOptions = [gboAllowReorder, gboFullSize, gboGroupStyle, gboShowCaptions]
+    ButtonOptions = [gboFullSize, gboGroupStyle, gboShowCaptions]
     Images = ImageList1
     Items = <
       item
