@@ -8,7 +8,7 @@
   Purpose:    Extended TDateTimePicker control,
               property FormatString - supports both date and time editing
 
-              For Delphi 5 to XE3
+              For Delphi 5 to 2009
 
   The source code is given as is. The author is not responsible
   for any possible damage done due to the use of this code.
@@ -22,12 +22,9 @@
   All rights reserved
   
   Change log:
-    v1.2, 15.11.2012
-    - added support for Delphi XE3
-
     v1.1, 14.10.2008
     - added support for Delphi 2009
-    
+
     v1.0  21.8.2006
     - initiall release
 ------------------------------------------------------------------------------}
@@ -39,26 +36,26 @@ unit DTPEx;
 interface
 
 uses
-  Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  ComCtrls;
+	Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
+	ComCtrls;
 
 type
-  TDateTimePickerEx = class(TDateTimePicker)
-  private
-    FIsBlank:Boolean;
-    FWasBlank:Boolean;
-    FFormatString:string;
-    FFormatBlank:string;
-    FLastDateTime:TDateTime;
-    procedure SetFormatString(const Value:string);
-    procedure SetFormatBlank(const Value:string);
-    procedure CNNotify(var Message: TWMNotify); message CN_NOTIFY;
-  protected
-    procedure CreateWnd; override;
-    function MsgSetDateTime(Value: TSystemTime): Boolean; override;
-    procedure DoEnter; override;
-    procedure DoExit; override;
-    procedure KeyDown(var Key: Word; Shift: TShiftState); override;
+	TDateTimePickerEx = class(TDateTimePicker)
+	private
+		FIsBlank:Boolean;
+		FWasBlank:Boolean;
+		FFormatString:string;
+		FFormatBlank:string;
+		FLastDateTime:TDateTime;
+		procedure SetFormatString(const Value:string);
+		procedure SetFormatBlank(const Value:string);
+		procedure CNNotify(var Message: TWMNotify); message CN_NOTIFY;
+	protected
+		procedure CreateWnd; override;
+		function MsgSetDateTime(Value: TSystemTime): Boolean; override;
+		procedure DoEnter; override;
+		procedure DoExit; override;
+		procedure KeyDown(var Key: Word; Shift: TShiftState); override;
     procedure CheckEmptyDate; override;
   public
     constructor Create(AOwner: TComponent); override;
@@ -80,11 +77,24 @@ begin
 end;
 
 constructor TDateTimePickerEx.Create(AOwner: TComponent);
+{$IFDEF DELPHI16_UP}
+var
+  FS: TFormatSettings;
+{$ENDIF}
 begin
+{  FIsBlank:=True;
+  FWasBlank:=True;
+  FFormatBlank:='''''';
+  FFormatString:=ShortDateFormat+' HH:mm:ss';}
   FIsBlank:=False;
   FWasBlank:=False;
   FFormatBlank:='''''';
-  FFormatString:={$IFDEF DELPHI16_UP}FormatSettings.{$ENDIF}ShortDateFormat+' HH:mm:ss';
+  {$IFDEF DELPHI16_UP}
+    FS := TFormatSettings.Create(GetThreadLocale);
+    FFormatString:=FS.ShortDateFormat+' HH:mm:ss';
+  {$ELSE}
+  FFormatString:=ShortDateFormat+' HH:mm:ss';
+  {$ENDIF}
   inherited Create(AOwner);
   FLastDateTime:=DateTime;
 end;
@@ -100,6 +110,8 @@ end;
 
 procedure TDateTimePickerEx.CheckEmptyDate;
 begin
+	{if not FShowCheckbox then raise EDateTimeError.CreateRes(@SNeedAllowNone);
+  FChecked := False;}
   Invalidate;
 end;
 
@@ -140,17 +152,17 @@ end;
 
 procedure TDateTimePickerEx.DoExit;
 begin
-  if FWasBlank then
-  begin
-    FWasBlank:=False;
-    datetime:=0;
-  end;
-  inherited;
+	if FWasBlank then
+	begin
+		FWasBlank:=False;
+		datetime:=0;
+	end;
+	inherited;
 end;
 
 procedure TDateTimePickerEx.KeyDown(var Key: Word; Shift: TShiftState);
 begin
-  inherited;
+	inherited;
   case Key of
     VK_F2:
       if FWasBlank then
@@ -164,133 +176,144 @@ end;
 
 function TDateTimePickerEx.MsgSetDateTime(Value: TSystemTime): Boolean;
 var
-  tmp:string;
-  h,m:Integer;
+	tmp:string;
+	h,m:Integer;
 begin
-  if not ShowCheckbox then
-  begin
-    if SystemTimeToDateTime(Value)=0 then
-    begin
-      if not FIsBlank then
-      begin
-        FIsBlank:=True;
-        Perform(DTM_SETFORMAT, 0, Integer(PChar(FFormatBlank)));
-      end
-    end
-    else
-    begin
-      if FIsBlank then
-      begin
-        Perform(DTM_SETFORMAT, 0, Integer(PChar(FFormatString)));
-      end;
-      FIsBlank:=False;
-      if FWasBlank then
-        FWasBlank:=False;
-    end;
-  end;
-  if (FFormatString<>'') and (Pos('tt',FFormatString)=0) then
-  begin
-    tmp:=LowerCase(FFormatString);
-    h:=Pos('h',tmp);
-    if h=0 then
-    begin
-      if Pos('t',FFormatString)=0 then
-      begin
-        Value.wHour:=0;
-        Value.wMinute:=0;
-      end;
-      Value.wSecond:=0;
-      Value.wMilliseconds:=0;
-    end
-    else
-    begin
-      m:=Pos('m',tmp);
-      if (Pos('n',tmp)=0) and ((m=0) or (LastDelimiter('m',tmp)<h) or (m-h>3)) then
-      begin
-        Value.wMinute:=0;
-        Value.wSecond:=0;
-        Value.wMilliseconds:=0;
-      end
-      else
-      if Pos('s',tmp)=0 then
-      begin
-        Value.wSecond:=0;
-        Value.wMilliseconds:=0;
-      end
-      else
-        if Pos('z',tmp)=0 then
-          Value.wMilliseconds:=0;
-    end;
-  end;
-  Result:=inherited MsgSetDateTime(Value);
+	if not ShowCheckbox then
+	begin
+		if SystemTimeToDateTime(Value)=0 then
+		begin
+			if not FIsBlank then
+			begin
+				FIsBlank:=True;
+				Perform(DTM_SETFORMAT, 0, Integer(PChar(FFormatBlank)));
+			end
+		end
+		else
+		begin
+			if FIsBlank then
+			begin
+				Perform(DTM_SETFORMAT, 0, Integer(PChar(FFormatString)));
+			end;
+			FIsBlank:=False;
+			if FWasBlank then
+				FWasBlank:=False;
+		end;
+	end;
+	if (FFormatString<>'') and (Pos('tt',FFormatString)=0) then
+	begin
+		tmp:=LowerCase(FFormatString);
+		h:=Pos('h',tmp);
+		if h=0 then
+		begin
+			if Pos('t',FFormatString)=0 then
+			begin
+				Value.wHour:=0;
+				Value.wMinute:=0;
+			end;
+			Value.wSecond:=0;
+			Value.wMilliseconds:=0;
+			{if Value.wMonth=2 then
+			begin
+				if IsLeapYear(Value.wYear) then
+				begin
+					if Value.wDay>29 then
+						Value.wDay:=29
+				end
+				else
+				if Value.wDay>28 then
+					Value.wDay:=28
+			end;}
+		end
+		else
+		begin
+			m:=Pos('m',tmp);
+			if (Pos('n',tmp)=0) and ((m=0) or (LastDelimiter('m',tmp)<h) or (m-h>3)) then
+			begin
+				Value.wMinute:=0;
+				Value.wSecond:=0;
+				Value.wMilliseconds:=0;
+			end
+			else
+			if Pos('s',tmp)=0 then
+			begin
+				Value.wSecond:=0;
+				Value.wMilliseconds:=0;
+			end
+			else
+			if Pos('z',tmp)=0 then
+				Value.wMilliseconds:=0;
+		end;
+	end;
+	Result:=inherited MsgSetDateTime(Value);
 end;
 
 procedure TDateTimePickerEx.CNNotify(var Message: TWMNotify);
 begin
-  with Message, NMHdr^ do
-  begin
-    Result := 0;
-    case code of
-      DTN_DROPDOWN:
-        begin
-          inherited;
-          FLastDateTime:=DateTime;
-        end;
-      DTN_CLOSEUP:
-        begin
-          inherited;
+	with Message, NMHdr^ do
+	begin
+		Result := 0;
+		case code of
+			DTN_DROPDOWN:
+				begin
+					inherited;
+					FLastDateTime:=DateTime;
+				end;
+			DTN_CLOSEUP:
+				begin
+					inherited;
           DateTime := FLastDateTime;
-        end;
-      DTN_DATETIMECHANGE:
-        begin
-          with PNMDateTimeChange(NMHdr)^ do
-          begin
-            if DroppedDown and (dwFlags = GDT_VALID) then
-            begin
-              FLastDateTime:=SystemTimeToDateTime(st);
-              DateTime:=FLastDateTime;
-            end
-            else
-            begin
-              if ShowCheckbox and IsBlankSysTime(st) then
-                Checked := False
-              else
-                if dwFlags = GDT_VALID then
-                begin
-                  if st.wMonth=2 then
-                  begin
-                    if IsLeapYear(st.wYear) then
-                    begin
-                      if st.wDay>29 then
-                        st.wDay:=29
-                    end
-                    else
-                      if st.wDay>28 then
-                        st.wDay:=28
-                  end
-                  else
-                    if MonthDays[IsLeapYear(st.wYear),st.wMonth]<st.wDay then
-                      st.wDay:=MonthDays[IsLeapYear(st.wYear),st.wMonth];
-                  FLastDateTime:=SystemTimeToDateTime(st);
-                  if FormatString='' then
-                  begin
-                    if Kind = dtkDate then
-                      FLastDateTime:=Trunc(FLastDateTime)
-                    else
-                      FLastDateTime:=frac(FLastDateTime)
-                  end;
-                  DateTime:=FLastDateTime;
-                  if ShowCheckbox then
-                    Checked := True;
-                end;
-            end;
-            Change;
-          end;
-        end;
-      else
-        inherited;
-    end;
-  end;
+				end;
+			DTN_DATETIMECHANGE:
+				begin
+					with PNMDateTimeChange(NMHdr)^ do
+					begin
+						if DroppedDown and (dwFlags = GDT_VALID) then
+						begin
+							FLastDateTime:=SystemTimeToDateTime(st);
+							DateTime:=FLastDateTime;
+						end
+						else
+						begin
+							if ShowCheckbox and IsBlankSysTime(st) then
+								Checked := False
+							else
+							if dwFlags = GDT_VALID then
+							begin
+								if st.wMonth=2 then
+								begin
+									if IsLeapYear(st.wYear) then
+									begin
+										if st.wDay>29 then
+											st.wDay:=29
+									end
+									else
+									if st.wDay>28 then
+										st.wDay:=28
+								end
+                else
+                  if MonthDays[IsLeapYear(st.wYear),st.wMonth]<st.wDay then
+                    st.wDay:=MonthDays[IsLeapYear(st.wYear),st.wMonth];
+								FLastDateTime:=SystemTimeToDateTime(st);
+								if FormatString='' then
+								begin
+									if Kind = dtkDate then
+										FLastDateTime:=Trunc(FLastDateTime)
+									else
+										FLastDateTime:=frac(FLastDateTime)
+								end;
+								DateTime:=FLastDateTime;
+								if ShowCheckbox then
+									Checked := True;
+							end;
+						end;
+						Change;
+					end;
+				end;
+		else
+			inherited;
+		end;
+	end;
 end;
 
 end.

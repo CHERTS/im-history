@@ -1,4 +1,4 @@
-package DTPEx_XE3;
+package DTPEx_XE4;
 
 {$R *.res}
 {$R 'DTPEx.dcr'}
