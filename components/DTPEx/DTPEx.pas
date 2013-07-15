@@ -20,11 +20,14 @@
 
   Copyright (c) 2008 - 2009  Precision software & consulting
   All rights reserved
-  
+
   Change log:
+    v1.3, 15.07.2013
+    - added support for Delphi XE4
+    v1.2, 15.11.2012
+    - added support for Delphi XE3
     v1.1, 14.10.2008
     - added support for Delphi 2009
-
     v1.0  21.8.2006
     - initiall release
 ------------------------------------------------------------------------------}
