@@ -386,8 +386,8 @@ object MainForm: TMainForm
     Top = 256
   end
   object ImportHistoryZConnection: TZConnection
+    ControlsCodePage = cCP_UTF16
     UTF8StringsAsWideField = True
-    PreprepareSQL = False
     Catalog = ''
     HostName = ''
     Port = 0
@@ -1239,9 +1239,11 @@ object MainForm: TMainForm
       000000000000}
   end
   object MainZConnection: TZConnection
+    ControlsCodePage = cCP_UTF16
     UTF8StringsAsWideField = True
-    PreprepareSQL = False
     Catalog = ''
+    Properties.Strings = (
+      'controls_cp=CP_UTF16')
     TransactIsolationLevel = tiReadCommitted
     AfterConnect = MainZConnectionAfterConnect
     HostName = ''

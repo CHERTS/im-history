@@ -218,7 +218,7 @@ begin
   // Проверка входных параметров
   if GetSysLang = 'Русский' then
   begin
-    CmdHelpStr := 'Параметры запуска ' + ProgramsName + ' v' + ProgramsVer + ':' + #13 +
+    CmdHelpStr := 'Параметры запуска ' + ProgramsName + ' v' + GetMyExeVersion(){ProgramsVer} + ':' + #13 +
     '------------------------------------------------------------' + #13#13 +
     'HistoryToDBImport.exe <1> <2> <3>' + #13#13 +
     '<1> - (Обязательный параметр) - Путь до файла плагина *HistoryToDB.dll, там же должен быть каталог lang с файлами локализации (Например: "C:\Program Files\QIP Infium\Plugins\QIPHistoryToDB\")' + #13#13 +
@@ -236,7 +236,7 @@ begin
   end
   else
   begin
-    CmdHelpStr := 'Startup options ' + ProgramsName + ' v' + ProgramsVer + ':' + #13 +
+    CmdHelpStr := 'Startup options ' + ProgramsName + ' v' + GetMyExeVersion(){ProgramsVer} + ':' + #13 +
     '------------------------------------------------------' + #13#13 +
     'HistoryToDBImport.exe <1> <2> <3> <4> <5> <6> <7>' + #13#13 +
     '<1> - (Required) - The path to the plugin file *HistoryToDB.dll, there must be a directory lang files localization (Example: "C:\Program Files\QIP Infium\Plugins\QIPHistoryToDB\")' + #13#13 +
@@ -357,7 +357,7 @@ begin
     UnicodeFiles := TUnicodeFile.Create(Self);
     UINToNickPointer.UINToNickCount := 0;
     // Версия
-    StatusBar1.Panels.Items[0].Text := ProgramsName + ' v' + ProgramsVer + ' ' + PlatformType;
+    StatusBar1.Panels.Items[0].Text := ProgramsName + ' v' + GetMyExeVersion(){ProgramsVer} + ' ' + PlatformType;
     // Программа запущена
     RunAppDone := True;
   end;
