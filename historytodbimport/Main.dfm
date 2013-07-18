@@ -389,6 +389,8 @@ object MainForm: TMainForm
     ControlsCodePage = cCP_UTF16
     UTF8StringsAsWideField = True
     Catalog = ''
+    Properties.Strings = (
+      'controls_cp=CP_UTF16')
     HostName = ''
     Port = 0
     Database = ''
