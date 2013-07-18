@@ -266,7 +266,7 @@ begin
   // Подсказка по параметрам запуска
   if GetSysLang = 'Русский' then
   begin
-    CmdHelpStr := 'Параметры запуска ' + ProgramsName + ' v' + ProgramsVer + ' ' + PlatformType + ':' + #13 +
+    CmdHelpStr := 'Параметры запуска ' + ProgramsName + ' v' + GetMyExeVersion(){ProgramsVer} + ' ' + PlatformType + ':' + #13 +
     '---------------------------------------------------------------' + #13#13 +
     'HistoryToDBSync.exe <1> <2> <3>' + #13#13 +
     '<1> - (Обязательный параметр) - Путь до файла плагина *HistoryToDB.dll, там же должен быть каталог lang с файлами локализации (Например: "C:\Program Files\QIP Infium\Plugins\QIPHistoryToDB\")' + #13#13 +
@@ -277,7 +277,7 @@ begin
   end
   else
   begin
-    CmdHelpStr := 'Startup options ' + ProgramsName + ' v' + ProgramsVer + ' ' + PlatformType + ':' + #13 +
+    CmdHelpStr := 'Startup options ' + ProgramsName + ' v' + GetMyExeVersion(){ProgramsVer} + ' ' + PlatformType + ':' + #13 +
     '-------------------------------------------------' + #13#13 +
     'HistoryToDBSync.exe <1> <2>' + #13#13 +
     '<1> - (Required) - The path to the plugin file *HistoryToDB.dll, there must be a directory lang files localization (Example: "C:\Program Files\QIP Infium\Plugins\QIPHistoryToDB\")' + #13#13 +
