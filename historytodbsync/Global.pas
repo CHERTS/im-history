@@ -125,6 +125,7 @@ function Tok(Sep: String; var S: String): String;
 function GetMyFileSize(const Path: String): Integer;
 function SearchMainWindow(MainWindowName: pWideChar): Boolean;
 function StrContactProtoToInt(Proto: AnsiString): Integer;
+function GetMyExeVersion: String;
 procedure EncryptInit;
 procedure EncryptFree;
 procedure WriteInLog(LogPath: String; TextString: String; LogType: Integer);
@@ -967,6 +968,29 @@ begin
     Application.ProcessMessages;
     N := GetTickCount;
   until (N - F >= (Value mod 10)) or (N < F);
+end;
+
+function GetMyExeVersion: String;
+type
+  TVerInfo = packed record
+    Info: Array[0..47] of Byte;       // Эти 48 байт нам не нужны
+    Minor,Major,Build,Release: Word;  // Версия программы
+  end;
+var
+  RS: TResourceStream;
+  VI: TVerInfo;
+begin
+  Result := ProgramsVer;
+  try
+    RS := TResourceStream.Create(HInstance, '#1', RT_VERSION); // Достаём ресурс
+    if RS.Size > 0 then
+    begin
+      RS.Read(VI, SizeOf(VI)); // Читаем нужные нам байты
+      Result := IntToStr(VI.Major)+'.'+IntToStr(VI.Minor)+'.'+IntToStr(VI.Release)+'.'+IntToStr(VI.Build);
+    end;
+    RS.Free;
+  except;
+  end;
 end;
 
 begin

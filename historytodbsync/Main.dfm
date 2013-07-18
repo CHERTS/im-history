@@ -593,9 +593,11 @@
     end
   end
   object ZConnection1: TZConnection
+    ControlsCodePage = cCP_UTF16
     UTF8StringsAsWideField = True
-    PreprepareSQL = False
     Catalog = ''
+    Properties.Strings = (
+      'controls_cp=CP_UTF16')
     AfterConnect = ZConnection1AfterConnect
     HostName = ''
     Port = 0
