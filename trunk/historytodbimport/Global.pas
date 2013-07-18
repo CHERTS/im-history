@@ -125,9 +125,10 @@ function GetMyFileSize(const Path: String): Integer;
 function GetUserFromWindows: String;
 function DetectWinVersion: TWinVersion;
 function DetectWinVersionStr: String;
+function OpenLogFile(LogPath: String; LogType: Integer): Boolean;
+function GetMyExeVersion: String;
 procedure EncryptInit;
 procedure EncryptFree;
-function OpenLogFile(LogPath: String; LogType: Integer): Boolean;
 procedure WriteInLog(LogPath: String; TextString: String; LogType: Integer);
 procedure CloseLogFile(LogType: Integer);
 procedure LoadINI(INIPath: String; NotSettingsForm: Boolean);
@@ -1273,6 +1274,29 @@ begin
       Result[i*3-1] := hexAlf[Byte(Str1[i]) and $f];
       Result[i*3] := Sep;
     end;
+  end;
+end;
+
+function GetMyExeVersion: String;
+type
+  TVerInfo = packed record
+    Info: Array[0..47] of Byte;       // Эти 48 байт нам не нужны
+    Minor,Major,Build,Release: Word;  // Версия программы
+  end;
+var
+  RS: TResourceStream;
+  VI: TVerInfo;
+begin
+  Result := ProgramsVer;
+  try
+    RS := TResourceStream.Create(HInstance, '#1', RT_VERSION); // Достаём ресурс
+    if RS.Size > 0 then
+    begin
+      RS.Read(VI, SizeOf(VI)); // Читаем нужные нам байты
+      Result := IntToStr(VI.Major)+'.'+IntToStr(VI.Minor)+'.'+IntToStr(VI.Release)+'.'+IntToStr(VI.Build);
+    end;
+    RS.Free;
+  except;
   end;
 end;
 
