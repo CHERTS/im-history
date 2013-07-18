@@ -68,7 +68,7 @@ var
   Global_IMProcessPID: DWORD;
   // Прокси
   IMUseProxy, IMProxyAuth: Boolean;
-  IMProxyAddress, IMProxyPort, IMProxyUser, IMProxyUserPagsswd: String;
+  IMProxyAddress, IMProxyPort, IMProxyUser, IMProxyUserPasswd: String;
   DBUserName, MyAccount: String;
   IMClientPlatformType: String;
   UpdateServer: String;
@@ -119,6 +119,9 @@ function GetUserTempPath: WideString;
 function EnumThreadWndProc(hwnd: HWND; lParam: LPARAM): BOOL; stdcall;
 function StringToParts(sString:String; tdDelim:TDelim): TArrayOfString;
 function ExtractWord(const AString: string; const ADelimiter: Char; const ANumber: integer): string;
+function DetectWinVersion: TWinVersion;
+function DetectWinVersionStr: String;
+function GetMyExeVersion: String;
 procedure EncryptInit;
 procedure EncryptFree;
 procedure WriteInLog(LogPath: String; TextString: String; LogType: Integer);
@@ -128,8 +131,6 @@ procedure MakeTransp(winHWND: HWND);
 procedure OnSendMessageToAllComponent(Msg: String);
 procedure IMDelay(Value: Cardinal);
 procedure OnSendMessageToOneComponent(WinName, Msg: String);
-function DetectWinVersion: TWinVersion;
-function DetectWinVersionStr: String;
 // Для мультиязыковой поддержки
 procedure MsgDie(Caption, Msg: WideString);
 procedure MsgInf(Caption, Msg: WideString);
@@ -354,9 +355,9 @@ begin
       else IMProxyAuth := False;
 
       IMProxyUser := INI.ReadString('Proxy', 'ProxyUser', '');
-      IMProxyUserPagsswd := INI.ReadString('Proxy', 'ProxyUserPasswd', '');
-      if IMProxyUserPagsswd <> '' then
-        IMProxyUserPagsswd := DecryptStr(IMProxyUserPagsswd);
+      IMProxyUserPasswd := INI.ReadString('Proxy', 'ProxyUserPasswd', '');
+      if IMProxyUserPasswd <> '' then
+        IMProxyUserPasswd := DecryptStr(IMProxyUserPasswd);
 
       IMClientPlatformType := INI.ReadString('Main', 'IMClientPlatformType', PlatformType);
       UpdateServer := INI.ReadString('Updater', 'UpdateServer', uURL);
@@ -382,7 +383,7 @@ begin
       IMProxyPort := '3128';
       IMProxyAuth := False;
       IMProxyUser := '';
-      IMProxyUserPagsswd := '';
+      IMProxyUserPasswd := '';
       // Сохраняем настройки
       INI.WriteString('Main', 'DBType', DBType);
       INI.WriteString('Main', 'DefaultLanguage', DefaultLanguage);
@@ -397,7 +398,7 @@ begin
       INI.WriteString('Proxy', 'ProxyPort', IMProxyPort);
       INI.WriteString('Proxy', 'ProxyAuth', BoolToIntStr(IMProxyAuth));
       INI.WriteString('Proxy', 'ProxyUser', IMProxyUser);
-      INI.WriteString('Proxy', 'ProxyUserPasswd', IMProxyUserPagsswd);
+      INI.WriteString('Proxy', 'ProxyUserPasswd', IMProxyUserPasswd);
       INI.WriteString('Updater', 'UpdateServer', uURL);
     finally
       INI.Free;
@@ -1577,6 +1578,29 @@ const
     'Windows 8');
 begin
   Result := VersStr[DetectWinVersion];
+end;
+
+function GetMyExeVersion: String;
+type
+  TVerInfo = packed record
+    Info: Array[0..47] of Byte;       // Эти 48 байт нам не нужны
+    Minor,Major,Build,Release: Word;  // Версия программы
+  end;
+var
+  RS: TResourceStream;
+  VI: TVerInfo;
+begin
+  Result := ProgramsVer;
+  try
+    RS := TResourceStream.Create(HInstance, '#1', RT_VERSION); // Достаём ресурс
+    if RS.Size > 0 then
+    begin
+      RS.Read(VI, SizeOf(VI)); // Читаем нужные нам байты
+      Result := IntToStr(VI.Major)+'.'+IntToStr(VI.Minor)+'.'+IntToStr(VI.Release)+'.'+IntToStr(VI.Build);
+    end;
+    RS.Free;
+  except;
+  end;
 end;
 
 begin
