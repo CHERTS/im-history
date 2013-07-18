@@ -129,6 +129,7 @@ function DetectWinVersion: TWinVersion;
 function DetectWinVersionStr: String;
 function CheckAllUserAutorun(AppTitle: String): Boolean;
 function CheckCurrentUserAutorun(AppTitle: String): Boolean;
+function GetMyExeVersion: String;
 procedure AddAllUserAutorun(AppTitle, AppExe: String);
 procedure AddCurrentUserAutorun(AppTitle, AppExe: String);
 procedure DeleteAllUserAutorun(AppTitle: String);
@@ -1381,6 +1382,29 @@ begin
     end;
   finally
     Reg.Free;
+  end;
+end;
+
+function GetMyExeVersion: String;
+type
+  TVerInfo = packed record
+    Info: Array[0..47] of Byte;       // Эти 48 байт нам не нужны
+    Minor,Major,Build,Release: Word;  // Версия программы
+  end;
+var
+  RS: TResourceStream;
+  VI: TVerInfo;
+begin
+  Result := ProgramsVer;
+  try
+    RS := TResourceStream.Create(HInstance, '#1', RT_VERSION); // Достаём ресурс
+    if RS.Size > 0 then
+    begin
+      RS.Read(VI, SizeOf(VI)); // Читаем нужные нам байты
+      Result := IntToStr(VI.Major)+'.'+IntToStr(VI.Minor)+'.'+IntToStr(VI.Release)+'.'+IntToStr(VI.Build);
+    end;
+    RS.Free;
+  except;
   end;
 end;
 
