@@ -35,10 +35,12 @@ type
     procedure IMDownloader_DemoHeaders(Sender: TObject; Headers: string);
     procedure IMDownloader_DemoMD5Checked(Sender: TObject; MD5Correct,
       SizeCorrect: Boolean; MD5Str: string);
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
   private
     { Private declarations }
   public
     { Public declarations }
+    function FullRemoveDir(Dir: string; DeleteAllFilesAndFolders, StopIfNotAllDeleted, RemoveRoot: boolean): Boolean;
   end;
 
 var
@@ -51,10 +53,19 @@ implementation
 
 {$R *.dfm}
 
+procedure TMainForm.FormClose(Sender: TObject; var Action: TCloseAction);
+begin
+  if DirectoryExists(IMDownloader_Demo.SaveDirPath) then
+    FullRemoveDir(IMDownloader_Demo.SaveDirPath, True, True, True);
+end;
+
 procedure TMainForm.FormShow(Sender: TObject);
 begin
   Edit1.Text := uURL;
   IMDownloader_Demo.DirPath := ExtractFilePath(Application.ExeName);
+  IMDownloader_Demo.SaveDirPath := IncludeTrailingPathDelimiter(ExtractFilePath(Application.ExeName))+'temp\';
+  if not DirectoryExists(IMDownloader_Demo.SaveDirPath) then
+    CreateDir(IMDownloader_Demo.SaveDirPath);
 end;
 
 procedure TMainForm.IMDownloader_DemoAccepted(Sender: TObject);
@@ -73,11 +84,11 @@ end;
 procedure TMainForm.IMDownloader_DemoBreak(Sender: TObject);
 begin
   ProgressBar1.Visible := False;
-  TBStopDownload.Visible := false;
-  TBStopDownload.Enabled := true;
-  TBDownload.Visible := true;
+  TBStopDownload.Visible := False;
+  TBStopDownload.Enabled := True;
+  TBDownload.Visible := True;
   TBView.Visible := IMDownloader_Demo.AcceptedSize > 0;
-  Edit1.ReadOnly := false;
+  Edit1.ReadOnly := False;
   StatusBar1.SimpleText :=
     'Скачивание остановлено. Всего получено данных в байтах: ' + IntToStr
     (IMDownloader_Demo.AcceptedSize);
@@ -98,9 +109,9 @@ var
 begin
   ProgressBar1.Visible := False;
   TBStopDownload.Visible := false;
-  TBDownload.Visible := true;
+  TBDownload.Visible := True;
   TBView.Visible := IMDownloader_Demo.AcceptedSize > 0;
-  Edit1.ReadOnly := false;
+  Edit1.ReadOnly := False;
   case E of
     deInternetOpen: s := 'Ошибка при открытии сессии. ';
     deInternetOpenUrl: s := 'Ошибка при запрашивании файла. ';
@@ -132,10 +143,10 @@ end;
 
 procedure TMainForm.IMDownloader_DemoStartDownload(Sender: TObject);
 begin
-  TBDownload.Visible := false;
-  TBStopDownload.Visible := true;
-  TBView.Visible := false;
-  Edit1.ReadOnly := true;
+  TBDownload.Visible := False;
+  TBStopDownload.Visible := True;
+  TBView.Visible := False;
+  Edit1.ReadOnly := True;
   StatusBar1.SimpleText := 'Инициализация скачивания...';
 end;
 
@@ -156,14 +167,14 @@ procedure TMainForm.TBDownloadClick(Sender: TObject);
 begin
   IMDownloader_Demo.URL := Edit1.Text;
   //IMDownloader_Demo.Proxy := '192.168.42.240:1522';
-  IMDownloader_Demo.Proxy := '172.29.72.168:8080';
+  //IMDownloader_Demo.Proxy := '172.29.72.168:8080';
   IMDownloader_Demo.Download;
 end;
 
 procedure TMainForm.TBStopDownloadClick(Sender: TObject);
 begin
   StatusBar1.SimpleText := 'Останавливаем скачку';
-  TBStopDownload.Enabled := false;
+  TBStopDownload.Enabled := False;
   IMDownloader_Demo.BreakDownload;
 end;
 
@@ -171,6 +182,81 @@ procedure TMainForm.TBViewClick(Sender: TObject);
 begin
   TBView.DropdownMenu.Popup(TBView.ClientOrigin.X,
     TBView.ClientOrigin.Y + TBView.Height);
+end;
+
+{ Удаление непустого каталога вместе с подкаталогами
+
+Удаление подкаталогов рекурсивное - функция вызывает саму себя.
+Описание назначения агрументов:
+
+-DeleteAllFilesAndFolder - если TRUE то функцией будут предприняты
+попытки для установки атрибута faArchive любому файлу или папке
+перед его(её) удалением;
+
+-StopIfNotAllDeleted - если TRUE то работа функции моментально
+прекращается если возникла ошибка удаления хотя бы одного файла или папки;
+
+-RemoveRoot - если TRUE, указывает на необходимость удаления корня.
+
+Зависимости: FileCtrl, SysUtils
+Автор:       lipskiy, lipskiy@mail.ru, ICQ:51219290, Санкт-Петербург
+Copyright:   Собственное написание (lipskiy)
+Дата:        26 апреля 2002 г.
+
+Пример использования:
+FullRemoveDir('C:\a', true, true, true);
+}
+function TMainForm.FullRemoveDir(Dir: String; DeleteAllFilesAndFolders, StopIfNotAllDeleted, RemoveRoot: Boolean): Boolean;
+var
+  i: Integer;
+  SRec: TSearchRec;
+  FN: string;
+begin
+  Result := False;
+  if not DirectoryExists(Dir) then
+    exit;
+  Result := True;
+  // Добавляем слэш в конце и задаем маску - "все файлы и директории"
+  Dir := IncludeTrailingBackslash(Dir);
+  i := FindFirst(Dir + '*', faAnyFile, SRec);
+  try
+    while i = 0 do
+    begin
+      // Получаем полный путь к файлу или директорию
+      FN := Dir + SRec.Name;
+      // Если это директория
+      if SRec.Attr = faDirectory then
+      begin
+        // Рекурсивный вызов этой же функции с ключом удаления корня
+        if (SRec.Name <> '') and (SRec.Name <> '.') and (SRec.Name <> '..') then
+        begin
+          if DeleteAllFilesAndFolders then
+            FileSetAttr(FN, faArchive);
+          Result := FullRemoveDir(FN, DeleteAllFilesAndFolders,
+            StopIfNotAllDeleted, True);
+          if not Result and StopIfNotAllDeleted then
+            exit;
+        end;
+      end
+      else // Иначе удаляем файл
+      begin
+        if DeleteAllFilesAndFolders then
+          FileSetAttr(FN, faArchive);
+        Result := SysUtils.DeleteFile(FN);
+        if not Result and StopIfNotAllDeleted then
+          exit;
+      end;
+      // Берем следующий файл или директорию
+      i := FindNext(SRec);
+    end;
+  finally
+    SysUtils.FindClose(SRec);
+  end;
+  if not Result then
+    exit;
+  if RemoveRoot then // Если необходимо удалить корень - удаляем
+    if not RemoveDir(Dir) then
+      Result := false;
 end;
 
 end.
