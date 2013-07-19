@@ -52,6 +52,7 @@ type
     fProxyAuthUserName: String;
     fProxyAuthPassword: String;
     fDirPath: String;
+    fSaveDirPath: String;
     MemoryStream: TMemoryStream;
     Err: TIMDownloadError;
     fError: TErrorEvent;
@@ -78,15 +79,16 @@ type
   protected
     procedure Execute; override;
   public
-    constructor Create(CreateSuspennded: Boolean; const URL, Proxy, ProxyBypass, AuthUserName, AuthPassword, ProxyAuthUserName, ProxyAuthPassword, DirPath: String; Stream: PMemoryStream);
+    constructor Create(CreateSuspennded: Boolean; const URL, Proxy, ProxyBypass, AuthUserName, AuthPassword, ProxyAuthUserName, ProxyAuthPassword, DirPath, SaveDirPath: String; Stream: PMemoryStream);
     property URL: string read fURL;
-    property Proxy: string read fProxy;			                          // Список прокси
-    property ProxyBypass: string read fProxyBypass;                   // Дополниотельный список прокси
-    property AuthUserName: string read fAuthUserName;                 // Логин для Authorization: Basic
-    property AuthPassword: string read fAuthPassword;                 // Пароль для Authorization: Basic
-    property ProxyAuthUserName: string read fProxyAuthUserName;       // Логин для прокси
-    property ProxyAuthPassword: string read fProxyAuthPassword;       // Пароль для прокси
-    property DirPath: string read fDirPath write fDirPath;            // Директория в которой будут проверяться MD5 файлов
+    property Proxy: string read fProxy;			                           // Список прокси
+    property ProxyBypass: string read fProxyBypass;                    // Дополниотельный список прокси
+    property AuthUserName: string read fAuthUserName;                  // Логин для Authorization: Basic
+    property AuthPassword: string read fAuthPassword;                  // Пароль для Authorization: Basic
+    property ProxyAuthUserName: string read fProxyAuthUserName;        // Логин для прокси
+    property ProxyAuthPassword: string read fProxyAuthPassword;        // Пароль для прокси
+    property DirPath: string read fDirPath write fDirPath;             // Директория в которой будут проверяться MD5 файлов
+    property SaveDirPath: string read fSaveDirPath write fSaveDirPath; // Директория в которую предполагается сохранение скаченных файлов
     property OnError: TErrorEvent read fError write fError;
     property OnAccepted: TNotifyEvent read fAccepted write fAccepted;
     property OnBreak: TNotifyEvent read fBreak write fBreak;
@@ -106,6 +108,7 @@ type
     fProxyAuthUserName: String;
     fProxyAuthPassword: String;
     fDirPath: String;
+    fSaveDirPath: String;
     Downloader: TIMDownloadThread;
     fOnError: TErrorEvent;
     fOnAccepted: TNotifyEvent;
@@ -145,6 +148,7 @@ type
     property ProxyAuthUserName: string read fProxyAuthUserName write fProxyAuthUserName; // Логин для прокси
     property ProxyAuthPassword: string read fProxyAuthPassword write fProxyAuthUserName; // Пароль для прокси
     property DirPath: string read fDirPath write fDirPath;  	                           // Директория в которой будут проверяться MD5 файлов
+    property SaveDirPath: string read fSaveDirPath write fSaveDirPath;                   // Директория в которую предполагается сохранение скаченных файлов
     property OnError: TErrorEvent read fOnError write fOnError;
     property OnAccepted: TNotifyEvent read fOnAccepted write fOnAccepted;
     property OnHeaders: THeadersEvent read fHeaders write fHeaders;
@@ -249,11 +253,11 @@ var
   Buffer: Array [0 .. 1024] of Byte;
   BytesRead: Cardinal;
   FSession, FConnect, FRequest: hInternet;
-  dwBuffer: array [0 .. 1024] of Byte;
+  dwBuffer: Array [0 .. 1024] of Byte;
   dwBufferLen, dwIndex: DWORD;
   FHost, FScript, SRequest, ARequest: String;
   ProxyReqRes, ProxyReqLen: Cardinal;
-  TempHeaders, TempMD5, DownloadsFileName, DownloadsFileMD5: String;
+  TempHeaders, TempMD5, TempSaveMD5, DownloadsFileName, DownloadsFileMD5: String;
 
  function DelHttp(sURL: String): String;
  var
@@ -446,53 +450,69 @@ begin
     TempHeaders := ParseHeadersMD5andSize(Headers);
     DownloadsFileName := Tok('|', TempHeaders);
     DownloadsFileMD5 := Tok('|', TempHeaders);
-    if FileExists(fDirPath+DownloadsFileName) then
-      TempMD5 := LowerCase(MD5DigestToStr(MD5File(fDirPath+DownloadsFileName)))
+    if FileExists(fSaveDirPath+DownloadsFileName) then
+      TempSaveMD5 := LowerCase(MD5DigestToStr(MD5File(fSaveDirPath+DownloadsFileName)))
     else
-      TempMD5 := '00000000000000000000000000000000';
-    if LowerCase(DownloadsFileMD5) <> TempMD5 then
+      TempSaveMD5 := '00000000000000000000000000000000';
+    if LowerCase(DownloadsFileMD5) <> TempSaveMD5 then
     begin
-      repeat
-        if Terminated then
-          Break;
-        FillChar(Buffer, SizeOf(Buffer), 0);
-        if fProxy = '' then
-        begin
-          if ErrorResult(not InternetReadFile(FConnect, @Buffer, Length(Buffer), BytesRead), deDownloadingFile) then
-            Exit
+      if FileExists(fDirPath+DownloadsFileName) then
+        TempMD5 := LowerCase(MD5DigestToStr(MD5File(fDirPath+DownloadsFileName)))
+      else
+        TempMD5 := '00000000000000000000000000000000';
+      if LowerCase(DownloadsFileMD5) <> TempMD5 then
+      begin
+        repeat
+          if Terminated then
+            Break;
+          FillChar(Buffer, SizeOf(Buffer), 0);
+          if fProxy = '' then
+          begin
+            if ErrorResult(not InternetReadFile(FConnect, @Buffer, Length(Buffer), BytesRead), deDownloadingFile) then
+              Exit
+            else
+              MemoryStream.Write(Buffer, BytesRead);
+          end
           else
-            MemoryStream.Write(Buffer, BytesRead);
-        end
+          begin
+            if ErrorResult(not InternetReadFile(FRequest, @Buffer, Length(Buffer), BytesRead), deDownloadingFile) then
+              Exit
+            else
+              MemoryStream.Write(Buffer, BytesRead);
+          end;
+          AcceptedSize := MemoryStream.Size;
+          Synchronize(toDownloading);
+        until (BytesRead = 0);
+        MemoryStream.Position := 0;
+        // Подсчет MD5 и размера файла
+        MD5Str := LowerCase(MD5DigestToStr(MD5Stream(MemoryStream)));
+        TempHeaders := ParseHeadersMD5andSize(Headers);
+        DownloadsFileName := Tok('|', TempHeaders);
+        if Tok('|', TempHeaders) = MD5Str then
+          MD5Correct := True
         else
-        begin
-          if ErrorResult(not InternetReadFile(FRequest, @Buffer, Length(Buffer), BytesRead), deDownloadingFile) then
-            Exit
-          else
-            MemoryStream.Write(Buffer, BytesRead);
-        end;
-        AcceptedSize := MemoryStream.Size;
+          MD5Correct := False;
+        if Tok('|', TempHeaders) = IntToStr(MemoryStream.Size) then
+          SizeCorrect := True
+        else
+          SizeCorrect := False;
+        Synchronize(toMD5);
+      end
+      else
+      begin
+        AcceptedSize := 0;
         Synchronize(toDownloading);
-      until (BytesRead = 0);
-      MemoryStream.Position := 0;
-      // Подсчет MD5 и размера файла
-      MD5Str := LowerCase(MD5DigestToStr(MD5Stream(MemoryStream)));
-      TempHeaders := ParseHeadersMD5andSize(Headers);
-      DownloadsFileName := Tok('|', TempHeaders);
-      if Tok('|', TempHeaders) = MD5Str then
-        MD5Correct := True
-      else
-        MD5Correct := False;
-      if Tok('|', TempHeaders) = IntToStr(MemoryStream.Size) then
-        SizeCorrect := True
-      else
-        SizeCorrect := False;
-      Synchronize(toMD5);
+        MD5Str := 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF';
+        MD5Correct := True;
+        SizeCorrect := True;
+        Synchronize(toMD5);
+      end;
     end
     else
     begin
       AcceptedSize := 0;
       Synchronize(toDownloading);
-      MD5Str := 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF';
+      MD5Str := LowerCase(DownloadsFileMD5);
       MD5Correct := True;
       SizeCorrect := True;
       Synchronize(toMD5);
@@ -508,7 +528,7 @@ begin
   end;
 end;
 
-constructor TIMDownloadThread.Create(CreateSuspennded: Boolean; const URL, Proxy, ProxyBypass, AuthUserName, AuthPassword, ProxyAuthUserName, ProxyAuthPassword, DirPath: String; Stream: PMemoryStream);
+constructor TIMDownloadThread.Create(CreateSuspennded: Boolean; const URL, Proxy, ProxyBypass, AuthUserName, AuthPassword, ProxyAuthUserName, ProxyAuthPassword, DirPath, SaveDirPath: String; Stream: PMemoryStream);
 begin
   inherited Create(CreateSuspennded);
   FreeOnTerminate := True;
@@ -526,6 +546,7 @@ begin
   fProxyAuthUserName := ProxyAuthUserName;
   fProxyAuthPassword := ProxyAuthPassword;
   fDirPath := DirPath;
+  fSaveDirPath := SaveDirPath;
 end;
 
 procedure TIMDownloader.Download;
@@ -541,7 +562,7 @@ begin
   fMyMD5Correct := False;
   fMySizeCorrect := False;
   fOutStream := TMemoryStream.Create;
-  Downloader := TIMDownloadThread.Create(True, fURL, fProxy, fProxyBypass, fAuthUserName, fAuthPassword, fProxyAuthUserName, fProxyAuthPassword, fDirPath, Pointer(fOutStream));
+  Downloader := TIMDownloadThread.Create(True, fURL, fProxy, fProxyBypass, fAuthUserName, fAuthPassword, fProxyAuthUserName, fProxyAuthPassword, fDirPath, fSaveDirPath, Pointer(fOutStream));
   Downloader.OnAccepted := AcceptDownload;
   Downloader.OnError := ErrorDownload;
   Downloader.OnHeaders := GetHeaders;
