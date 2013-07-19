@@ -480,6 +480,7 @@
   <SizeNotConfirmed>Not true size of the received data.</SizeNotConfirmed>
   <AllUpdatesDownloaded>All updates are downloaded successfully.</AllUpdatesDownloaded>
   <AllUpdatesInstalled>All updates have been installed.</AllUpdatesInstalled>
+  <AllUpdatesInstalledErr>Error! Updates are not installed.</AllUpdatesInstalledErr>
   <Step>Step</Step>
   <NumberFilesUpdate>The number of files to update</NumberFilesUpdate>
   <FileToUpdate>File to update</FileToUpdate>

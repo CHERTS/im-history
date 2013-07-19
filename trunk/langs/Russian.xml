@@ -481,6 +481,7 @@
   <SizeNotConfirmed>Не сходится размер принятых данных.</SizeNotConfirmed>
   <AllUpdatesDownloaded>Все обновления успешно загружены.</AllUpdatesDownloaded>
   <AllUpdatesInstalled>Все обновления успешно установлены.</AllUpdatesInstalled>
+  <AllUpdatesInstalledErr>Ошибка! Обновления не установлены.</AllUpdatesInstalledErr>
   <Step>Шаг</Step>
   <NumberFilesUpdate>Число файлов для обновления</NumberFilesUpdate>
   <FileToUpdate>Очередной файл для обновления</FileToUpdate>
