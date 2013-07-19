@@ -92,11 +92,13 @@ type
   private
     { Private declarations }
     FLanguage : WideString;
+    TotalDownloadFile: Integer;
     procedure OnControlReq(var Msg : TWMCopyData); message WM_COPYDATA;
     // Для мультиязыковой поддержки
     procedure OnLanguageChanged(var Msg: TMessage); message WM_LANGUAGECHANGED;
     procedure LoadLanguageStrings;
     function EndTask(TaskName, FormName: String): Boolean;
+    function CloseAllComponent: Integer;
   public
     { Public declarations }
     RunAppDone: Boolean;
@@ -237,7 +239,8 @@ begin
     // Временный каталог
     SavePath := GetUserTempPath + 'IMHistory\';
     INISavePath := SavePath + 'HistoryToDBUpdate.ini';
-    IMDownloader1.DirPath := PluginPath;
+    IMDownloader1.DirPath := IncludeTrailingPathDelimiter(PluginPath);
+    IMDownloader1.SaveDirPath := IncludeTrailingPathDelimiter(SavePath);
     // Инициализация криптования
     EncryptInit;
     // Читаем настройки
@@ -270,6 +273,8 @@ begin
     SetWindowLong(Handle, GWL_EXSTYLE, GetWindowLong(Handle, GWL_EXSTYLE) or WS_EX_APPWINDOW);
     // Загружаем язык интерфейса
     LoadLanguageStrings;
+    // Всего загружено файлов
+    TotalDownloadFile := 0;
     // Программа запущена
     RunAppDone := True;
   end;
@@ -370,7 +375,7 @@ begin
   EProxyUser.Text := IMProxyUser;
   EProxyUserPasswd.Text := IMProxyUserPasswd;
   // Версия утилиты обновления
-  LogMemo.Lines.Add(ProgramsName + ' v' + GetMyExeVersion(){ProgramsVer} + ' ' + PlatformType);
+  LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + ProgramsName + ' v' + GetMyExeVersion(){ProgramsVer} + ' ' + PlatformType);
 end;
 
 procedure TMainForm.ButtonSettingsClick(Sender: TObject);
@@ -388,106 +393,112 @@ begin
 end;
 
 procedure TMainForm.ButtonUpdateStartClick(Sender: TObject);
-var
-  AllProcessEndErr: Integer;
 begin
   IMCancelCopy := False;
-  AllProcessEndErr := 0;
+  TotalDownloadFile := 0;
   if (DBType = 'Unknown') or (IMClientType  = 'Unknown') then
     MsgInf(Caption, GetLangStr('SelectDBTypeAndIMClient'))
   else
   begin
     LogMemo.Clear;
-    // Ищем программы синхронизации типа Dropbox
-    {if IsProcessRun('Dropbox.exe') then
+    // Начинаем обновление
+    TrueHeader := False;
+    CurrentUpdateStep := 0;
+    // Ставим параметры соединения через прокси-сервер
+    SetProxySettings;
+    if IMClientPlatformType = 'x86' then
+      IMDownloader1.URL := UpdateServer + '&platform=windows-x86'
+    else
+      IMDownloader1.URL := UpdateServer + '&platform=windows-x64';
+    IMDownloader1.DownLoad;
+  end;
+end;
+
+function TMainForm.CloseAllComponent: Integer;
+var
+  AllProcessEndErr: Integer;
+begin
+  AllProcessEndErr := 0;
+  Result := AllProcessEndErr;
+  // Ищем запущенные компоненты плагина и закрываем их
+  if not EndTask('HistoryToDBSync.exe', 'HistoryToDBSync for ' + IMClientType + ' (' + MyAccount + ')') then
+    Inc(AllProcessEndErr);
+  if not EndTask('HistoryToDBViewer.exe', 'HistoryToDBViewer for ' + IMClientType + ' (' + MyAccount + ')') then
+    Inc(AllProcessEndErr);
+  if not EndTask('HistoryToDBImport.exe', 'HistoryToDBImport for ' + IMClientType + ' (' + MyAccount + ')') then
+    Inc(AllProcessEndErr);
+  if AllProcessEndErr = 0 then
+  begin
+    // Ищем все экземпляры IM-клиентов и закрываем их
+    if IMClientType = 'QIP' then
     begin
-      if SystemLang = 'Russian' then
-        MsgString := 'В памяти найдена программа Dropbox.' + #13 +
-        'Если Вы используете её для синхронизации IM-клиента, то для корректного обновления' + #13 +
-        'всех компонентов плагина необходимо её закрыть.' + #13 +
-        'Закрыть Dropbox?'
-      else
-        MsgString := 'Find the program in the memory of Dropbox.' + #13 +
-        'If you use it to synchronize the IM-client, to properly' + #13 +
-        'update all the components necessary to close the plug.' + #13 +
-        'Close Dropbox?';
-      case MessageBox(MainForm.Handle, PWideChar(MsgString), PWideChar(Caption),36) of
-        6: DropboxProcessInfo := EndProcess('Dropbox.exe', True);
+      if IsProcessRun('qip.exe') then
+      begin
+        LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('EndProcess'), ['qip.exe']));
+        QIPProcessInfo := EndProcess('qip.exe', 0, True); // WM_CLOSE
       end;
-    end;}
-    // Ищем запущенные компоненты плагина и закрываем их
-    if not EndTask('HistoryToDBSync.exe', 'HistoryToDBSync for ' + IMClientType + ' (' + MyAccount + ')') then
-      Inc(AllProcessEndErr);
-    if not EndTask('HistoryToDBViewer.exe', 'HistoryToDBViewer for ' + IMClientType + ' (' + MyAccount + ')') then
-      Inc(AllProcessEndErr);
-    if not EndTask('HistoryToDBImport.exe', 'HistoryToDBImport for ' + IMClientType + ' (' + MyAccount + ')') then
-      Inc(AllProcessEndErr);
-    // Если все процессы убиты, то обновляемся
-    if AllProcessEndErr = 0 then
+    end;
+    if IMClientType = 'Miranda' then
     begin
-      // Ищем все экземпляры IM-клиентов и закрываем их
-      if IMClientType = 'QIP' then
+      if IMClientPlatformType = 'x86' then
       begin
-        LogMemo.Lines.Add(Format(GetLangStr('EndProcess'), ['qip.exe']));
-        QIPProcessInfo := EndProcess('qip.exe', 0, True);
-      end;
-      if IMClientType = 'Miranda' then
-      begin
-        if IMClientPlatformType = 'x86' then
+        if IsProcessRun('miranda32.exe') then
         begin
-          LogMemo.Lines.Add(Format(GetLangStr('EndProcess'), ['miranda32.exe']));
+          LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('EndProcess'), ['miranda32.exe']));
           MirandaProcessInfo := EndProcess('miranda32.exe', 1, True);
-        end
-        else
+        end;
+      end
+      else
+      begin
+        if IsProcessRun('miranda64.exe') then
         begin
-          LogMemo.Lines.Add(Format(GetLangStr('EndProcess'), ['miranda64.exe']));
+          LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('EndProcess'), ['miranda64.exe']));
           MirandaProcessInfo := EndProcess('miranda64.exe', 1, True);
         end;
       end;
-      if IMClientType = 'MirandaNG' then
+    end;
+    if IMClientType = 'MirandaNG' then
+    begin
+      if IMClientPlatformType = 'x86' then
       begin
-        if IMClientPlatformType = 'x86' then
+        if IsProcessRun('miranda32.exe') then
         begin
-          LogMemo.Lines.Add(Format(GetLangStr('EndProcess'), ['miranda32.exe']));
+          LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('EndProcess'), ['miranda32.exe']));
           MirandaProcessInfo := EndProcess('miranda32.exe', 0, True);
-        end
-        else
+        end;
+      end
+      else
+      begin
+        if IsProcessRun('miranda64.exe') then
         begin
-          LogMemo.Lines.Add(Format(GetLangStr('EndProcess'), ['miranda64.exe']));
+          LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('EndProcess'), ['miranda64.exe']));
           MirandaProcessInfo := EndProcess('miranda64.exe', 0, True);
         end;
       end;
-      if IMClientType = 'RnQ' then
+    end;
+    if IMClientType = 'RnQ' then
+    begin
+      if IsProcessRun('rnq.exe') then
       begin
-        if IsProcessRun('rnq.exe') then
-        begin
-          RnQProcessInfo := EndProcess('rnq.exe', 0, True);
-          LogMemo.Lines.Add(Format(GetLangStr('EndProcess'), ['rnq.exe']));
-        end;
-        if IsProcessRun('R&Q.exe') then
-        begin
-          RnQProcessInfo := EndProcess('R&Q.exe', 0, True);
-          LogMemo.Lines.Add(Format(GetLangStr('EndProcess'), ['R&Q.exe']));
-        end;
+        LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('EndProcess'), ['rnq.exe']));
+        RnQProcessInfo := EndProcess('rnq.exe', 0, True);
       end;
-      if IMClientType = 'Skype' then
+      if IsProcessRun('R&Q.exe') then
       begin
+        LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('EndProcess'), ['R&Q.exe']));
+        RnQProcessInfo := EndProcess('R&Q.exe', 0, True);
+      end;
+    end;
+    if IMClientType = 'Skype' then
+    begin
+      if IsProcessRun('skype.exe') then
+      begin
+        LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('EndProcess'), ['skype.exe']));
         SkypeProcessInfo := EndProcess('skype.exe', 0, True);
-        LogMemo.Lines.Add(Format(GetLangStr('EndProcess'), ['skype.exe']));
       end;
-      // Начинаем обновление
-      TrueHeader := False;
-      CurrentUpdateStep := 0;
-      SetProxySettings;
-      if IMClientPlatformType = 'x86' then
-        IMDownloader1.URL := UpdateServer + '&platform=windows-x86'
-      else
-        IMDownloader1.URL := UpdateServer + '&platform=windows-x64';
-      IMDownloader1.DownLoad;
-    end
-    else
-      MsgInf(Caption, GetLangStr('ManualUpdate'));
+    end;
   end;
+  Result := AllProcessEndErr;
 end;
 
 { Устанавливаем настройки прокси }
@@ -515,6 +526,7 @@ begin
   end;
 end;
 
+// Скачивание файла завершено
 procedure TMainForm.IMDownloader1Accepted(Sender: TObject);
 var
   MaxSteps: Integer;
@@ -541,8 +553,8 @@ begin
     LStatus.Repaint;
     if MD5InMemory <> 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF' then
     begin
-      LogMemo.Lines.Add(GetLangStr('MD5FileInMemory') + ' ' + MD5InMemory);
-      LogMemo.Lines.Add(GetLangStr('FileSizeInMemory') + ' ' + IntToStr(IMDownloader1.OutStream.Size));
+      LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + GetLangStr('MD5FileInMemory') + ' ' + MD5InMemory);
+      LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + GetLangStr('FileSizeInMemory') + ' ' + IntToStr(IMDownloader1.OutStream.Size));
     end;
     if IMMD5Correct and IMSizeCorrect then
     begin
@@ -551,14 +563,14 @@ begin
         LStatus.Caption := GetLangStr('ChecksumConfirmed');
         LStatus.Hint := 'ChecksumConfirmed';
         LStatus.Repaint;
-        LogMemo.Lines.Add(GetLangStr('ChecksumConfirmed'));
+        LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + GetLangStr('ChecksumConfirmed'));
       end
       else
       begin
         LStatus.Caption := GetLangStr('ChecksumFileEqServer');
         LStatus.Hint := 'ChecksumFileEqServer';
         LStatus.Repaint;
-        LogMemo.Lines.Add(GetLangStr('ChecksumFileEqServer'));
+        LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + GetLangStr('ChecksumFileEqServer'));
       end;
       // Если первый шаг - скачивание INI файла
       if CurrentUpdateStep = 0 then
@@ -572,17 +584,21 @@ begin
         if FileExists(INISavePath) then
           DeleteFile(INISavePath);
       end;
-      if FileExists(SavePath + HeaderFileName) then
-        DeleteFile(SavePath + HeaderFileName);
       // Сохряняем новый
       try
         if MD5InMemory <> 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF' then
         begin
-          IMDownloader1.OutStream.SaveToFile(SavePath + HeaderFileName);
-          LStatus.Caption := GetLangStr('FileSavedAs') + ' ' + HeaderFileName;
-          LStatus.Hint := 'FileSavedAs';
-          LStatus.Repaint;
-          LogMemo.Lines.Add(GetLangStr('FileSavedAs') + ' ' + HeaderFileName);
+          if IMDownloader1.AcceptedSize <> 0 then
+          begin
+            if FileExists(SavePath + HeaderFileName) then
+              DeleteFile(SavePath + HeaderFileName);
+            IMDownloader1.OutStream.SaveToFile(SavePath + HeaderFileName);
+            LStatus.Caption := GetLangStr('FileSavedAs') + ' ' + HeaderFileName;
+            LStatus.Hint := 'FileSavedAs';
+            LStatus.Repaint;
+            LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + GetLangStr('FileSavedAs') + ' ' + HeaderFileName);
+          end;
+          Inc(TotalDownloadFile);
         end;
         Inc(CurrentUpdateStep);
         if CurrentUpdateStep > 0 then
@@ -593,7 +609,9 @@ begin
           LStatus.Caption := GetLangStr('ErrFileSavedAs') + ' ' + HeaderFileName;
           LStatus.Hint := 'ErrFileSavedAs';
           LStatus.Repaint;
-          LogMemo.Lines.Add(GetLangStr('ErrFileSavedAs') + ' ' + HeaderFileName);
+          LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + GetLangStr('ErrFileSavedAs') + ' ' + HeaderFileName);
+          if EnableDebug then
+            LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + 'Error: '+E.Message);
         end;
       end;
     end
@@ -604,14 +622,14 @@ begin
         LStatus.Caption := GetLangStr('ChecksumNotConfirmed');
         LStatus.Hint := 'ChecksumNotConfirmed';
         LStatus.Repaint;
-        LogMemo.Lines.Add(GetLangStr('ChecksumNotConfirmed'));
+        LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + GetLangStr('ChecksumNotConfirmed'));
       end;
       if not IMSizeCorrect then
       begin
         LStatus.Caption := GetLangStr('SizeNotConfirmed');
         LStatus.Hint := 'SizeNotConfirmed';
         LStatus.Repaint;
-        LogMemo.Lines.Add(GetLangStr('SizeNotConfirmed'));
+        LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + GetLangStr('SizeNotConfirmed'));
       end;
       ButtonUpdateEnableStart;
     end;
@@ -633,18 +651,18 @@ begin
   begin
     UpdateINI := TIniFile.Create(INIFileName);
     UpdateServerInServiceMode := UpdateINI.ReadInteger('HistoryToDBUpdate', 'UpdateServerInServiceMode', 0);
-    LogMemo.Lines.Add('UpdateServerInServiceMode = ' + IntToStr(UpdateServerInServiceMode));
+    LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + 'UpdateServerInServiceMode = ' + IntToStr(UpdateServerInServiceMode));
     //Сервер обновлений временно на сервисном обслуживании
     if UpdateServerInServiceMode = 1 then
     begin
-      LogMemo.Lines.Add(Format(GetLangStr('UpdateServerInServiceMode'), [' ']));
+      LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('UpdateServerInServiceMode'), [' ']));
       IMDownloader1.BreakDownload;
       MsgInf(Caption, Format(GetLangStr('UpdateServerInServiceMode'), [#13]));
       Result := -1;
       // Вкл. кнопки
       ButtonUpdateEnableStart;
       // Запуск IM-клиента
-      RunAllIMClients;
+      //RunAllIMClients;
       // Выход
       Close;
       Exit;
@@ -657,7 +675,7 @@ begin
     MaxStep := UpdateINI.ReadInteger('HistoryToDBUpdate', 'FileCount', 0);
     IMClientCount := UpdateINI.ReadInteger('HistoryToDBUpdate', 'IMClientCount', 0);
     if EnableDebug then
-      LogMemo.Lines.Add('Число IM-клиентов в INI-файле = ' + IntToStr(IMClientCount));
+      LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + 'Число IM-клиентов в INI-файле = ' + IntToStr(IMClientCount));
     IMClientDownloadFileCount := 0;
     SetLength(DownloadListArray, 0);
     if IMClientCount > 0 then
@@ -669,8 +687,8 @@ begin
         IMClientNum := UpdateINI.ReadString('HistoryToDBUpdate', 'IMClient'+IntToStr(IMClientCount)+'File', '');
         if EnableDebug then
         begin
-          LogMemo.Lines.Add('IM-клиент = ' + IMClientName);
-          LogMemo.Lines.Add('Номера файлов = ' + IMClientNum);
+          LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + 'IM-клиент = ' + IMClientName);
+          LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + 'Номера файлов = ' + IMClientNum);
         end;
         Dec(IMClientCount);
       end;
@@ -681,13 +699,13 @@ begin
       if EnableDebug then
       begin
         for I := 0 to High(FileListArray) do
-          LogMemo.Lines.Add('№ файла для '+IMClientName+' = ' + FileListArray[I]);
+          LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + '№ файла для '+IMClientName+' = ' + FileListArray[I]);
       end;
     end;
     DatabaseCount := UpdateINI.ReadInteger('HistoryToDBUpdate', 'DatabaseCount', 0);
     DatabaseDownloadFileCount := 0;
     if EnableDebug then
-      LogMemo.Lines.Add('Число типов Database в INI-файле = ' + IntToStr(DatabaseCount));
+      LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + 'Число типов Database в INI-файле = ' + IntToStr(DatabaseCount));
     if DatabaseCount > 0 then
     begin
       DatabaseName := '';
@@ -697,8 +715,8 @@ begin
         DatabaseNum := UpdateINI.ReadString('HistoryToDBUpdate', 'Database'+IntToStr(DatabaseCount)+'File', '');
         if EnableDebug then
         begin
-          LogMemo.Lines.Add('Database = ' + DatabaseName);
-          LogMemo.Lines.Add('Номера файлов = ' + DatabaseNum);
+          LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + 'Database = ' + DatabaseName);
+          LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + 'Номера файлов = ' + DatabaseNum);
         end;
         Dec(DatabaseCount);
       end;
@@ -709,53 +727,80 @@ begin
       begin
         DownloadListArray[IMClientDownloadFileCount+I] := FileListArray[I];
         if EnableDebug then
-          LogMemo.Lines.Add('№ файла для '+DatabaseName+' = ' + FileListArray[I]);
+          LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + '№ файла для '+DatabaseName+' = ' + FileListArray[I]);
       end;
     end;
     if EnableDebug then
     begin
-      LogMemo.Lines.Add('Число шагов = ' + IntToStr(Length(DownloadListArray)));
+      LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + 'Число шагов = ' + IntToStr(Length(DownloadListArray)));
       for I := 0 to High(DownloadListArray) do
-        LogMemo.Lines.Add('DownloadListArray['+IntToStr(I)+'] = ' + DownloadListArray[I]);
+        LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + 'DownloadListArray['+IntToStr(I)+'] = ' + DownloadListArray[I]);
     end;
     MaxStep := IMClientDownloadFileCount + DatabaseDownloadFileCount;
     Result := MaxStep;
     if EnableDebug then
-      LogMemo.Lines.Add('Число шагов = ' + IntToStr(MaxStep));
+      LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + 'Число шагов = ' + IntToStr(MaxStep));
+    LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + '================= ' + GetLangStr('Step') + ' '+IntToStr(CurrStep)+' =================');
+    LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + GetLangStr('NumberFilesUpdate') + ' = ' + IntToStr(MaxStep));
     if CurrentUpdateStep > MaxStep then
     begin
-      LStatus.Caption := GetLangStr('AllUpdatesDownloaded');
-      LStatus.Hint := 'AllUpdatesDownloaded';
-      LStatus.Repaint;
-      LogMemo.Lines.Add('=========================================');
-      LogMemo.Lines.Add(GetLangStr('AllUpdatesDownloaded'));
-      InstallUpdate;
-      LStatus.Caption := GetLangStr('AllUpdatesInstalled');
-      LStatus.Hint := 'AllUpdatesInstalled';
-      LStatus.Repaint;
-      LogMemo.Lines.Add('=========================================');
-      LogMemo.Lines.Add(GetLangStr('AllUpdatesInstalled'));
-      // Вкл. кнопки
-      ButtonUpdateEnableStart;
-      // Запуск IM-клиента
-      RunAllIMClients;
-      Close;
-      Exit;
+      if TotalDownloadFile > 1 then // Если загружено более 1 файла
+      begin
+        LStatus.Caption := GetLangStr('AllUpdatesDownloaded');
+        LStatus.Hint := 'AllUpdatesDownloaded';
+        LStatus.Repaint;
+        LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + '=========================================');
+        LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + GetLangStr('AllUpdatesDownloaded'));
+        // Если все компоненты успешно закрыты и процесс IM-клиента тоже - обновляемся
+        if CloseAllComponent() = 0 then
+        begin
+          // Установка обновлений
+          InstallUpdate;
+          LStatus.Caption := GetLangStr('AllUpdatesInstalled');
+          LStatus.Hint := 'AllUpdatesInstalled';
+          LStatus.Repaint;
+          LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + '=========================================');
+          LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + GetLangStr('AllUpdatesInstalled'));
+          // Запуск IM-клиента
+          RunAllIMClients;
+          // Вкл. кнопки
+          ButtonUpdateEnableStart;
+          Close;
+          Exit;
+        end
+        else
+        begin
+          LStatus.Caption := GetLangStr('AllUpdatesInstalledErr');
+          LStatus.Hint := 'AllUpdatesInstalledErr';
+          LStatus.Repaint;
+          LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + '=========================================');
+          LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + GetLangStr('AllUpdatesInstalledErr'));
+          LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + GetLangStr('ManualUpdate'));
+          MsgInf(Caption, GetLangStr('ManualUpdate'));
+          // Вкл. кнопки
+          ButtonUpdateEnableStart;
+        end;
+      end
+      else
+      begin
+        // Вкл. кнопки
+        ButtonUpdateEnableStart;
+        Close;
+        Exit;
+      end;
     end;
-    LogMemo.Lines.Add('================= ' + GetLangStr('Step') + ' '+IntToStr(CurrStep)+' =================');
-    LogMemo.Lines.Add(GetLangStr('NumberFilesUpdate') + ' = ' + IntToStr(MaxStep));
     if MaxStep > 0 then
     begin
       UpdateURL := UpdateINI.ReadString('HistoryToDBUpdate', 'File'+DownloadListArray[CurrStep-1], '');
       if (UpdateURL <> '') and (CurrStep <= MaxStep) then
       begin
-        LogMemo.Lines.Add(GetLangStr('FileToUpdate') + ' = ' + UpdateURL);
-        if MatchStrings(UpdateURL, '*file=*Lang') then
-          IMDownloader1.DirPath := PluginPath + dirLangs
+        LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + GetLangStr('FileToUpdate') + ' = ' + UpdateURL);
+        if MatchStrings(UpdateURL, '*file=*Lang*') then
+          IMDownloader1.DirPath := IncludeTrailingPathDelimiter(PluginPath) + dirLangs
         else if MatchStrings(UpdateURL, '*file=*-update-*-to-*') then
-          IMDownloader1.DirPath := PluginPath + dirSQLUpdate
+          IMDownloader1.DirPath := IncludeTrailingPathDelimiter(PluginPath) + dirSQLUpdate
         else
-          IMDownloader1.DirPath := PluginPath;
+          IMDownloader1.DirPath := IncludeTrailingPathDelimiter(PluginPath);
         IMDownloader1.URL := UpdateURL;
         IMDownloader1.DownLoad;
       end
@@ -764,7 +809,7 @@ begin
     end;
   end
   else
-    LogMemo.Lines.Add(GetLangStr('UpdateSettingsFileNotFound') + ' ' + INIFileName);
+    LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + GetLangStr('UpdateSettingsFileNotFound') + ' ' + INIFileName);
 end;
 
 procedure TMainForm.InstallUpdate;
@@ -789,37 +834,37 @@ begin
         LStatus.Caption := Format(GetLangStr('UpdateFile'), [SR.Name]);
         LStatus.Hint := 'UpdateFile';
         LStatus.Repaint;
-        LogMemo.Lines.Add(Format(GetLangStr('UpdateFile'), [SR.Name]));
+        LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('UpdateFile'), [SR.Name]));
         if CopyFileEx(PChar(SavePath + SR.Name), PChar(PluginPath + 'HistoryToDBUpdater.upd'), Addr(CopyProgressFunc), nil, Addr(IMCancelCopy), COPY_FILE_RESTARTABLE) then
         begin
           DeleteFile(SavePath + SR.Name);
-          LogMemo.Lines.Add(Format(GetLangStr('UpdateFileDone'), [SR.Name]));
+          LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('UpdateFileDone'), [SR.Name]));
         end
         else
-          LogMemo.Lines.Add(Format(GetLangStr('UpdateFileErr'), [SR.Name]));
+          LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('UpdateFileErr'), [SR.Name]));
       end;
       if MatchStrings(SR.Name, '*.xml') then
       begin
         LStatus.Caption := Format(GetLangStr('UpdateLangFile'), [SR.Name]);
         LStatus.Hint := 'UpdateLangFile';
         LStatus.Repaint;
-        LogMemo.Lines.Add(Format(GetLangStr('UpdateLangFile'), [SR.Name]));
+        LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('UpdateLangFile'), [SR.Name]));
         if FileExists(PluginPath + dirLangs + SR.Name) then
           DeleteFile(PluginPath + dirLangs + SR.Name);
         if CopyFileEx(PChar(SavePath + SR.Name), PChar(PluginPath + dirLangs + SR.Name), Addr(CopyProgressFunc), nil, Addr(IMCancelCopy), COPY_FILE_RESTARTABLE) then
         begin
           DeleteFile(SavePath + SR.Name);
-          LogMemo.Lines.Add(Format(GetLangStr('UpdateLangFileDone'), [SR.Name]));
+          LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('UpdateLangFileDone'), [SR.Name]));
         end
         else
-          LogMemo.Lines.Add(Format(GetLangStr('UpdateFileErr'), [SR.Name]));
+          LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('UpdateFileErr'), [SR.Name]));
       end;
       if MatchStrings(SR.Name, '*.sql') then
       begin
         LStatus.Caption := Format(GetLangStr('UpdateSQLFile'), [SR.Name]);
         LStatus.Hint := 'UpdateSQLFile';
         LStatus.Repaint;
-        LogMemo.Lines.Add(Format(GetLangStr('UpdateSQLFile'), [SR.Name]));
+        LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('UpdateSQLFile'), [SR.Name]));
         if not DirectoryExists(PluginPath + dirSQLUpdate) then
           CreateDir(PluginPath + dirSQLUpdate);
         if FileExists(PluginPath + dirSQLUpdate + SR.Name) then
@@ -827,74 +872,74 @@ begin
         if CopyFileEx(PChar(SavePath + SR.Name), PChar(PluginPath + dirSQLUpdate + SR.Name), Addr(CopyProgressFunc), nil, Addr(IMCancelCopy), COPY_FILE_RESTARTABLE) then
         begin
           DeleteFile(SavePath + SR.Name);
-          LogMemo.Lines.Add(Format(GetLangStr('UpdateSQLFileDone'), [SR.Name]));
+          LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('UpdateSQLFileDone'), [SR.Name]));
         end
         else
-          LogMemo.Lines.Add(Format(GetLangStr('UpdateFileErr'), [SR.Name]));
+          LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('UpdateFileErr'), [SR.Name]));
       end;
       if MatchStrings(SR.Name, '*.exe') then
       begin
         LStatus.Caption := Format(GetLangStr('UpdateFile'), [SR.Name]);
         LStatus.Hint := 'UpdateFile';
         LStatus.Repaint;
-        LogMemo.Lines.Add(Format(GetLangStr('UpdateFile'), [SR.Name]));
+        LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('UpdateFile'), [SR.Name]));
         if FileExists(PluginPath + SR.Name) then
           DeleteFile(PluginPath + SR.Name);
         if CopyFileEx(PChar(SavePath + SR.Name), PChar(PluginPath + SR.Name), nil, nil, Addr(IMCancelCopy), COPY_FILE_RESTARTABLE) then
         begin
           DeleteFile(SavePath + SR.Name);
-          LogMemo.Lines.Add(Format(GetLangStr('UpdateFileDone'), [SR.Name]));
+          LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('UpdateFileDone'), [SR.Name]));
         end
         else
-          LogMemo.Lines.Add(Format(GetLangStr('UpdateFileErr'), [SR.Name]));
+          LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('UpdateFileErr'), [SR.Name]));
       end;
       if MatchStrings(SR.Name, '*.dll') then
       begin
         LStatus.Caption := Format(GetLangStr('UpdateFile'), [SR.Name]);
         LStatus.Hint := 'UpdateFile';
         LStatus.Repaint;
-        LogMemo.Lines.Add(Format(GetLangStr('UpdateFile'), [SR.Name]));
+        LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('UpdateFile'), [SR.Name]));
         if FileExists(PluginPath + SR.Name) then
           DeleteFile(PluginPath + SR.Name);
         if CopyFileEx(PChar(SavePath + SR.Name), PChar(PluginPath + SR.Name), Addr(CopyProgressFunc), nil, Addr(IMCancelCopy), COPY_FILE_RESTARTABLE) then
         begin
           DeleteFile(SavePath + SR.Name);
-          LogMemo.Lines.Add(Format(GetLangStr('UpdateFileDone'), [SR.Name]));
+          LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('UpdateFileDone'), [SR.Name]));
         end
         else
-          LogMemo.Lines.Add(Format(GetLangStr('UpdateFileErr'), [SR.Name]));
+          LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('UpdateFileErr'), [SR.Name]));
       end;
       if MatchStrings(SR.Name, '*.msg') then
       begin
         LStatus.Caption := Format(GetLangStr('UpdateFile'), [SR.Name]);
         LStatus.Hint := 'UpdateFile';
         LStatus.Repaint;
-        LogMemo.Lines.Add(Format(GetLangStr('UpdateFile'), [SR.Name]));
+        LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('UpdateFile'), [SR.Name]));
         if FileExists(PluginPath + SR.Name) then
           DeleteFile(PluginPath + SR.Name);
         if CopyFileEx(PChar(SavePath + SR.Name), PChar(PluginPath + SR.Name), nil, nil, Addr(IMCancelCopy), COPY_FILE_RESTARTABLE) then
         begin
           DeleteFile(SavePath + SR.Name);
-          LogMemo.Lines.Add(Format(GetLangStr('UpdateFileDone'), [SR.Name]));
+          LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('UpdateFileDone'), [SR.Name]));
         end
         else
-          LogMemo.Lines.Add(Format(GetLangStr('UpdateFileErr'), [SR.Name]));
+          LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('UpdateFileErr'), [SR.Name]));
       end;
       if MatchStrings(SR.Name, '*.txt') then
       begin
         LStatus.Caption := Format(GetLangStr('UpdateFile'), [SR.Name]);
         LStatus.Hint := 'UpdateFile';
         LStatus.Repaint;
-        LogMemo.Lines.Add(Format(GetLangStr('UpdateFile'), [SR.Name]));
+        LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('UpdateFile'), [SR.Name]));
         if FileExists(PluginPath + SR.Name) then
           DeleteFile(PluginPath + SR.Name);
         if CopyFileEx(PChar(SavePath + SR.Name), PChar(PluginPath + SR.Name), Addr(CopyProgressFunc), nil, Addr(IMCancelCopy), COPY_FILE_RESTARTABLE) then
         begin
           DeleteFile(SavePath + SR.Name);
-          LogMemo.Lines.Add(Format(GetLangStr('UpdateFileDone'), [SR.Name]));
+          LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('UpdateFileDone'), [SR.Name]));
         end
         else
-          LogMemo.Lines.Add(Format(GetLangStr('UpdateFileErr'), [SR.Name]));
+          LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('UpdateFileErr'), [SR.Name]));
       end;
     until FindNext(SR) <> 0;
     FindClose(SR);
@@ -951,7 +996,7 @@ begin
   end;
   LStatus.Caption := S;
   LStatus.Hint := HS;
-  LogMemo.Lines.Add(S);
+  LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + S);
   LAmount.Caption := CurrToStr(IMDownloader1.AcceptedSize/1024)+' '+GetLangStr('Kb');
   LAmount.Repaint;
   if not TrueHeader then
@@ -976,7 +1021,7 @@ var
   ResultFilename, ResultFileDesc, ResultMD5Sum, ResultHeaders: String;
   ResultFileSize: Integer;
 begin
-  //LogMemo.Lines.Add(Headers);
+  //LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Headers);
   HeadersStrList := TStringList.Create;
   HeadersStrList.Clear;
   HeadersStrList.Text := Headers;
@@ -987,10 +1032,10 @@ begin
     ResultFileDesc := 'Test';
     ResultMD5Sum := '00000000000000000000000000000000';
     ResultFileSize := 0;
-    LogMemo.Lines.Add(GetLangStr('ParseHeader'));
+    LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + GetLangStr('ParseHeader'));
     for I := 0 to HeadersStrList.Count - 1 do
     begin
-      //LogMemo.Lines.Add(HeadersStrList[I]);
+      //LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + HeadersStrList[I]);
       // Парсим строку вида
       // Content-Disposition: attachment; filename="ИМЯ-ФАЙЛА"
       // Такую строку вставляет в заголовок HTTP-запроса
@@ -1000,7 +1045,7 @@ begin
         ResultFilename := HeadersStrList[I];
         Delete(ResultFilename, 1, Pos('"', HeadersStrList[I]));
         Delete(ResultFilename, Length(ResultFilename),1);
-        //LogMemo.Lines.Add('Filename: '+ResultFilename);
+        //LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + 'Filename: '+ResultFilename);
       end;
       // Парсим строку вида
       // Content-Description: Desc
@@ -1009,7 +1054,7 @@ begin
         ResultFileDesc := HeadersStrList[I];
         Delete(ResultFileDesc, 1, Pos(':', HeadersStrList[I]));
         Delete(ResultFileDesc, 1,1);
-        //LogMemo.Lines.Add('Description: '+ResultFileDesc);
+        //LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + 'Description: '+ResultFileDesc);
       end;
       // Парсим строку вида
       // Content-MD5Sum: MD5
@@ -1018,7 +1063,7 @@ begin
         ResultMD5Sum := HeadersStrList[I];
         Delete(ResultMD5Sum, 1, Pos(':', HeadersStrList[I]));
         Delete(ResultMD5Sum, 1,1);
-        //LogMemo.Lines.Add('MD5: '+ResultMD5Sum);
+        //LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + 'MD5: '+ResultMD5Sum);
       end;
       // Парсим строку вида
       // Content-Length: РАЗМЕР
@@ -1034,11 +1079,11 @@ begin
     ResultHeaders := ResultFilename + '|' + ResultFileDesc + '|' + ResultMD5Sum + '|' + IntToStr(ResultFileSize) + '|';
     if(ResultHeaders <> 'Test|Test|00000000000000000000000000000000|' + IntToStr(ResultFileSize) + '|') then
     begin
-      LogMemo.Lines.Add(GetLangStr('HeaderData'));
-      LogMemo.Lines.Add(GetLangStr('FileName') + ' ' + ResultFilename);
-      LogMemo.Lines.Add(GetLangStr('FileDesc') + ' ' + ResultFileDesc);
-      LogMemo.Lines.Add('MD5: ' + ResultMD5Sum);
-      LogMemo.Lines.Add(GetLangStr('FileSize') + ' ' + IntToStr(ResultFileSize));
+      LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + GetLangStr('HeaderData'));
+      LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + GetLangStr('FileName') + ' ' + ResultFilename);
+      LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + GetLangStr('FileDesc') + ' ' + ResultFileDesc);
+      LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + 'MD5: ' + ResultMD5Sum);
+      LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + GetLangStr('FileSize') + ' ' + IntToStr(ResultFileSize));
       LFileName.Caption := ResultFilename;
       LFileDescription.Caption := ResultFileDesc;
       LFileMD5.Caption := ResultMD5Sum;
@@ -1051,8 +1096,8 @@ begin
     end
     else
     begin
-      LogMemo.Lines.Add(GetLangStr('InvalidResponseHeader'));
-      LogMemo.Lines.Add(GetLangStr('InvalidResponseHeaderDesc'));
+      LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + GetLangStr('InvalidResponseHeader'));
+      LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + GetLangStr('InvalidResponseHeaderDesc'));
       HeaderFileName := 'Test';
       HeaderMD5 := '00000000000000000000000000000000';
       HeaderFileSize := 0;
@@ -1078,7 +1123,7 @@ begin
   LStatus.Hint := 'InitDownload';
   LAmount.Caption := '0 '+GetLangStr('Kb');
   LSpeed.Caption := '0 '+GetLangStr('KbSec');
-  LogMemo.Lines.Add(GetLangStr('InitDownloadFromURL') + ' ' + IMDownloader1.URL);
+  LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + GetLangStr('InitDownloadFromURL') + ' ' + IMDownloader1.URL);
 end;
 
 procedure TMainForm.ButtonUpdateStopClick(Sender: TObject);
@@ -1290,34 +1335,34 @@ begin
   Result := False;
   if IsProcessRun(TaskName, FormName) then
   begin
-    LogMemo.Lines.Add(Format(GetLangStr('InMemoryFoundProcess'), [TaskName, IntToStr(GetProcessID(TaskName))]));
-    LogMemo.Lines.Add(GetLangStr('SendExitCommand'));
+    LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('InMemoryFoundProcess'), [TaskName, IntToStr(GetProcessID(TaskName))]));
+    LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + GetLangStr('SendExitCommand'));
     OnSendMessageToOneComponent(FormName, '009');
     Sleep(1200);
-    LogMemo.Lines.Add(Format(GetLangStr('SearchProcessInMemory'), [TaskName]));
+    LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('SearchProcessInMemory'), [TaskName]));
     if IsProcessRun(TaskName, FormName) then
     begin
-      LogMemo.Lines.Add(Format(GetLangStr('InMemoryFoundProcess'), [TaskName, IntToStr(GetProcessID(TaskName))]));
-      LogMemo.Lines.Add(Format(GetLangStr('KillProcess'), [TaskName]));
+      LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('InMemoryFoundProcess'), [TaskName, IntToStr(GetProcessID(TaskName))]));
+      LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('KillProcess'), [TaskName]));
       if KillTask(TaskName, FormName) = 1 then
       begin
-        LogMemo.Lines.Add(Format(GetLangStr('KillProcessDone'), [TaskName]));
+        LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('KillProcessDone'), [TaskName]));
         Result := True;
       end
       else
       begin
         if Global_IMProcessPID <> 0 then
         begin
-          LogMemo.Lines.Add(Format(GetLangStr('NotKillProcess'), [TaskName]));
-          LogMemo.Lines.Add(Format(GetLangStr('SeDebugPrivilege'), [TaskName]));
+          LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('NotKillProcess'), [TaskName]));
+          LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('SeDebugPrivilege'), [TaskName]));
           if ProcessTerminate(Global_IMProcessPID) then
           begin
-            LogMemo.Lines.Add(Format(GetLangStr('SeDebugPrivilegeDone'), [TaskName]));
+            LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('SeDebugPrivilegeDone'), [TaskName]));
             Result := True;
           end
           else
           begin
-            LogMemo.Lines.Add(Format(GetLangStr('NotKillSeDebugPrivilege'), [TaskName]));
+            LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('NotKillSeDebugPrivilege'), [TaskName]));
             Result := False;
           end;
         end;
@@ -1325,13 +1370,13 @@ begin
     end
     else
     begin
-      LogMemo.Lines.Add(Format(GetLangStr('InMemoryNotFoundProcess'), [TaskName]));
+      LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('InMemoryNotFoundProcess'), [TaskName]));
       Result := True;
     end;
   end
   else
   begin
-    LogMemo.Lines.Add(Format(GetLangStr('InMemoryNotFoundProcess'), [TaskName]));
+    LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('InMemoryNotFoundProcess'), [TaskName]));
     Result := True;
   end;
 end;
@@ -1435,13 +1480,13 @@ begin
     begin
       if FileExists(IMProcessArray[i].ProcessPath) then
       begin
-        LogMemo.Lines.Add(Format(GetLangStr('StartProgram'), [IMProcessArray[i].ProcessPath + IMProcessArray[i].ProcessParamCmd]));
+        LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('StartProgram'), [IMProcessArray[i].ProcessPath + IMProcessArray[i].ProcessParamCmd]));
         ShellExecute(0, 'open', PWideChar(IMProcessArray[i].ProcessPath), PWideChar(' '+IMProcessArray[i].ProcessParamCmd), nil, SW_SHOWNORMAL);
         Sleep(500);
         if IsProcessRun(IMProcessArray[i].ProcessName) then
-          LogMemo.Lines.Add(Format(GetLangStr('StartProgramDone'), [IMProcessArray[i].ProcessPath]))
+          LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('StartProgramDone'), [IMProcessArray[i].ProcessPath]))
         else
-          LogMemo.Lines.Add(Format(GetLangStr('StartProgramFail'), [IMProcessArray[i].ProcessPath]));
+          LogMemo.Lines.Add(FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - ' + Format(GetLangStr('StartProgramFail'), [IMProcessArray[i].ProcessPath]));
       end;
     end;
   end;

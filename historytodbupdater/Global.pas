@@ -895,7 +895,6 @@ begin
     ProcessCmdLine := GetProcessCmdLine(ProcessPIDListArray[I]);
     if ProcessCmdLine = '' then
     begin
-
       if (IMClientExeName = 'qip.exe') and (DetectWinVersionStr = 'Windows 7') then
         ProcessCmdLine := '"C:\Program Files\QIP 2012\qip.exe"'
       else if (IMClientExeName = 'qip.exe') and (DetectWinVersionStr <> 'Windows 7') then
@@ -969,6 +968,7 @@ begin
         EnumWindows(@ProcCloseEnum, ProcessPIDListArray[I])
       else //WM_QUIT
         EnumWindows(@ProcQuitEnum, ProcessPIDListArray[I]);
+      Sleep(700);
     end;
   end;
 end;

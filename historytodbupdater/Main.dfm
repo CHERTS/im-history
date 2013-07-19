@@ -2,9 +2,10 @@ object MainForm: TMainForm
   Left = 0
   Top = 0
   BorderIcons = [biSystemMenu, biMinimize]
+  BorderStyle = bsSingle
   Caption = 'HistoryToDBUpdater'
-  ClientHeight = 357
-  ClientWidth = 486
+  ClientHeight = 359
+  ClientWidth = 488
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -55,20 +56,21 @@ object MainForm: TMainForm
   OnDestroy = FormDestroy
   OnShow = FormShow
   DesignSize = (
-    486
-    357)
+    488
+    359)
   PixelsPerInch = 96
   TextHeight = 13
   object GBUpdater: TGroupBox
     Left = 8
     Top = 8
-    Width = 472
+    Width = 474
     Height = 145
     Anchors = [akLeft, akTop, akRight]
     Caption = ' '#1054#1073#1085#1086#1074#1083#1077#1085#1080#1077' '
     TabOrder = 0
+    ExplicitWidth = 472
     DesignSize = (
-      472
+      474
       145)
     object LAmountDesc: TLabel
       Left = 16
@@ -151,10 +153,11 @@ object MainForm: TMainForm
     object ProgressBarDownloads: TProgressBar
       Left = 16
       Top = 40
-      Width = 444
+      Width = 446
       Height = 10
       Anchors = [akLeft, akTop, akRight]
       TabOrder = 0
+      ExplicitWidth = 444
     end
     object ButtonSettings: TButton
       Left = 114
@@ -183,25 +186,28 @@ object MainForm: TMainForm
   object SettingsPageControl: TPageControl
     Left = 8
     Top = 159
-    Width = 472
+    Width = 474
     Height = 193
     ActivePage = TabSheetSettings
     Anchors = [akLeft, akTop, akRight]
     TabOrder = 1
+    ExplicitWidth = 472
     object TabSheetSettings: TTabSheet
       Caption = #1054#1073#1097#1080#1077' '#1085#1072#1089#1090#1088#1086#1081#1082#1080
       ImageIndex = 2
+      ExplicitWidth = 464
       DesignSize = (
-        464
+        466
         165)
       object GBSettings: TGroupBox
         Left = 3
         Top = 0
-        Width = 458
+        Width = 460
         Height = 161
         Anchors = [akLeft, akTop, akRight]
         Caption = ' '#1054#1073#1097#1080#1077' '#1085#1072#1089#1090#1088#1086#1081#1082#1080
         TabOrder = 0
+        ExplicitWidth = 458
         object LLanguage: TLabel
           Left = 16
           Top = 81
@@ -266,16 +272,17 @@ object MainForm: TMainForm
       ExplicitWidth = 0
       ExplicitHeight = 0
       DesignSize = (
-        464
+        466
         165)
       object GBConnectSettings: TGroupBox
         Left = 3
         Top = 0
-        Width = 458
+        Width = 460
         Height = 161
         Anchors = [akLeft, akTop, akRight]
         Caption = ' '#1053#1072#1089#1090#1088#1086#1081#1082#1080' '#1089#1086#1077#1076#1080#1085#1077#1085#1080#1103' '
         TabOrder = 0
+        ExplicitWidth = 458
         object LProxyAddress: TLabel
           Left = 16
           Top = 47
@@ -365,17 +372,18 @@ object MainForm: TMainForm
       ExplicitWidth = 0
       ExplicitHeight = 0
       DesignSize = (
-        464
+        466
         165)
       object LogMemo: TMemo
         Left = 3
         Top = 3
-        Width = 458
+        Width = 460
         Height = 159
         Anchors = [akLeft, akTop, akRight, akBottom]
         ReadOnly = True
         ScrollBars = ssVertical
         TabOrder = 0
+        ExplicitWidth = 458
       end
     end
   end
