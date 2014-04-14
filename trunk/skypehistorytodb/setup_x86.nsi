@@ -1,13 +1,13 @@
 !include "MUI2.nsh"
 !include "UAC.nsh"
 
-!define HOME ".\..\..\Release\2.5.0\x86"
-!define SKYPEHOME ".\..\..\Release\2.5.0\x86\skype"
-!define INSTALLERHOME ".\..\..\Release\2.5.0"
+!define HOME ".\..\..\Release\2.6.0\x86"
+!define SKYPEHOME ".\..\..\Release\2.6.0\x86\skype"
+!define INSTALLERHOME ".\..\..\Release\2.6.0"
 
 !define PRODUCT_NAME "SkypeHistoryToDB"
 !define NAME "SkypeHistoryToDB"
-!define VERSION 2.5.0
+!define VERSION 2.6.0
 !define COMPANY "Michael Grigorev"
 !define URL http://www.im-history.ru
 !define /date DbTIMESTAMP "%Y-%m-%d-%H-%M-%S"

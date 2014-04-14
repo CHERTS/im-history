@@ -111,7 +111,7 @@ object AboutForm: TAboutForm
         Top = 32
         Width = 124
         Height = 13
-        Caption = 'Copyright '#169' 2011-2013 by'
+        Caption = 'Copyright '#169' 2011-2014 by'
       end
       object LabelAuthor: TLabel
         Left = 143
@@ -182,6 +182,10 @@ object AboutForm: TAboutForm
     object ThankYouTabSheet: TTabSheet
       Caption = #1041#1083#1072#1075#1086#1076#1072#1088#1085#1086#1089#1090#1080
       ImageIndex = 1
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       DesignSize = (
         324
         140)

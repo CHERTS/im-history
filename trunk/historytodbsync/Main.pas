@@ -1,6 +1,6 @@
 { ############################################################################ }
 { #                                                                          # }
-{ #  HistoryToDBSync v2.5                                                    # }
+{ #  HistoryToDBSync v2.6                                                    # }
 { #                                                                          # }
 { #  License: GPLv3                                                          # }
 { #                                                                          # }
@@ -1233,7 +1233,7 @@ begin
     DBName := StringReplace(DBName,'<PluginPath>',ExtractFileDir(PluginPath),[RFReplaceall]);
   // End
   ZConnection1.Database := DBName;
-  ZConnection1.LoginPrompt := false;
+  ZConnection1.LoginPrompt := False;
   if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Процедура LoadDBSettings: Protocol = ' + ZConnection1.Protocol + ', HostName = ' + ZConnection1.HostName + ', Port = ' + IntToStr(ZConnection1.Port) + ', Database = ' + ZConnection1.Database + ', User = ' + ZConnection1.User + ', Password = ' + EncryptMD5(ZConnection1.Password), 2);
 end;
 

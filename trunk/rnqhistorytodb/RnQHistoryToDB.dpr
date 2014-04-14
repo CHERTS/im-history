@@ -18,11 +18,13 @@ library RnQHistoryToDB;
 {$ENDIF COMPILER_14_UP}
 
 uses
+  {$IFDEF DEBUG}
   madExcept,
   madLinkDisAsm,
   madListHardware,
   madListProcesses,
   madListModules,
+  {$ENDIF}
   Classes,
   Windows,
   Messages,
@@ -162,6 +164,7 @@ begin
         CloseLogFile(3);
       if ProtoListLogOpened then
         CloseLogFile(4);
+      MsgInf(PluginName, GetLangStr('SaveContactListCompleted'));
     end;
     4: OnSendMessageToOneComponent('HistoryToDBSync for RnQ ('+MyAccount+')', '0050');
     5: OnSendMessageToOneComponent('HistoryToDBSync for RnQ ('+MyAccount+')', '0051');

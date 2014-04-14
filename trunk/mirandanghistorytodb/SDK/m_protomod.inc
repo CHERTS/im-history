@@ -44,7 +44,7 @@ const
   MS_PROTO_REGISTERMODULE:PAnsiChar = 'Proto/RegisterModule';
 
   {
-    wParam : HCONTACT
+    wParam : TMCONTACT
     lParam : protocol_name_string
     Affect : Add the given protocol module to the chain for a contact, see notes
     Returns: 0 success, [non zero] on failure
@@ -54,7 +54,7 @@ const
   MS_PROTO_ADDTOCONTACT:PAnsiChar = 'Proto/AddToContact';
 
   {
-    wParam : HCONTACT
+    wParam : TMCONTACT
     lParam : protocol_name_string
     Affect : Remove the given protocol name from the chain for the given contact
     Returns: 0 on success, [non zero] on failure
@@ -100,18 +100,5 @@ const
   }
   MS_PROTO_BROADCASTACK:PAnsiChar = 'Proto/BroadcastAck';
 
-// -- Added during 0.3.4 (2004/09/27) development! -----
-{
-  wParam: (HANDLE)hContact
-  lParam: 0
-  Affect: Given a hContact, return the protocol that is registered for it, or NULL if no such protocol exists,
-      the returned string does not have to be freed and is valid even for multiple threads.
-  Note:  Prior to 2004/09/28 this service WAS NOT THREAD SAFE and was slower
-  Note:  Prior to 2004/09/28 this service would return NULL for a hContact if the protocol module
-      associated with the hContact was not currently loaded, no such check is performed now.
-  Version: 0.3.4 (2004/09/28)
-}
-const
-  MS_PROTODIR_PROTOFROMCONTACT = MS_PROTO_GETCONTACTBASEPROTO;
 
 {$ENDIF}

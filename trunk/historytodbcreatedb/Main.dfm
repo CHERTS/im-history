@@ -44,7 +44,7 @@ object MainForm: TMainForm
       Style = tbsDropDown
     end
     object AboutButton: TToolButton
-      Left = 65
+      Left = 67
       Top = 0
       ImageIndex = 0
       ParentShowHint = False
@@ -224,6 +224,10 @@ object MainForm: TMainForm
     object StepsTabSheet: TTabSheet
       Caption = #1064#1072#1075' 1 - 4'
       ImageIndex = 1
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       DesignSize = (
         345
         364)
@@ -403,6 +407,10 @@ object MainForm: TMainForm
     object SQLLogTabSheet: TTabSheet
       Caption = #1052#1086#1085#1080#1090#1086#1088' SQL '#1086#1087#1077#1088#1072#1094#1080#1081
       ImageIndex = 2
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       DesignSize = (
         345
         364)
@@ -428,8 +436,7 @@ object MainForm: TMainForm
     end
   end
   object ZConnection1: TZConnection
-    UTF8StringsAsWideField = True
-    PreprepareSQL = False
+    ControlsCodePage = cCP_UTF16
     Catalog = ''
     AfterConnect = ZConnection1AfterConnect
     AfterDisconnect = ZConnection1AfterDisconnect
@@ -461,7 +468,7 @@ object MainForm: TMainForm
     Left = 312
     Top = 200
     Bitmap = {
-      494C010102000400140020002000FFFFFFFFFF00FFFFFFFFFFFFFFFF424D3600
+      494C010102000500040020002000FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000800000002000000001002000000000000040
       0000000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
@@ -993,7 +1000,8 @@ object MainForm: TMainForm
       F000000FC000007F0000000000000000F800001FC000007F0000000000000000
       FC00003FC380007F0000000000000000FE00007FCFE0007F0000000000000000
       FF0000FFFFF801FF0000000000000000FFC003FFFFFE07FF0000000000000000
-      FFFFFFFFFFFFFFFF0000000000000000}
+      FFFFFFFFFFFFFFFF000000000000000000000000000000000000000000000000
+      000000000000}
   end
   object Lang_PM: TPopupMenu
     Left = 312

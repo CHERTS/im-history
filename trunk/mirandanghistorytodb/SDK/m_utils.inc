@@ -32,14 +32,14 @@ const
   // hyperlink messages
   {
     Use this in a SendMessage to set the color of the url when control is enabled
-    wParam=DWORD color
+    wParam=dword color
     lParam=not used
   }
   HLK_SETENABLECOLOUR = WM_USER+101; // added in 0.3.1
 
   {
     Use this in a SendMessage to set the color of the url when control is disabled
-    wParam=DWORD color
+    wParam=dword color
     lParam=not used
   }
   HLK_SETDISABLECOLOUR = WM_USER+102; // added in 0.3.1
@@ -78,13 +78,13 @@ type
   TWINDOWLISTENTRY = record
     hList   : THANDLE;
     hWnd    : HWND;
-    hContact: THANDLE;
+    hContact: TMCONTACT;
   end;
 
   PSAVEWINDOWPOS = ^TSAVEWINDOWPOS;
   TSAVEWINDOWPOS = record
     hWnd        : HWND;
-    hContact    : THANDLE;
+    hContact    : TMCONTACT;
     szModule    : PAnsiChar;        // module name eto store the settings in
     szNamePrefix: PAnsiChar;        // text to prefix on 'x', 'width', etc
   end;
@@ -159,14 +159,14 @@ const
   }
   MS_UTILS_GETCOUNTRYLIST:PAnsiChar = 'Utils/GetCountryList';
 
-  // see WindowList_* functions below
+
+//******************************* Window lists *******************************
 
   {
     wParam : 0
     lParam : 0
     Affect : Allocate a window list
     Returns: A handle to the new window list
-    Version: v0.1.0.1+
   }
   MS_UTILS_ALLOCWINDOWLIST:PAnsiChar = 'Utils/AllocWindowList';
 
@@ -175,7 +175,6 @@ const
     lParam : Pointer to an initalised TWINDOWLISTENTRY structure
     Affect : Add a window to a given window list handle
     Returns: 0 on success, [non zero] on failure
-    Version: v0.1.0.1+
   }
   MS_UTILS_ADDTOWINDOWLIST:PAnsiChar = 'Utils/AddToWindowList';
 
@@ -184,35 +183,31 @@ const
     lParam : Window handle to remove
     Affect : Remove a window from the specified window list
     Returns: 0 on success, [non zero] on failure
-    Version: v0.1.0.1+
   }
   MS_UTILS_REMOVEFROMWINDOWLIST:PAnsiChar = 'Utils/RemoveFromWindowList';
 
   {
     wParam : Handle to the window list to look in
-    lParam : Handle to a HCONTACT to find in the window list
+    lParam : Handle to a TMCONTACT to find in the window list
     Affect : Find a window handle given the hContact
     Returns: The found window handle or NULL(0) on failure
-    Version: v0.1.0.1+
   }
   MS_UTILS_FINDWINDOWINLIST:PAnsiChar = 'Utils/FindWindowInList';
 
   {
     wParam : Handle to window list
     lParam : Pointer to TMSG (initalised with what to broadcast)
-    Affect : Broadcast a message to all windows in a list, see notes
+    Affect : sends a message to all windows in a list using SendMessage
     Returns: 0 on success, [non zero] on failure
     Notes  : only TMSG.Message, .wParam, .lParam are used
-    Version: v0.1.0.1+
   }
   MS_UTILS_BROADCASTTOWINDOWLIST:PAnsiChar = 'Utils/BroadcastToWindowList';
 
   {
-  Version: 0.3.0.0+
   Inline helper: WindowList_BroadcastAsync
   wParam : Handle to window list
   lParam : Pointer to TMSG (initalised with what to broadcast)
-  Affect : Broadcast a message to all windows in the given list using PostMessage()
+  Affect : Sends a message to all windows in a list using PostMessage
   Returns: 0 on success, nonzero on failure, this service does not fail,
            even if PostMessage() fails for whatever reason
   }
@@ -260,7 +255,7 @@ const
     Affect : Moves a RECT inside screen if it is outside.It works with multiple monitors (v0.9.0.4+)
     Returns: <0 on error, 0 if not changed the rect, 1 if changed the rect
 }
-  MS_UTILS_ASSERTINSIDESCREEN:pAnsiChar = 'Utils/AssertInsideScreen';
+  MS_UTILS_ASSERTINSIDESCREEN:PAnsiChar = 'Utils/AssertInsideScreen';
 
   {
     wParam : 0
@@ -354,7 +349,7 @@ type
   TREPLACEVARSDATA = record
     cbSize   :int;
     dwFlags  :dword;
-    hContact :THANDLE;
+    hContact :TMCONTACT;
     variables:PREPLACEVARSARRAY;
   end;
 
@@ -366,6 +361,8 @@ const
 {
   variables known by the core:
   ----------------------------
+  folders comes without trailing slash
+
   %miranda_profile%     -> same as MS_DB_GETPROFILEPATH, base folder for all profiles
   %miranda_userdata%    -> the active profile folder (home of the .dat file and all
                            profile data)
@@ -384,6 +381,7 @@ const
   %nick%                -> a contact nick name.
   %proto%               -> internal protocol name for a given contact. NOT the user-
                            defined account name.
+  %accountname%         -> user-defined account name for a given contact.
   %userid%              -> Unique ID for a given contact (UIN, JID etc.)
 
   the following variables are system variables - unrelated to miranda profiles.
@@ -393,5 +391,35 @@ const
   %mydocuments%         -> location of the "My Documents" shell folder.
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////
+// one field form
+
+const
+  ESF_MULTILINE = 1;
+  ESF_COMBO     = 2;
+  ESF_RICHEDIT  = 3;
+  ESF_PASSWORD  = 4;
+
+type
+  PENTER_STRING = ^TENTER_STRING;
+  TENTER_STRING = record
+    cbSize      :int;       // structure size
+    _type       :int;       // one of ESF_* constants
+    szModuleName:PAnsiChar; // module name to save window size and combobox strings
+    szDataPrefix:PAnsiChar; // prefix for stored database variables
+    caption     :PAnsiChar; // window caption
+    // next TChar fields is on same place
+    // ptszInitVal:TChar;   // initial value (note: the core DOES NOT free it)
+    ptszResult  :TChar;     // result entered (must be freed via mir_free)
+    recentCount :int;       // number of combobox strings to store
+    timeout     :int;       // timeout for the form auto-close
+  end;
+
+const
+// enters one string
+// wParam = 0 (unused)
+// lParam = PENTER_STRING (form description)
+// returns TRUE on pressing OK or FALSE if Cancel was pressed
+  MS_UTILS_ENTERSTRING:PAnsiChar = 'Utils/EnterString';
 
 {$ENDIF}

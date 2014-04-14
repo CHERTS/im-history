@@ -32,7 +32,7 @@ type
   pfnPainterFunc = procedure (mb:pMButtonCtrl; dc:HDC); cdecl;
 
 type
-  MButtonCtrl = record
+  tMButtonCtrl = record
     hwnd:HWND;
     stateId:int; // button state
     focus:int;   // has focus (1 or 0)
@@ -45,27 +45,17 @@ type
     cHot:WideChar;
     hwndToolTips:HWND;
 
-    bIsPushBtn, // button has two states
-    bIsPushed,  // is button pushed or not
-    bIsDefault, // default button
-    bIsFlat,    // flat button
-    bIsThemed,  // themed button
-    bIsSkinned: // skinned button
-    bool;
-    lResult:LRESULT;          // custom window proc result
-    fnWindowProc:TWNDPROC;    // custom window proc
+    bIsPushBtn,  // button has two states
+    bIsPushed,   // is button pushed or not
+    bIsDefault,  // default button
+    bIsFlat,     // flat button
+    bIsThemed,   // themed button
+    bIsSkinned,  // skinned button
+    bSendOnDown: // sends BN_CLICKED on WM_LBUTTONDOWN
+    ByteBool;
     fnPainter:pfnPainterFunc; // custom button painter
 
     pAccPropServices:^IAccPropServices;
-  end;
-
-/////////////////////////////////////////////////////////////////
-
-type
-  MButtonCustomize = record
-    cbLen       :size_t;         // total length of the internal data structure
-    fnWindowProc:TWNDPROC;       // subclassed windows procedure for the custom button
-    fnPainter   :pfnPainterFunc; // custom button painter
   end;
 
 {$ENDIF}

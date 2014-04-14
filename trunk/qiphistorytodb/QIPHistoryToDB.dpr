@@ -11,11 +11,13 @@
 library QIPHistoryToDB;
 
 uses
+  {$IFDEF DEBUG}
   madExcept,
   madLinkDisAsm,
   madListHardware,
   madListProcesses,
   madListModules,
+  {$ENDIF}
   u_qip_plugin in 'u_qip_plugin.pas',
   u_common in 'SDK\u_common.pas',
   u_plugin_info in 'SDK\u_plugin_info.pas',

@@ -13,11 +13,13 @@ library MirandaNGHistoryToDB;
 {$I Global.inc}
 
 uses
+  {$IFDEF DEBUG}
   madExcept,
   madLinkDisAsm,
   madListHardware,
   madListProcesses,
   madListModules,
+  {$ENDIF}
   m_api,
   Windows,
   SysUtils,
@@ -33,7 +35,9 @@ uses
   MsgExport in 'MsgExport.pas' {ExportForm},
   Global in 'Global.pas',
   FSMonitor in 'FSMonitor.pas',
-  MapStream in 'MapStream.pas';
+  MapStream in 'MapStream.pas',
+  Srmm in 'Srmm.pas',
+  SrmmMenu in 'SrmmMenu.pas';
 
 // use it to make plugin unicode-aware
 {$DEFINE UNICODE}
@@ -55,12 +59,7 @@ begin
 end;
 
 var
-  {$ifdef REPLDEFHISTMOD}
   PluginInterfaces: array[0..1] of TGUID;
-  {$else}
-  PluginInterfaces: array[0] of TGUID;
-  {$endif REPLDEFHISTMOD}
-
   PluginStatus: Boolean = False;
   StartExport: Boolean = False;
   StartUpdate: Boolean = False;
@@ -97,7 +96,8 @@ begin
   PluginInterfaces[0]:=MIID_UIHISTORY;
   PluginInterfaces[1]:=MIID_LAST;
   {$else}
-  PluginInterfaces[0]:=MIID_LAST;
+  PluginInterfaces[0]:=PluginInfo.uuid;
+  PluginInterfaces[1]:=MIID_LAST;
   {$endif REPLDEFHISTMOD}
   Result := @PluginInterfaces;
 end;
@@ -245,10 +245,10 @@ begin
   ZeroMemory(@DBEventInfo, SizeOf(DBEventInfo));
   DBEventInfo.cbSize := SizeOf(DBEventInfo);
   DBEventInfo.pBlob := nil;
-  BlobSize := CallService(MS_DB_EVENT_GETBLOBSIZE, lParam, 0);
+  BlobSize := db_event_getBlobSize(lParam);
   GetMem(DBEventInfo.pBlob, BlobSize);
   DBEventInfo.cbBlob := BlobSize;
-  if (CallService(MS_DB_EVENT_GET, lParam, Integer(@DBEventInfo)) = 0) and (DBEventInfo.eventType = EVENTTYPE_MESSAGE and EVENTTYPE_URL) then
+  if (db_event_get(lParam, @DBEventInfo) = 0) and (DBEventInfo.eventType = EVENTTYPE_MESSAGE and EVENTTYPE_URL) then
   begin
     // Получаем текст сообщения
     msgA := PAnsiChar(DBEventInfo.pBlob);
@@ -415,38 +415,6 @@ begin
     end;
   end;
 end;
-
-{function OnTTBLoaded(awParam: WPARAM; alParam: LPARAM): Integer; cdecl;
-var
-  TTB: TTBButtonV2;
-begin
-  if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Функция OnTTBLoaded', 2);
-  if hTTBButton <> 0 then
-  begin
-    if ServiceExists(MS_TTB_REMOVEBUTTON)>0 then
-    begin
-      CallService(MS_TTB_REMOVEBUTTON, WPARAM(hTTBButton),0);
-      hTTBButton := 0;
-    end;
-  end;
-  if ShowPluginButton then
-  begin
-    if ServiceExists(MS_TTB_ADDBUTTON) > 0 then
-    begin
-      ZeroMemory(@TTB, SizeOf(TTB));
-      TTB.cbSize        := SizeOf(TTB);
-      TTB.pszServiceUp  := MHTD_SHOWSERVICE;
-      TTB.pszServiceDown:= MHTD_SHOWSERVICE;
-      TTB.hIconUp       := LoadImage(hInstance, 'ICON_0', IMAGE_ICON, 16, 16, 0);
-      TTB.hIconDn       := ttb.hIconUp;
-      TTB.dwFlags       := TTBBF_VISIBLE;
-      TTB.name          := htdDBName;
-      hTTBButton := CallService(MS_TTB_ADDBUTTON, WPARAM(@TTB), 0);
-      if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Функция OnTTBLoaded: Кнопка добавлена.', 2);
-    end;
-  end;
-  Result := 0;
-end;}
 
 { Cервис MS_MHTD_SHOWHISTORY
   Смотри детали в m_historytodb.inc }
@@ -631,7 +599,7 @@ begin
   Si.Position := 500060000;
   Si.szName.a := pAnsiChar(AnsiString(Format(WideStringToString(GetLangStr('IMButtonCaption'), CP_ACP), [htdPluginShortName])));
   Si.pszService := MS_MHTD_SHOWHISTORY;//MS_HISTORY_SHOWCONTACTHISTORY;
-  Si.hIcon := LoadImage(hInstance,'ICON_0',IMAGE_ICON,16,16,0);;
+  Si.hIcon := LoadImage(hInstance,'ICON_0',IMAGE_ICON,16,16,0);
   HookSystemHistoryMenu := CallService(MS_CLIST_ADDMAINMENUITEM,0,LPARAM(@Si));
   //{$endif REPLDEFHISTMOD}
   // Создаем свой пункт в меню контакта
@@ -652,32 +620,6 @@ begin
  {$ifdef REPLDEFHISTMOD}
     HookShowMainHistory := CreateServiceFunction(MS_HISTORY_SHOWCONTACTHISTORY, @OpenHistoryWindow);
  {$endif REPLDEFHISTMOD}
-  // Поддержка TopToolBar
-  //HookTTBLoaded := HookEvent(ME_TTB_MODULELOADED, OnTTBLoaded);
-  // Register in updater
-  {if Boolean(ServiceExists(MS_UPDATE_REGISTER)) then
-  begin
-    ZeroMemory(@IMUPD,SizeOf(IMUPD));
-    IMUPD.cbSize := SizeOf(IMUPD);
-    IMUPD.szComponentName := htdPluginShortName;
-    IMUPD.pbVersion := @hppVersionStr[1];
-    IMUPD.cpbVersion := Length(hppVersionStr);
-    // File listing section
-    //IMUPD.szUpdateURL = UPDATER_AUTOREGISTER;
-    IMUPD.szUpdateURL := htdFLUpdateURL;
-    IMUPD.szVersionURL := htdFLVersionURL;
-    IMUPD.pbVersionPrefix := htdFLVersionPrefix;
-    IMUPD.cpbVersionPrefix := Length(htdFLVersionPrefix);
-    // Alpha-beta section
-    IMUPD.szBetaUpdateURL := htdUpdateURL;
-    IMUPD.szBetaVersionURL := htdVersionURL;
-    IMUPD.pbBetaVersionPrefix := htdVersionPrefix;
-    IMUPD.cpbBetaVersionPrefix := Length(htdVersionPrefix);
-    IMUPD.szBetaChangelogURL := htdChangelogURL;
-    CallService(MS_UPDATE_REGISTER, 0, LPARAM(@IMUPD));
-  end;}
-  // Регистрируемся в dbeditor
-  CallService(MS_DBEDIT_REGISTERSINGLEMODULE, WPARAM(PAnsiChar(htdDBName)), 0);
   { Запускаем контроль файла конфигурации
   FILE_NOTIFY_CHANGE_FILE_NAME        = $00000001;//Изменение имени файла
   FILE_NOTIFY_CHANGE_DIR_NAME         = $00000002;//Изменение имени папки
@@ -818,6 +760,7 @@ begin
         MsgInf(htdPluginShortName, Format('The history synchronization program %s not found.' + #13 + 'Begin the process of updating the plugin.', [PluginPath + 'HistoryToDBSync.exe']));
     end;
   end;
+  //InitSRMM;
   Result := 0;
 end;
 
@@ -831,16 +774,6 @@ begin
   hppCodepage := CallService(MS_LANGPACK_GETCODEPAGE, 0, 0);
   if (hppCodepage = CALLSERVICE_NOTFOUND) or (hppCodepage = CP_ACP) then
     hppCodepage := GetACP();
-  // Проверка на поддержку Мета-контактов
-  MetaContactsEnabled := Boolean(ServiceExists(MS_MC_GETMOSTONLINECONTACT));
-  if MetaContactsEnabled then
-  begin
-    Str := pAnsiChar(CallService(MS_MC_GETPROTOCOLNAME, 0, 0));
-    if Assigned(Str) then
-      MetaContactsProto := AnsiString(Str)
-    else
-      MetaContactsEnabled := False;
-  end;
   // Путь до плагинов
   SetLength(DllPath, MAX_PATH);
   SetLength(DllPath, GetModuleFileNameW(hInstance, @DllPath[1], MAX_PATH));
@@ -901,6 +834,8 @@ begin
     UnhookEvent(HookEventAdded);
     UnhookEvent(HookBuildMenu);
     UnhookEvent(HookModulesLoad);
+    // SRMM
+    //DeinitSRMM;
     // Запрос на закрытие всех компонентов плагина
     OnSendMessageToAllComponent('003');
     // Закрываем лог-файлы

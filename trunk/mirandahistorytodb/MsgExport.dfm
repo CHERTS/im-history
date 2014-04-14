@@ -4308,6 +4308,8 @@ object ExportForm: TExportForm
       Header.Subtitle.Font.Name = 'Tahoma'
       Header.Subtitle.Font.Style = []
       EnabledButtons = [bkBack, bkNext, bkFinish, bkCancel]
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object CBSelectAll: TCheckBox
         Left = 16
         Top = 199
@@ -4372,6 +4374,8 @@ object ExportForm: TExportForm
       Header.Subtitle.Font.Style = []
       EnabledButtons = [bkBack, bkNext, bkFinish, bkCancel]
       OnPage = Page3Page
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object LExportDesc: TLabel
         Left = 16
         Top = 77
@@ -4414,6 +4418,8 @@ object ExportForm: TExportForm
       Header.Subtitle.Font.Style = []
       EnabledButtons = [bkBack, bkFinish, bkCancel]
       VisibleButtons = [bkFinish]
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object LExportDone: TLabel
         Left = 16
         Top = 72

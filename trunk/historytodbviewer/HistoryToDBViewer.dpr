@@ -1,6 +1,6 @@
 { ############################################################################ }
 { #                                                                          # }
-{ #  Просмотр истории HistoryToDBViewer v2.4                                 # }
+{ #  Просмотр истории HistoryToDBViewer v2.5                                 # }
 { #                                                                          # }
 { #  License: GPLv3                                                          # }
 { #                                                                          # }
@@ -11,11 +11,13 @@
 program HistoryToDBViewer;
 
 uses
+  {$IFDEF DEBUG}
   madExcept,
   madLinkDisAsm,
   madListHardware,
   madListProcesses,
   madListModules,
+  {$ENDIF}
   Forms,
   Global in 'Global.pas',
   Main in 'Main.pas' {MainForm},

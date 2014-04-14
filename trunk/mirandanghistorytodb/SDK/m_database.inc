@@ -44,13 +44,6 @@ const
   MS_DB_CHECKPROFILE:PAnsiChar = 'DB/CheckProfile';
 
 type
-  PDBCONTACTGETSETTING = ^TDBCONTACTGETSETTING;
-  TDBCONTACTGETSETTING = record
-    szModule : PAnsiChar;  // name of the module that wrote the setting to get
-    szSetting: PAnsiChar;  // the name of the setting to get
-    pValue   : PDBVARIANT; // pointer to DBVARIANT to receive the value
-  end;
-
   PDBCONTACTWRITESETTING = ^TDBCONTACTWRITESETTING;
   TDBCONTACTWRITESETTING = record
     szModule : PAnsiChar;  // module sig to write this setting under
@@ -58,104 +51,25 @@ type
     value    : TDBVARIANT; // variant containing value to set
   end;
 
-const
-  {
-    wParam : Handle of a contact to get the setting for (see notes)
-    lParam : pointer to a TDBCONTACTGETSETTING structure to be filled with setting
-             this structure also has to be initalised (see notes)
-    affect : Queries the database module for a setting from a contact.
-    returns: 0 on success, non zero on failure (contact not found, setting doesn't exist)
-    notes  : TDBCONTACTGETSETTING must be filled with the module name that created
-             /wrote the setting you want to get (e.g. your module name)
-             and the actual setting to read with TDBCONTACTGETSETTING.szModule and
-             TDBCONTACTGETSETTING.szSetting -- TDBCONTACTGETSETTING.pValue is
-             a pointer to a TDBVARIANT with the returned setting, this maybe nil
-             and MUST be freed after you're done with it with FreeVariant()
-
-             There are helper functions for reading/writing/deleting common types to and
-             from the database -- see DBGetContactSetting<type>
-
-             the contact handle (hContact) can be returned by FindContact/AddContact
-  }
-  MS_DB_CONTACT_GETSETTING:PAnsiChar = 'DB/Contact/GetSetting';
-
-  {
-    DB/Contact/GetSettingString service  0.4.3+
-    Same as DB/Contact/GetSetting, but also gets the required string type
-    inside the dbcgs->type parameter
-  }
-  MS_DB_CONTACT_GETSETTING_STR:PAnsiChar = 'DB/Contact/GetSettingStr';
-
-  {
-    wParam : Handle for a contact to query a setting for
-    lParam : Pointer to a TDBCONTACTGETSETTING structure
-    affects: This service is almost the same as the one above, but it does
-             not return a dynamic copy (with malloc()) -- the caller
-             must do this for datatypes which require it, e.g. a string.
-
-             This means the TDBCONTACTGETSETTING.pValue *has* to exist and be
-             allocated by the caller (doesn't have to be allocated from the heap)
-             the DBVARIANT structure has to be initalised with the type wanted
-             and enough buffer space around to return the info, do not
-             expect this service to be as fast as the one above.
-
-    returns: 0 on success, non zero on failure.
-  }
-  MS_DB_CONTACT_GETSETTINGSTATIC:PAnsiChar = 'DB/Contact/GetSettingStatic';
-
-  {
-    wParam : 0
-    lParam : Pointer to a TDBVARIANT structure
-    affect : Free's the passed DBVARIANT's dynamic memory (if any) see notes
-    returns: 0 on success, non zero on failure
-    notes  : use the helper function FreeVariant()
-  }
-  MS_DB_CONTACT_FREEVARIANT:PAnsiChar = 'DB/Contact/FreeVariant';
-
-  {
-    wParam : Handle to contact to write setting for
-    lParam : Pointer to TDBCONTACTWRITESETTING which must be initalised
-    affects: writes a setting under a contact -- TDBCONTACTWRITESETTING structure
-             must contain the module name writing -- the setting name, and the value
-             to write (which is NOT a pointer) .szModule, .szSetting, .Value, see notes
-    returns: 0 on success, non zero on failure
-    notes  : this service triggers 'DB/Contact/SettingChanged' before it returns
-             as always, there is a helper function to use this service.
-  }
-  MS_DB_CONTACT_WRITESETTING:PAnsiChar = 'DB/Contact/WriteSetting';
-
-  {
-    wParam : hContact under which the setting should be deleted
-    lParam : Pointer to a TDBCONTACTGETSETTING structure
-    affects: Deletes the given setting for a contact, the TDBCONTACTGETSETTING.pValue
-             field is ignored -- only .szModule and .szSetting are needed, see notes
-    returns: 0 on success, non zero on failure
-    notes  : triggers 'DB/Contact/SettingChanged' BEFORE it deletes the given
-             setting, when the service returns the TDBVARIANT structure .type_ is set
-             to 0 and no fields are valid, there is a helper function for this
-             service, see below.
-  }
-  MS_DB_CONTACT_DELETESETTING:PAnsiChar = 'DB/Contact/DeleteSetting';
-
-    {
-        wParam : Handle of a contact to enum settings for
-        lParam : Pointer to a TDBCONTACTENUMSETTINGS structure, must be initalised
-        affect : Enumerates all settings for a given contact under a module,
-                 TDBCONTACTENUMSETTINGS must be filled with the function pointer to call
-                 the TDBCONTACTENUMSETTINGS.lParam value to pass to it each time,
-                 as well as the .szModule under which the contact is valid
-        returns: returns the value of the last call to the enum function, or -1
-                 if no settings could be enumerated
-        notes  : the szSetting argument passed to the enumeration function is only
-                 valid for the duration of that enumeration call,
-                 it must be allocated dynamically if it is required after that call frame
-                 has returned.
-                 Also, deleting settings as they are enumerated has unpredictable results!
-                 but writing a new value for a setting is okay.
-                 it is unclear how you stop the enumeration once it is started, maybe
-                 possible to return -1 to stop it.
-        vesion : only valid for 0.1.0.1+
-    }
+{
+    wParam : Handle of a contact to enum settings for
+    lParam : Pointer to a TDBCONTACTENUMSETTINGS structure, must be initalised
+    affect : Enumerates all settings for a given contact under a module,
+             TDBCONTACTENUMSETTINGS must be filled with the function pointer to call
+             the TDBCONTACTENUMSETTINGS.lParam value to pass to it each time,
+             as well as the .szModule under which the contact is valid
+    returns: returns the value of the last call to the enum function, or -1
+             if no settings could be enumerated
+    notes  : the szSetting argument passed to the enumeration function is only
+             valid for the duration of that enumeration call,
+             it must be allocated dynamically if it is required after that call frame
+             has returned.
+             Also, deleting settings as they are enumerated has unpredictable results!
+             but writing a new value for a setting is okay.
+             it is unclear how you stop the enumeration once it is started, maybe
+             possible to return -1 to stop it.
+    vesion : only valid for 0.1.0.1+
+}
 
 type
   TDBSETTINGENUMPROC = function(const szSetting: PAnsiChar; lParam: LPARAM): int; cdecl;
@@ -166,7 +80,7 @@ type
                                      // enum via MS_DB_CONTACT_ENUMSETTINGS
     lParam     : LPARAM;             // passed to the above function
     szModule   : PAnsiChar;          // name of the module to get settings for
-    ofsSettings: DWORD;              // not used by us
+    ofsSettings: dword;              // not used by us
   end;
 
 const
@@ -181,25 +95,6 @@ const
     notes  : the contacts in the database can be read with FindFirst/FindNext
   }
   MS_DB_CONTACT_GETCOUNT:PAnsiChar = 'DB/Contact/GetCount';
-
-  {
-    wParam : 0
-    lParam : 0
-    returns: Returns a handle to the first contact in the database,
-             this handle does not need to be closed, if there are no users
-             NULL(0) is returned.
-  }
-  MS_DB_CONTACT_FINDFIRST:PAnsiChar = 'DB/Contact/FindFirst';
-
-  {
-    wParam : Contact handle
-    lParam : 0
-    returns: Returns a handle to the next contact after the given contact in
-             wParam, this handle does not neeed to be closed -- may return NULL(0)
-             if the given contact in wParam was the last in the database, or the
-             given contact was invalid
-  }
-  MS_DB_CONTACT_FINDNEXT:PAnsiChar = 'DB/Contact/FindNext';
 
   {
     wParam : Handle of a contact to delete
@@ -247,7 +142,7 @@ decode a blob and return the event text in the required format, its prototype is
 to a call of MS_DB_EVENT_GETTEXT (see below)
   wParam=0
   lParam=(LPARAM)(DBEVENTTYPEDESCR*)
-Always returns 0.
+Returns -1 on error (e.g., event type already registred), 0 on success
 }
 
 type
@@ -260,7 +155,7 @@ type
     textService:PAnsiChar; // service name for MS_DB_EVENT_GETTEXT (0.8+, default Module+'/GetEventText'+EvtID)
     iconService:PAnsiChar; // service name for MS_DB_EVENT_GETICON (0.8+, default Module+'/GetEventIcon'+EvtID)
     eventIcon  :THANDLE;   // icolib handle to eventicon           (0.8+, default 'eventicon_'+Module+EvtID)
-    flags      :DWORD;     // flags, combination of the DETF_*
+    flags      :dword;     // flags, combination of the DETF_*
   end;
 
 const
@@ -268,14 +163,6 @@ const
   DETF_HISTORY   = 1; // show event in history
   DETF_MSGWINDOW = 2; // show event in message window
   DETF_NONOTIFY  = 4; // block event notify (e.g. Popups)
-
-const
-  DBEVENTTYPEDESCR_SIZE    = sizeof(TDBEVENTTYPEDESCR);
-  {$IFNDEF WIN64}
-  DBEVENTTYPEDESCR_SIZE_V1 = $10;
-  {$ELSE}
-  DBEVENTTYPEDESCR_SIZE_V1 = DBEVENTTYPEDESCR_SIZE;
-  {$ENDIF}
 
 const
   MS_DB_EVENT_REGISTERTYPE:PAnsiChar = 'DB/EventType/Register';
@@ -288,77 +175,17 @@ const
   }
   MS_DB_EVENT_GETTYPE:PAnsiChar = 'DB/EventType/Get';
 
-  {
-    wParam : contact handle for events count is needed
-    lParam : 0
-    service: Gets the number of events in the chain belonging to a contact
-             in the databasee.
-    returns: the numbef of events owned by hContact or -1 if hContact
-             is invalid, they can be found with the event/find* servicees
-  }
-  MS_DB_EVENT_GETCOUNT:PAnsiChar = 'DB/Event/GetCount';
-
-  {
-    wParam : contact handle to add an event for
-    lParam : Pointer to TDBEVENTINFO initialised with data
-    affect : Add's an event to the contact's event list, the TDBEVENTINFO
-             structure should be filled with the event of message -- see notes
-    returns: a handle to a DB event (HANDLE), or NULL on error
-    notes  : Triggers DB/Event/Added event just before it returns,
-             Events are sorted chronologically as they are entered,
-             so you cannot guarantee that the new hEvent is the last event in the chain,
-             however if a new event is added that has a timestamp less than
-             90 seconds *before* the event that should be after it,
-             it will be added afterwards, to allow for protocols that only
-             store times to the nearest minute, and slight delays in transports.
-             There are a few predefined eventTypes below for easier compatibility, but
-             modules are free to define their own, beginning at 2000
-             DBEVENTINFO.timestamp is in GMT, as returned by time()
-  }
-const
-  MS_DB_EVENT_ADD:PAnsiChar = 'DB/Event/Add';
-
-  {
-    wParam : Handle to the contact
-    lParam : HANDLE handle to delete
-    affects: Removes a single event from the database for the given contact
-    returns: 0 on success, nonzero on failure
-    notes  : Triggers DB/Event/Deleted just before the event *is* deleted
-  }
-  MS_DB_EVENT_DELETE:PAnsiChar = 'DB/Event/Delete';
-
-  {
-    wParam : Handle to DB event
-    lParam : 0
-    returns: Returns the space in bytes requried to store the blob in HANDLE
-             given by HANDLE(wParam) -- or -1 on error
-  }
-  MS_DB_EVENT_GETBLOBSIZE:PAnsiChar = 'DB/Event/GetBlobSize';
-
-  {
-    wParam : Handle to a DB event
-    lParam : Pointer to a TDBEVENTINFO structure which must be initialised
-    affects: Returns all the information about an DB event handle to a TDBEVENTINFO
-             structure which must be initalised, DBEI.cbSize, DBEI.pBlob and DBEI.cbSize
-             before calling this service, the size can be assertained with
-             GetBlobSize() service, see notes
-    returns: Returns 0 on success, non zero on failure
-    notes  : The correct value dbe.cbBlob can be got using db/event/getblobsize
-             If successful, all the fields of dbe are filled. dbe.cbBlob is set to the
-             actual number of bytes retrieved and put in dbe.pBlob
-             If dbe.cbBlob is too small, dbe.pBlob is filled up to the size of dbe.cbBlob
-             and then dbe.cbBlob is set to the required size of data to go in dbe.pBlob
-             On return, dbe.szModule is a pointer to the database module's
-             own internal list of modules. Look but don't touch.
-  }
-  MS_DB_EVENT_GET:PAnsiChar = 'DB/Event/Get';
-
   { DB/Event/GetText (0.7.0+)
     Retrieves the event's text
       wParam=0
       lParam=pointer to TDBEVENTGETTEXT
     dbe should be the valid database event read via MS_DB_EVENT_GET
     Only events of type EVENTTYPE_MESSAGE are supported.
+
+  egt->dbei should be the valid database event read via db_event_get()
+  egt->datatype = DBVT_WCHAR or DBVT_ASCIIZ or DBVT_TCHAR.
+  egt->codepage is any valid codepage, CP_ACP by default.
+
     Function returns a pointer to a string in the required format.
     This string should be freed by a call of mir_free
   }
@@ -368,6 +195,7 @@ type
     datatype:int; // DBVT_ASCIIZ, DBVT_WCHAR (DBVT_TCHAR)
     codepage:int;
   end;
+
 const
   MS_DB_EVENT_GETTEXT:PAnsiChar = 'DB/Event/GetText';
 
@@ -395,107 +223,10 @@ const
 
   MS_DB_EVENT_GETSTRINGT:PAnsiChar = 'DB/Event/GetStringT';
 
-  {
-    wParam : HCONTACT
-    lParam : HANDLE
-    affect : Changes the flag for an event to mark it as read
-    Returns: Returns the entire flag DWORD for the event after the change, or -1
-             if HANDLE is invalid, see notes
-    notes  : This iss one of the database write operations that does not trigger
-             an event, modules should not save flagss states for any length of time.
-  }
-  MS_DB_EVENT_MARKREAD:PAnsiChar = 'DB/Event/MarkRead';
-
-  {
-    wParam : HANDLE
-    lParam : 0
-    Affect : Returns a handle to a contact that owns the HANDLE,
-             see notes
-    Returns: Returns a handle if successful or HDBEEVENT(-1) on failure
-    notes  : This service is very slow, only use wheen you have no other choice
-             at all.
-  }
-  MS_DB_EVENT_GETCONTACT:PAnsiChar = 'DB/Event/GetContact';
-
-  {
-    wParam : HCONTACT
-    lParam : 0
-    Affect : Retrieves a handlee to the first event in the chain
-             for a HCONTACT
-    returns: Returns a handle, or NULL(0) if HCONTACT is invalid or has
-             no events, events in a chain are sorted chronologically automatically
-  }
-  MS_DB_EVENT_FINDFIRST:PAnsiChar = 'DB/Event/FindFirst';
-
-  {
-    wParam : HCONTACT
-    lParam : 0
-    Affect : Retrieves a handle to the first unreead event in a chain for a HCONTACT
-             see notes
-    Returns: Returns a HANDLE handle or NULL(0) if the HCONTACT is invalid
-             or all it's events have beeen read.
-    Notes  : Events in a chain are sorted chronologically automatically,
-             but this does not necessarily mean that all events after
-             the first unread are unread too.
-             They should be checked individually with event/findnext and event/get
-             This service is designed for startup, reloading all the events that remained
-             unread from last time
-  }
-  MS_DB_EVENT_FINDFIRSTUNREAD:PAnsiChar = 'DB/Event/FindFirstUnread';
-
-  {
-    wParam : HCONTACT
-    lParam : 0;
-    Affects: Retrieves a handle to the lasts event in the chain for a HCONTACT
-    Returns: Returns a handle or NULL(0) if HCONTACT is invalid or has no events
-  }
-  MS_DB_EVENT_FINDLAST:PAnsiChar = 'DB/Event/FindLast';
-
-  {
-    wParam : HANDLE
-    lParam : 0
-    Affects: Retrieves a handle to the next event in a chain after HANDLE
-    Returns: A handle to the next DB event or NULL(0) if HANDLE is invalid
-             or the last event in the chain.
-  }
-  MS_DB_EVENT_FINDNEXT:PAnsiChar = 'DB/Event/FindNext';
-
-  {
-    wParam : HANDLE
-    lParam : 0
-    Affects: Retrieves a handle to the previous event in a chain before HANDLE
-    Returns: A handle to the previous HANDLE or NULL(0) if HANDLE is invalid
-             or is the first event in the chain
-  }
-  MS_DB_EVENT_FINDPREV:PAnsiChar = 'DB/Event/FindPrev';
-
-//************************** Encryption ****************************
-
-  {
-    wParam : size in bytes of string buffer (including null term)
-    lParam : pointer to string buffer
-    Affect : Scrambles the string buffer in place using a strange encryption algorithm,
-             see notes
-    Returns: Always returns 0
-    notes  : this service may be changed at a later date such that it increasess
-             the length of the string
-  }
-  MS_DB_CRYPT_ENCODESTRING:PAnsiChar = 'DB/Crypt/EncodeString';
-
-  {
-    wParam : size in bytes of string buffer, including null term
-    lParam : pointer to string buffer
-    Affect : Descrambles pszString in-place using the strange encryption algorithm,
-             see notes.
-    Return : Always returns 0
-    notes  : Reverses the operation done by MS_DB_CRYPT_ENCODINGSTRING
-  }
-  MS_DB_CRYPT_DECODESTRING:PAnsiChar = 'DB/Crypt/DecodeString';
-
 //**************************** Time ********************************
 
   {
-    wParam : timestamp (DWORD)
+    wParam : timestamp (dword)
     lParam : 0
     Affect : Converts a GMT timestap into local time
     Returns: Returns the converted value, see notes
@@ -509,7 +240,7 @@ const
   MS_DB_TIME_TIMESTAMPTOLOCAL:PAnsiChar = 'DB/Time/TimestampToLocal';
 
   {
-    wParam : timestamp (DWORD)
+    wParam : timestamp (dword)
     lParam : pointer to initalised DBTIMETOSTRING structure
     Affect : Converts a GMT timestamp to a customisable local time string
              see notes
@@ -577,19 +308,16 @@ const
              the database module uses wParam as the lParam cookie value and the lParam
              value given here is the function pointer -- this is not safe
              to use before v0.1.2.1 because I don't know if this was done in v0.1.2.1-
-
-             prior to v0.1.2.1 you can not pass a value to the enumeration because
-             of a bug -- which is fixed, but hey :) -- [sam]
   }
 type
-  TDBMODULEENUMPROC = function(const szModule: PAnsiChar; ofsModuleName: DWORD; lParam: LPARAM): int; cdecl;
+  TDBMODULEENUMPROC = function(const szModule: PAnsiChar; ofsModuleName: dword; lParam: LPARAM): int; cdecl;
 const
   MS_DB_MODULES_ENUM:PAnsiChar = 'DB/Modules/Enum';
 
 { DB/Module/Delete  0.8.0+
 
   Removes all settings for the specified module.
-  wParam=0 (unused)
+  wParam=Contact's handle or 0 for global settings
   lParam=(LPARAM)(AnsiChar*)szModuleName - the module name to be deleted
 }
   MS_DB_MODULE_DELETE:PAnsiChar = 'DB/Module/Delete';
@@ -597,20 +325,20 @@ const
 //************************** EVENTS ********************************
 
   {
-    wParam : HCONTACT
-    lParam : HDBCONTACT
+    wParam : TMCONTACT
+    lParam : HDBEVENT
     Affect : Called when a new event has been added to the event chain
-             for a contact, HCONTACT contains the contact who added the event,
-             HDBCONTACT a handle to what was added.
+             for a contact, TMCONTACT contains the contact who added the event,
+             HDBEVENT a handle to what was added.
              see notes
     notes  : since events are sorted chronologically, you can not guarantee
-             that HDBEVEnT is in any particular position in the chain.
+             that HDBEVENT is in any particular position in the chain.
 
   }
   ME_DB_EVENT_ADDED:PAnsiChar = 'DB/Event/Added';
 
   {
-    wParam :  HANDLE (hContact)
+    wParam :  TMCONTACT
     lParam :  @DBEVENTINFO
     Affects:  Hook is fired before any DBEVENTS are created within the database for
           a contact (or a user, if hContact is NULL(0)) - It allows a module to
@@ -626,8 +354,15 @@ const
   ME_DB_EVENT_FILTER_ADD:PAnsiChar = 'DB/Event/FilterAdd';
 
   {
-    wParam : HCONTACT
-    lParam : HANDLE
+    wParam : TMCONTACT
+    lParam : HDBEVENT
+    Affect : Called when an event is marked read
+  }
+  ME_DB_EVENT_MARKED_READ:PAnsiChar = 'DB/Event/Marked/Read';
+
+  {
+    wParam : TMCONTACT
+    lParam : HDBEVENT
     Affect : Called when an event is about to be deleted from the event chain
              for a contact, see notes
     notes  : Returning non zero from your hook will NOT stop the deletion,
@@ -636,15 +371,15 @@ const
   ME_DB_EVENT_DELETED:PAnsiChar = 'DB/Event/Deleted';
 
   {
-    wParam : HCONTACT
+    wParam : TMCONTACT
     lParam : 0
     Affect : Called when a new contact has been added to the database,
-             HCONTACT contains a handle to the new contact.
+             TMCONTACT contains a handle to the new contact.
   }
   ME_DB_CONTACT_ADDED:PAnsiChar = 'DB/Contact/Added';
 
   {
-    wParam : HCONTACT
+    wParam : TMCONTACT
     lParam : 0
     Affect : Called when a contact is about to be deleted
     Returns: Returning nonzero from your hook will not stop the deletion
@@ -653,7 +388,7 @@ const
   ME_DB_CONTACT_DELETED:PAnsiChar = 'DB/Contact/Deleted';
 
   {
-    wParam : HCONTACT
+    wParam : TMCONTACT
     lParam : Pointer to a TDBCONTACTWRITESETTING
     Affect : Calleed when a contact has one of it's settings changed
              hContact is a valid handle to the contact that has changed,
@@ -668,12 +403,5 @@ const
              original service all, so don't change any of it's fields
   }
   ME_DB_CONTACT_SETTINGCHANGED:PAnsiChar = 'DB/Contact/SettingChanged';
-
-  { DB/Contact/SetSettingResident service (0.6+)
-    Disables a setting saving to the database.
-    wParam=(WPARAM)(BOOL)bIsResident
-    lParam=(LPARAM)(AnsiChar*)pszSettingName
-  }
-  MS_DB_SETSETTINGRESIDENT:PAnsiChar = 'DB/SetSettingResident';
 
 {$ENDIF}

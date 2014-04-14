@@ -1,6 +1,6 @@
 { ############################################################################ }
 { #                                                                          # }
-{ #  MirandaNG HistoryToDB Plugin v2.5                                       # }
+{ #  MirandaNG HistoryToDB Plugin v2.6                                       # }
 { #                                                                          # }
 { #  License: GPLv3                                                          # }
 { #                                                                          # }
@@ -86,19 +86,19 @@ end;
 procedure TExportForm.FormShow(Sender: TObject);
 var
   ListItem: TListItem;
-  hContact: Cardinal;
+  hContact: THandle;
   ContactProto, ContactID, ContactName: AnsiString;
   Count: Integer;
 begin
   IMExportWizard.ActivePage := Page1;
   StartExport := False;
-  // Получаем список контактов
-  hContact := CallService(MS_DB_CONTACT_FINDFIRST, 0, 0);
   ContactList.Columns[0].MaxWidth := 190;
   ContactList.Columns[1].MaxWidth := 90;
   ContactList.Columns[2].MaxWidth := 140;
   ContactList.Items.BeginUpdate;
   Count := 0;
+  // Получаем список контактов
+  hContact := db_find_first();
   while hContact <> 0 do
   begin
     ContactProto := GetContactProto(hContact);
@@ -126,7 +126,7 @@ begin
       ListItem.Checked := False
     else
       ListItem.Checked := True;}
-    hContact := CallService(MS_DB_CONTACT_FINDNEXT, hContact, 0);
+    hContact := db_find_next(hContact);
   end;
   ContactList.Items.EndUpdate;
 end;
@@ -174,7 +174,7 @@ procedure TExportForm.IMExportThreadExecute(Sender: TObject; Params: Pointer);
 var
   I, J, K, ProtoType: Integer;
   SelectedCount, BlobSize: Integer;
-  hDbEvent: Cardinal;
+  hDbEvent: THandle;
   DBEventInfo: TDBEventInfo;
   msgA: PAnsiChar;
   msgW: PChar;
@@ -210,13 +210,13 @@ begin
       PBTotalExport.Position := SelectedCount;
       if IMExportThread.Terminated then // Выход из потока в случае закрытия окна
         Exit;
-      hDbEvent := CallService(MS_DB_EVENT_FINDFIRST, ExportContactRecords[I].hContact, 0);
+      hDBEvent := db_event_first(ExportContactRecords[I].hContact);
       while hDbEvent <> 0 do
       begin
         ZeroMemory(@DBEventInfo, SizeOf(DBEventInfo));
         DBEventInfo.cbSize := SizeOf(DBEventInfo);
         DBEventInfo.pBlob := nil;
-        BlobSize := CallService(MS_DB_EVENT_GETBLOBSIZE, hDbEvent, 0);
+        BlobSize := db_event_getBlobSize(hDbEvent);
         GetMem(DBEventInfo.pBlob, BlobSize);
         DBEventInfo.cbBlob := BlobSize;
         if IMExportThread.Terminated then // Выход из потока в случае закрытия окна
@@ -225,7 +225,7 @@ begin
             CloseLogFile(5);
           Exit;
         end;
-        if (CallService(MS_DB_EVENT_GET, hDbEvent, Integer(@DBEventInfo)) = 0) and (DBEventInfo.eventType = EVENTTYPE_MESSAGE and EVENTTYPE_URL) then
+        if (db_event_get(hDbEvent, @DBEventInfo) = 0) and (DBEventInfo.eventType = EVENTTYPE_MESSAGE and EVENTTYPE_URL) then
         begin
           // Получаем текст сообщения
           msgA := PAnsiChar(DBEventInfo.pBlob);
@@ -325,7 +325,7 @@ begin
               WriteInLog(ProfilePath, Format(MSG_LOG, [DBUserName, IntToStr(ProtoType), Msg_SenderNick, Msg_SenderAcc, Msg_RcvrNick, Msg_RcvrAcc, MsgStatus, Date_Str, Msg_Text, EncryptMD5(MD5String)]), 5);
           end;
         end;
-        hDbEvent := CallService(MS_DB_EVENT_FINDNEXT, hDbEvent, 0);
+        hDBEvent := db_event_next(ExportContactRecords[I].hContact, hDbEvent);
       end;
     end;
     if IMExportThread.Terminated then // Выход из потока в случае закрытия окна

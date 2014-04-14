@@ -5,7 +5,7 @@
         <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
         <DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
         <DCC_DependencyCheckOutputName>RnQHistoryToDB.dll</DCC_DependencyCheckOutputName>
-        <ProjectVersion>14.4</ProjectVersion>
+        <ProjectVersion>14.6</ProjectVersion>
         <Config Condition="'$(Config)'==''">Release</Config>
         <Base>True</Base>
         <AppType>Library</AppType>
@@ -101,13 +101,14 @@
         <VerInfo_Locale>1033</VerInfo_Locale>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_AutoIncVersion>true</VerInfo_AutoIncVersion>
-        <VerInfo_Keys>CompanyName=http://www.im-history.ru;FileDescription=RnQHistoryToDB;FileVersion=2.5.0.0;InternalName=RnQHistoryToDB;LegalCopyright=Michael Grigorev;LegalTrademarks=http://www.im-history.ru;OriginalFilename=RnQHistoryToDB.dll;ProductName=RnQHistoryToDB;ProductVersion=2.5.0.0;Comments=http://www.im-history.ru</VerInfo_Keys>
+        <VerInfo_Keys>CompanyName=http://www.im-history.ru;FileDescription=RnQHistoryToDB;FileVersion=2.6.0.0;InternalName=RnQHistoryToDB;LegalCopyright=Michael Grigorev;LegalTrademarks=http://www.im-history.ru;OriginalFilename=RnQHistoryToDB.dll;ProductName=RnQHistoryToDB;ProductVersion=2.6.0.0;Comments=http://www.im-history.ru</VerInfo_Keys>
         <VerInfo_Build>0</VerInfo_Build>
         <VerInfo_Release>0</VerInfo_Release>
         <VerInfo_MajorVer>2</VerInfo_MajorVer>
-        <VerInfo_MinorVer>5</VerInfo_MinorVer>
+        <VerInfo_MinorVer>6</VerInfo_MinorVer>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win64)'!=''">
+        <VerInfo_Build>0</VerInfo_Build>
         <DCC_Define>madExcept;$(DCC_Define)</DCC_Define>
         <DCC_LocalDebugSymbols>true</DCC_LocalDebugSymbols>
         <VerInfo_Locale>1033</VerInfo_Locale>
@@ -116,9 +117,9 @@
         <VerInfo_AutoIncVersion>true</VerInfo_AutoIncVersion>
         <DCC_DcuOutput>.\$(Platform)\$(Config)</DCC_DcuOutput>
         <VerInfo_Release>0</VerInfo_Release>
-        <VerInfo_Keys>CompanyName=http://www.im-history.ru;FileDescription=RnQHistoryToDB;FileVersion=2.4.0.1;InternalName=RnQHistoryToDB;LegalCopyright=Michael Grigorev;LegalTrademarks=http://www.im-history.ru;OriginalFilename=RnQHistoryToDB.dll;ProductName=RnQHistoryToDB;ProductVersion=2.4.0.0;Comments=http://www.im-history.ru</VerInfo_Keys>
+        <VerInfo_Keys>CompanyName=http://www.im-history.ru;FileDescription=RnQHistoryToDB;FileVersion=2.6.0.0;InternalName=RnQHistoryToDB;LegalCopyright=Michael Grigorev;LegalTrademarks=http://www.im-history.ru;OriginalFilename=RnQHistoryToDB.dll;ProductName=RnQHistoryToDB;ProductVersion=2.6.0.0;Comments=http://www.im-history.ru</VerInfo_Keys>
         <VerInfo_MajorVer>2</VerInfo_MajorVer>
-        <VerInfo_MinorVer>4</VerInfo_MinorVer>
+        <VerInfo_MinorVer>6</VerInfo_MinorVer>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2)'!=''">
         <Manifest_File>None</Manifest_File>
@@ -163,8 +164,8 @@
                     <Source Name="MainSource">RnQHistoryToDB.dpr</Source>
                 </Source>
                 <Excluded_Packages>
-                    <Excluded_Packages Name="$(BDSBIN)\dcloffice2k170.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
-                    <Excluded_Packages Name="$(BDSBIN)\dclofficexp170.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dcloffice2k190.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dclofficexp190.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
                 </Excluded_Packages>
             </Delphi.Personality>
             <Platforms>

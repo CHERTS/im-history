@@ -1,6 +1,6 @@
 { ################################################################################ }
 { #                                                                              # }
-{ #  Miranda HistoryToDB Plugin v2.4                                             # }
+{ #  Miranda HistoryToDB Plugin v2.6                                             # }
 { #                                                                              # }
 { #  License: GPLv3                                                              # }
 { #                                                                              # }

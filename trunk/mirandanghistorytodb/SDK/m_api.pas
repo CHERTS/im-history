@@ -72,7 +72,7 @@ type
   plong     = ^long;
   {$IFDEF VER150}
   UnicodeString = WideString;
-  ULONG_PTR = LongWord;
+  ULONG_PTR = longword;
   {$ENDIF}
   DWORD_PTR = ULONG_PTR;
   size_t    = ULONG_PTR;
@@ -83,13 +83,13 @@ type
   int       = integer;
 //  uint     = Cardinal;
 //  pint     = ^int;
-//  WPARAM   = Integer;
-//  LPARAM   = Integer;
+//  WPARAM   = integer;
+//  LPARAM   = integer;
   TLPARAM   = LPARAM;
   TWPARAM   = WPARAM;
 
 // My definitions
-  TWNDPROC = function (Dialog:HWnd; hMessage:uint; wParam:WPARAM;lParam:LPARAM):lresult; stdcall;
+  TWNDPROC = function (Dialog:HWND; hMessage:uint; wParam:WPARAM;lParam:LPARAM):LRESULT; stdcall;
 
 type
   PTChar = ^TChar;
@@ -129,7 +129,7 @@ type
   TPLUGININFOEX = record
     cbSize     :int;
     shortName  :PAnsiChar;
-    version    :DWORD;
+    version    :dword;
     description:PAnsiChar;
     author     :PAnsiChar;
     authorEmail:PAnsiChar;
@@ -149,7 +149,7 @@ type
   //lParam=HINSTANCE of the loaded plugin
 }
 const
-  ME_SYSTEM_MODULELOAD:pAnsiChar = 'Miranda/System/LoadModule';
+  ME_SYSTEM_MODULELOAD:PAnsiChar = 'Miranda/System/LoadModule';
 
 {
   Miranda/System/UnloadModule event
@@ -157,7 +157,7 @@ const
   wParam=PLUGININFOEX*
   lParam=HINSTANCE of the loaded plugin
 }
-  ME_SYSTEM_MODULEUNLOAD:pAnsiChar = 'Miranda/System/UnloadModule';
+  ME_SYSTEM_MODULEUNLOAD:PAnsiChar = 'Miranda/System/UnloadModule';
 
 {
   Each service mode plugin must implement MS_SERVICEMODE_LAUNCH
@@ -216,17 +216,17 @@ var
   {$include m_icolib.inc}
   {$include m_fontservice.inc}
   {$include m_chat.inc}
-  {$include m_fingerprint.inc}
-  {$include m_variables.inc}
+//  {$include m_fingerprint.inc}
+//  {$include m_variables.inc}
   {$include m_cluiframes.inc}
   {$include m_popup.inc}
   {$include m_avatars.inc}
-  {$include m_smileyadd.inc}
-  {$include m_tipper.inc}
+//  {$include m_smileyadd.inc}
+//  {$include m_tipper.inc}
   {$include m_button.inc}
   {$include m_button_int.inc}
-  {$include m_dbeditor.inc}
-  {$include m_userinfoex.inc}
+//  {$include m_dbeditor.inc}
+//  {$include m_userinfoex.inc}
   {$include m_imgsrvc.inc}
   {$include m_hotkeys.inc}
   {$include m_acc.inc}
@@ -235,20 +235,19 @@ var
   {$include m_descbutton.inc}
   {$include m_iconheader.inc}
   {$include m_extraicons.inc}
-  {$include m_errors.inc}
-  {$include m_help.inc}
-  {$include m_proto_listeningto.inc}
+//  {$include m_proto_listeningto.inc}
   {$include m_toptoolbar.inc}
   {$include m_msg_buttonsbar.inc}
   {$include m_json.inc}
   {$include m_xstatus.inc}
   {$include m_zlib.inc}
-{$define M_API_UNIT}
-  {$include m_helpers.inc}
-  {$include m_clistint.inc}
+  {$include m_pluginupdater.inc}
   {$include m_metacontacts.inc}
   {$include m_timezones.inc}
   {$include m_crypto.inc}
+{$define M_API_UNIT}
+  {$include m_helpers.inc}
+  {$include m_clistint.inc}
 
 implementation
 

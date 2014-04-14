@@ -11,11 +11,13 @@
 program HistoryToDBImport;
 
 uses
+  {$IFDEF DEBUG}
   madExcept,
   madLinkDisAsm,
   madListHardware,
   madListProcesses,
   madListModules,
+  {$ENDIF}
   Forms,
   Global in 'Global.pas',
   Main in 'Main.pas' {MainForm};

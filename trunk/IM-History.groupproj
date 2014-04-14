@@ -1,0 +1,132 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{6DF7EDA5-80AE-4374-B672-65439859D8A4}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="historytodbcreatedb\HistoryToDBCreateDB.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="historytodbsync\HistoryToDBSync.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="historytodbviewer\HistoryToDBViewer.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="historytodbupdater\HistoryToDBUpdater.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="historytodbimport\HistoryToDBImport.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="mirandahistorytodb\MirandaHistoryToDB.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="mirandanghistorytodb\MirandaNGHistoryToDB.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="qiphistorytodb\QIPHistoryToDB.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="rnqhistorytodb\RnQHistoryToDB.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="HistoryToDBCreateDB">
+        <MSBuild Projects="historytodbcreatedb\HistoryToDBCreateDB.dproj"/>
+    </Target>
+    <Target Name="HistoryToDBCreateDB:Clean">
+        <MSBuild Projects="historytodbcreatedb\HistoryToDBCreateDB.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="HistoryToDBCreateDB:Make">
+        <MSBuild Projects="historytodbcreatedb\HistoryToDBCreateDB.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="HistoryToDBSync">
+        <MSBuild Projects="historytodbsync\HistoryToDBSync.dproj"/>
+    </Target>
+    <Target Name="HistoryToDBSync:Clean">
+        <MSBuild Projects="historytodbsync\HistoryToDBSync.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="HistoryToDBSync:Make">
+        <MSBuild Projects="historytodbsync\HistoryToDBSync.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="HistoryToDBViewer">
+        <MSBuild Projects="historytodbviewer\HistoryToDBViewer.dproj"/>
+    </Target>
+    <Target Name="HistoryToDBViewer:Clean">
+        <MSBuild Projects="historytodbviewer\HistoryToDBViewer.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="HistoryToDBViewer:Make">
+        <MSBuild Projects="historytodbviewer\HistoryToDBViewer.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="HistoryToDBUpdater">
+        <MSBuild Projects="historytodbupdater\HistoryToDBUpdater.dproj"/>
+    </Target>
+    <Target Name="HistoryToDBUpdater:Clean">
+        <MSBuild Projects="historytodbupdater\HistoryToDBUpdater.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="HistoryToDBUpdater:Make">
+        <MSBuild Projects="historytodbupdater\HistoryToDBUpdater.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="HistoryToDBImport">
+        <MSBuild Projects="historytodbimport\HistoryToDBImport.dproj"/>
+    </Target>
+    <Target Name="HistoryToDBImport:Clean">
+        <MSBuild Projects="historytodbimport\HistoryToDBImport.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="HistoryToDBImport:Make">
+        <MSBuild Projects="historytodbimport\HistoryToDBImport.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MirandaHistoryToDB">
+        <MSBuild Projects="mirandahistorytodb\MirandaHistoryToDB.dproj"/>
+    </Target>
+    <Target Name="MirandaHistoryToDB:Clean">
+        <MSBuild Projects="mirandahistorytodb\MirandaHistoryToDB.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MirandaHistoryToDB:Make">
+        <MSBuild Projects="mirandahistorytodb\MirandaHistoryToDB.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MirandaNGHistoryToDB">
+        <MSBuild Projects="mirandanghistorytodb\MirandaNGHistoryToDB.dproj"/>
+    </Target>
+    <Target Name="MirandaNGHistoryToDB:Clean">
+        <MSBuild Projects="mirandanghistorytodb\MirandaNGHistoryToDB.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MirandaNGHistoryToDB:Make">
+        <MSBuild Projects="mirandanghistorytodb\MirandaNGHistoryToDB.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="QIPHistoryToDB">
+        <MSBuild Projects="qiphistorytodb\QIPHistoryToDB.dproj"/>
+    </Target>
+    <Target Name="QIPHistoryToDB:Clean">
+        <MSBuild Projects="qiphistorytodb\QIPHistoryToDB.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="QIPHistoryToDB:Make">
+        <MSBuild Projects="qiphistorytodb\QIPHistoryToDB.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="RnQHistoryToDB">
+        <MSBuild Projects="rnqhistorytodb\RnQHistoryToDB.dproj"/>
+    </Target>
+    <Target Name="RnQHistoryToDB:Clean">
+        <MSBuild Projects="rnqhistorytodb\RnQHistoryToDB.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="RnQHistoryToDB:Make">
+        <MSBuild Projects="rnqhistorytodb\RnQHistoryToDB.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="HistoryToDBCreateDB;HistoryToDBSync;HistoryToDBViewer;HistoryToDBUpdater;HistoryToDBImport;MirandaHistoryToDB;MirandaNGHistoryToDB;QIPHistoryToDB;RnQHistoryToDB"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="HistoryToDBCreateDB:Clean;HistoryToDBSync:Clean;HistoryToDBViewer:Clean;HistoryToDBUpdater:Clean;HistoryToDBImport:Clean;MirandaHistoryToDB:Clean;MirandaNGHistoryToDB:Clean;QIPHistoryToDB:Clean;RnQHistoryToDB:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="HistoryToDBCreateDB:Make;HistoryToDBSync:Make;HistoryToDBViewer:Make;HistoryToDBUpdater:Make;HistoryToDBImport:Make;MirandaHistoryToDB:Make;MirandaNGHistoryToDB:Make;QIPHistoryToDB:Make;RnQHistoryToDB:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>

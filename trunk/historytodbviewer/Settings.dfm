@@ -1198,10 +1198,6 @@ object SettingsForm: TSettingsForm
     object AboutTabSheet: TTabSheet
       Caption = #1054' '#1087#1088#1086#1075#1088#1072#1084#1084#1077
       ImageIndex = 5
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object LProgramName: TLabel
         Left = 96
         Top = 16
@@ -1220,7 +1216,7 @@ object SettingsForm: TSettingsForm
         Top = 32
         Width = 130
         Height = 13
-        Caption = 'Copyright '#169' 2011-2013 by'
+        Caption = 'Copyright '#169' 2011-2014 by'
       end
       object LabelAuthor: TLabel
         Left = 227
