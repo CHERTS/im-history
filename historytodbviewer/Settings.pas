@@ -1,6 +1,6 @@
 { ############################################################################ }
 { #                                                                          # }
-{ #  Просмотр истории HistoryToDBViewer v2.4                                 # }
+{ #  Просмотр истории HistoryToDBViewer v2.6                                 # }
 { #                                                                          # }
 { #  License: GPLv3                                                          # }
 { #                                                                          # }
@@ -1556,6 +1556,17 @@ end;
 procedure TSettingsForm.CBDBTypeChange(Sender: TObject);
 begin
   if (MatchStrings(CBDBType.Items[CBDBType.ItemIndex], 'mysql*')) then
+  begin
+    EDBAddress.Enabled := True;
+    EDBPort.Enabled := True;
+    LDBAddress.Caption := GetLangStr('LDBAddress');
+    LDBName.Caption := GetLangStr('LDBName');
+    EDBPasswd.Enabled := true;
+    EDBAddress.Text := DBAddress;
+    EDBPort.Text := '3306';
+    EDBName.Text := DBName;
+  end
+  else if (MatchStrings(CBDBType.Items[CBDBType.ItemIndex], 'MariaDB*')) then
   begin
     EDBAddress.Enabled := True;
     EDBPort.Enabled := True;

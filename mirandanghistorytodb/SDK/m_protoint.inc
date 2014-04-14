@@ -46,27 +46,30 @@ type
     iDesiredStatus:int;
     iXStatus      :int;
     iVersion      :int;  // version 2 or higher designate support of Unicode services
+
     tszUserName   :TChar;
     szModuleName  :PAnsiChar;
-    hProtoIcon    :THandle;
+    hProtoIcon    :THANDLE;
+    hNetlibUser   :THANDLE;
+	//////////////////////////////////////////////////////////////////////////////////////
+	//////////////////////////////////////////////////////////////////////////////////////
+	// Virtual functions
 
-    AddToList       :function(intf:PPROTO_INTERFACE;flags:int; var psr:TPROTOSEARCHRESULT):THANDLE; cdecl;
-    AddToListByEvent:function(intf:PPROTO_INTERFACE;flags:int; iContact:int; hDbEvent:THANDLE):THANDLE; cdecl;
+    AddToList       :function(intf:PPROTO_INTERFACE;flags:int; var psr:TPROTOSEARCHRESULT):TMCONTACT; cdecl;
+    AddToListByEvent:function(intf:PPROTO_INTERFACE;flags:int; iContact:int; hDbEvent:THANDLE):TMCONTACT; cdecl;
 
-    Authorize  :function(intf:PPROTO_INTERFACE;hContact:THANDLE):int; cdecl;
-    AuthDeny   :function(intf:PPROTO_INTERFACE;hContact:THANDLE;const szReason:TChar):int; cdecl;
-    AuthRecv   :function(intf:PPROTO_INTERFACE;hContact:THANDLE;var ptr:TPROTORECVEVENT):int; cdecl;
-    AuthRequest:function(intf:PPROTO_INTERFACE;hContact:THANDLE;szMessage:TChar):int; cdecl;
+    Authorize  :function(intf:PPROTO_INTERFACE;hDbEvent:THANDLE):int; cdecl;
+    AuthDeny   :function(intf:PPROTO_INTERFACE;hDbEvent:THANDLE;const szReason:TChar):int; cdecl;
+    AuthRecv   :function(intf:PPROTO_INTERFACE;hContact:TMCONTACT;var ptr:TPROTORECVEVENT):int; cdecl;
+    AuthRequest:function(intf:PPROTO_INTERFACE;hContact:TMCONTACT;szMessage:TChar):int; cdecl;
 
-    ChangeInfo:function(intf:PPROTO_INTERFACE;iInfoType:int; var pInfoData:pointer):THANDLE; cdecl;
+    FileAllow :function(intf:PPROTO_INTERFACE;hContact:TMCONTACT;hTransfer:THANDLE; szPath:PROTOCHAR):THANDLE; cdecl;
+    FileCancel:function(intf:PPROTO_INTERFACE;hContact:TMCONTACT;hTransfer:THANDLE):int; cdecl;
+    FileDeny  :function(intf:PPROTO_INTERFACE;hContact:TMCONTACT;hTransfer:THANDLE; var szReason:PROTOCHAR):int; cdecl;
+    FileResume:function(intf:PPROTO_INTERFACE;hTransfer:THANDLE;var action:integer; var szFilename:PROTOCHAR):int; cdecl;
 
-    FileAllow :function(intf:PPROTO_INTERFACE;hContact:THANDLE;hTransfer:THANDLE; szPath:PROTOCHAR):THANDLE; cdecl;
-    FileCancel:function(intf:PPROTO_INTERFACE;hContact:THANDLE;hTransfer:THANDLE):int; cdecl;
-    FileDeny  :function(intf:PPROTO_INTERFACE;hContact:THANDLE;hTransfer:THANDLE; var szReason:PROTOCHAR):int; cdecl;
-    FileResume:function(intf:PPROTO_INTERFACE;hTransfer:THANDLE;var action:Integer; var szFilename:PROTOCHAR):int; cdecl;
-
-    GetCaps:function(intf:PPROTO_INTERFACE;_type:int):dword_ptr; cdecl;
-    GetInfo:function(intf:PPROTO_INTERFACE;hContact:THANDLE;infoType:int):int; cdecl;
+    GetCaps:function(intf:PPROTO_INTERFACE;_type:int;hContact:TMCONTACT=0):dword_ptr; cdecl;
+    GetInfo:function(intf:PPROTO_INTERFACE;hContact:TMCONTACT;infoType:int):int; cdecl;
 
     SearchBasic           :function(intf:PPROTO_INTERFACE;id:PAnsiChar):THANDLE; cdecl;
     SearchByEmail         :function(intf:PPROTO_INTERFACE;email:PAnsiChar):THANDLE; cdecl;
@@ -74,25 +77,24 @@ type
     SearchAdvanced        :function(intf:PPROTO_INTERFACE;owner:HWND):HWND; cdecl;
     CreateExtendedSearchUI:function(intf:PPROTO_INTERFACE;owner:HWND):HWND; cdecl;
 
-    RecvContacts:function(intf:PPROTO_INTERFACE;hContact:THANDLE;var ptr:TPROTORECVEVENT):int; cdecl;
-    RecvFile    :function(intf:PPROTO_INTERFACE;hContact:THANDLE;var ptr:TPROTORECVEVENT):int; cdecl;
-    RecvMessage :function(intf:PPROTO_INTERFACE;hContact:THANDLE;var ptr:TPROTORECVEVENT):int; cdecl;
-    RecvUrl     :function(intf:PPROTO_INTERFACE;hContact:THANDLE;var ptr:TPROTORECVEVENT):int; cdecl;
+    RecvContacts:function(intf:PPROTO_INTERFACE;hContact:TMCONTACT;var ptr:TPROTORECVEVENT):int; cdecl;
+    RecvFile    :function(intf:PPROTO_INTERFACE;hContact:TMCONTACT;var ptr:TPROTORECVEVENT):int; cdecl;
+    RecvMessage :function(intf:PPROTO_INTERFACE;hContact:TMCONTACT;var ptr:TPROTORECVEVENT):int; cdecl;
+    RecvUrl     :function(intf:PPROTO_INTERFACE;hContact:TMCONTACT;var ptr:TPROTORECVEVENT):int; cdecl;
 
-    SendContacts:function(intf:PPROTO_INTERFACE;hContact:THANDLE;flags:int; nContacts:int; var hContactsList:THANDLE):int; cdecl;
-    SendFile    :function(intf:PPROTO_INTERFACE;hContact:THANDLE;szDescription:PROTOCHAR; var ppszFiles:PROTOCHAR):THANDLE; cdecl;
-    SendMessage :function(intf:PPROTO_INTERFACE;hContact:THANDLE;flags:int; const msg:PAnsiChar):int; cdecl;
-    SendUrl     :function(intf:PPROTO_INTERFACE;hContact:THANDLE;flags:int; const url:PAnsiChar):int; cdecl;
+    SendContacts:function(intf:PPROTO_INTERFACE;hContact:TMCONTACT;flags:int; nContacts:int; var hContactsList:THANDLE):int; cdecl;
+    SendFile    :function(intf:PPROTO_INTERFACE;hContact:TMCONTACT;szDescription:PROTOCHAR; var ppszFiles:PROTOCHAR):THANDLE; cdecl;
+    SendMessage :function(intf:PPROTO_INTERFACE;hContact:TMCONTACT;flags:int; const msg:PAnsiChar):int; cdecl;
+    SendUrl     :function(intf:PPROTO_INTERFACE;hContact:TMCONTACT;flags:int; const url:PAnsiChar):int; cdecl;
 
-    SetApparentMode:function(intf:PPROTO_INTERFACE;hContact:THANDLE;mode:int):int; cdecl;
+    SetApparentMode:function(intf:PPROTO_INTERFACE;hContact:TMCONTACT;mode:int):int; cdecl;
     SetStatus      :function(intf:PPROTO_INTERFACE;iNewStatus:int):int; cdecl;
 
-    GetAwayMsg :function(intf:PPROTO_INTERFACE;hContact:THANDLE):THANDLE; cdecl;
-    RecvAwayMsg:function(intf:PPROTO_INTERFACE;hContact:THANDLE;mode:int;var evt:TPROTORECVEVENT):int; cdecl;
-    SendAwayMsg:function(intf:PPROTO_INTERFACE;hContact:THANDLE;hProcess:THANDLE;const msg:PAnsiChar):int; cdecl;
+    GetAwayMsg :function(intf:PPROTO_INTERFACE;hContact:TMCONTACT):THANDLE; cdecl;
+    RecvAwayMsg:function(intf:PPROTO_INTERFACE;hContact:TMCONTACT;mode:int;var evt:TPROTORECVEVENT):int; cdecl;
     SetAwayMsg :function(intf:PPROTO_INTERFACE;iStatus:int; const msg:PAnsiChar):int; cdecl;
 
-    UserIsTyping:function(intf:PPROTO_INTERFACE;hContact:THANDLE; _type:int):int; cdecl;
+    UserIsTyping:function(intf:PPROTO_INTERFACE;hContact:TMCONTACT; _type:int):int; cdecl;
     OnEvent:function(intf:PPROTO_INTERFACE;iEventType:TPROTOEVENTTYPE;wParam:WPARAM;lParam:LPARAM):int; cdecl;
   end;
 

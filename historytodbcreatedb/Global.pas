@@ -18,7 +18,7 @@ uses
 
 const
   ProgramsName = 'IM-History CreateDB';
-  ProgramsVer : WideString = '1.8.0.0';
+  ProgramsVer : WideString = '2.0.0.0';
   DefaultDBAddres = 'db01.im-history.ru';
   DefaultDBName = 'imhistory';
   DefaultSQLiteDBName = 'imhistory.sqlite';

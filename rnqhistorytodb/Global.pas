@@ -1,6 +1,6 @@
 { ############################################################################ }
 { #                                                                          # }
-{ #  RnQ HistoryToDB Plugin v2.4                                             # }
+{ #  RnQ HistoryToDB Plugin v2.6                                             # }
 { #                                                                          # }
 { #  License: GPLv3                                                          # }
 { #                                                                          # }
@@ -20,7 +20,7 @@ type
   TCopyDataType = (cdtString = 0, cdtImage = 1, cdtRecord = 2);
 
 const
-  PluginVersion = '2.5';
+  PluginVersion = '2.6';
   PluginName = 'RnQHistoryToDB';
   DefaultDBAddres = 'db01.im-history.ru';
   DefaultDBName = 'imhistory';

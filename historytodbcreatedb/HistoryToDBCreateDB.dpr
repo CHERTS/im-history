@@ -1,6 +1,13 @@
 program HistoryToDBCreateDB;
 
 uses
+  {$IFDEF DEBUG}
+  madExcept,
+  madLinkDisAsm,
+  madListHardware,
+  madListProcesses,
+  madListModules,
+  {$ENDIF}
   Forms,
   Main in 'Main.pas' {MainForm},
   Global in 'Global.pas',

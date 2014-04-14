@@ -1,6 +1,6 @@
 { ############################################################################ }
 { #                                                                          # }
-{ #  Просмотр истории HistoryToDBViewer v2.4                                 # }
+{ #  Просмотр истории HistoryToDBViewer v2.6                                 # }
 { #                                                                          # }
 { #  License: GPLv3                                                          # }
 { #                                                                          # }
@@ -981,7 +981,10 @@ begin
     SummaryQuery.Connection := ZConnection1;
     SummaryQuery.ParamCheck := False;
     SummaryQuery.SQL.Clear;
-    SQL_Zeos('select msg_time from uin_'+ DBUserName + ' where msg_direction = 1 order by msg_time desc limit 1');
+    if (MatchStrings(DBType, 'firebird*')) then
+      SQL_Zeos('select first 1 skip 0 msg_time from uin_'+ DBUserName + ' where msg_direction = 1 order by msg_time desc')
+    else
+      SQL_Zeos('select msg_time from uin_'+ DBUserName + ' where msg_direction = 1 order by msg_time desc limit 1');
     if ViewerQuery.FieldByName('msg_time').AsString <> '' then
       EndHistoryDateTimePicker.DateTime := StrToDateTime(ViewerQuery.FieldByName('msg_time').AsString)
     else
@@ -1497,7 +1500,12 @@ begin
         Exit;
       end
       else
-        SQL_Zeos('select nick,uin,proto_name from uin_'+ DBUserName + ' where nick is not null group by uin order by nick asc');
+      begin
+        if (MatchStrings(DBType, 'firebird*')) then
+          SQL_Zeos('select distinct nick,uin,proto_name from uin_'+ DBUserName + ' where nick is not null order by nick asc')
+        else
+          SQL_Zeos('select nick,uin,proto_name from uin_'+ DBUserName + ' where nick is not null group by uin order by nick asc');
+      end;
     end
     else
     begin

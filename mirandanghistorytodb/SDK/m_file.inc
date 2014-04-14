@@ -25,22 +25,22 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 const
   {
-    wParam : HCONTACT
+    wParam : TMCONTACT
     lParam : 0
     Affects: Brings up the send file dialog for a contact, see notes
-    Returns: 0 on success [non zero] on failure
+    Returns: returns file selection dialog's handle or 0 on error
     Notes  : Returns immediately without waiting for the send
   }
   MS_FILE_SENDFILE:PAnsiChar = 'SRFile/SendCommand';
 
   {
-    wParam : HCONTACT
+    wParam : TMCONTACT
     lParam : pointer to an array of PAnsiChar's the first nil item
              terminates the list -- see notes
     Affects: Brings up the send file dialog with specifieed files already chosen
-             the user is not prevented from editing the list --
-    Returns: 0 on success [non zero] on failure -- returns immediately without
-              waiting for the send to finish
+             the user is not prevented from editing the list
+    Returns: returns file selection dialog's handle or 0 on error
+             returns immediately without waiting for the send to finish
     Notes  : both directories and files can be given
     Version: v0.1.2.1+
   }
@@ -50,22 +50,36 @@ const
   v0.9.0+
   wParam=(WPARAM)(HANDLE)hContact
   lParam=(LPARAM)(const TCHAR**)ppFiles
-  returns 0 on success or nonzero on failure
+  returns file selection dialog's handle or 0 on error
   returns immediately, without waiting for the send
 }
   MS_FILE_SENDSPECIFICFILEST:PAnsiChar = 'SRFile/SendSpecificFilesT';
 
   {
-    wParam : HCONTACT
+    wParam : TMCONTACT
     lParam : Pointer to a buffer
     Affects: returns the received files folder for a contact, the buffer
              should be at least MAX_PATH long (defined with WinAPI),
              the returned path may not exist -- see notes
     Returns: Returns 0 on success [non zero] on failure
-    notes  : If HCONTACT is NULL(0) the path returned is the path
+    notes  : If TMCONTACT is NULL(0) the path returned is the path
              without the postfix contact name.
     Version: v0.1.2.2+
   }
   MS_FILE_GETRECEIVEDFILESFOLDER:PAnsiChar = 'SRFile/GetReceivedFilesFolder';
+
+  {
+    wParam : TMCONTACT
+    lParam : file selection dialog's window
+    Notes  : notifies a caller about file send start
+  }
+  ME_FILEDLG_SUCCEEDED:PAnsiChar = 'SRFile/Dlg/Succeeded';
+
+  {
+    wParam : TMCONTACT
+    lParam : file selection dialog's window
+    Notes  : notifies a caller about file send cancellation
+  }
+  ME_FILEDLG_CANCELED:PAnsiChar = 'SRFile/Dlg/Canceled';
 
 {$ENDIF}

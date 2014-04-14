@@ -20,8 +20,9 @@ uses
   System.Actions, FMX.ActnList, FMX.StdCtrls, FMX.Edit, Global, FMX.Objects,
   UniProvider, Data.DB, DBAccess, Uni, FGX.ProgressDialog, MySQLUniProvider,
   FMX.Layouts, FMX.ExtCtrls, System.IOUtils, FMX.Gestures, FMX.Platform,
-  FMX.ListView.Types, FMX.ListView, FMX.ListBox, FMX.Media, FMX.LinkBtn
-  {$IFDEF ANDROID},FMX.Platform.Android, Android.Net{$ENDIF}
+  FMX.ListView.Types, FMX.ListView, FMX.ListBox, FMX.Media, FMX.LinkBtn,
+  NetworkState
+  {$IFDEF ANDROID},FMX.Platform.Android{$ENDIF}
   {$IFDEF iOS},FMX.Platform.iOS{$ENDIF};
 
 type
@@ -447,70 +448,77 @@ begin
 end;
 
 procedure TMainForm.ConnectDB;
+var
+  NS: TNetworkState;
 begin
-  if IsConnected then // Проверка на подключение к сети
-  begin
-    UniConnection1.Username := ELogin.Text;
-    UniConnection1.Password := EPassword.Text;
-    fgActivityDialog.Title := 'Подключение к БД';
-    fgActivityDialog.Message := 'Пожалуйста, подождите...';
-    fgActivityDialog.Show;
-    try
+  NS := TNetworkState.Create;
+  try
+    if NS.IsConnected then // Проверка на подключение к сети
+    begin
+      UniConnection1.Username := ELogin.Text;
+      UniConnection1.Password := EPassword.Text;
+      fgActivityDialog.Title := 'Подключение к БД';
+      fgActivityDialog.Message := 'Пожалуйста, подождите...';
+      fgActivityDialog.Show;
       try
-        if not UniConnection1.Connected then
-          UniConnection1.Connect;
-        if UniConnection1.Connected then
-        begin
-          // Проверка на сохранение логина и пароля
-          if CBSavePassword.IsChecked then
+        try
+          if not UniConnection1.Connected then
+            UniConnection1.Connect;
+          if UniConnection1.Connected then
           begin
-            Settings.DBUserName := ELogin.Text;
-            Settings.DBUserPassword := EPassword.Text;
-            if not Settings.SaveUserPassword then
+            // Проверка на сохранение логина и пароля
+            if CBSavePassword.IsChecked then
             begin
-              Settings.SaveUserPassword := CBSavePassword.IsChecked;
-              SaveINI(DocumentPath);
+              Settings.DBUserName := ELogin.Text;
+              Settings.DBUserPassword := EPassword.Text;
+              if not Settings.SaveUserPassword then
+              begin
+                Settings.SaveUserPassword := CBSavePassword.IsChecked;
+                SaveINI(DocumentPath);
+              end;
+            end
+            else
+            begin
+              Settings.DBUserName := ELogin.Text;
+              Settings.DBUserPassword := EPassword.Text;
+              if Settings.SaveUserPassword then
+              begin
+                Settings.SaveUserPassword := CBSavePassword.IsChecked;
+                SaveINI(DocumentPath);
+              end;
             end;
+            fgActivityDialog.Message := 'Подключение выполнено';
+            Sleep(100);
+            fgActivityDialog.Message := 'Загружаем данные...';
+            // Грузим список контактов
+            LoadContactList;
+            Sleep(100);
           end
           else
           begin
-            Settings.DBUserName := ELogin.Text;
-            Settings.DBUserPassword := EPassword.Text;
-            if Settings.SaveUserPassword then
-            begin
-              Settings.SaveUserPassword := CBSavePassword.IsChecked;
-              SaveINI(DocumentPath);
-            end;
+            fgActivityDialog.Message := 'Подключение не выполнено';
+            Sleep(1000);
           end;
-          fgActivityDialog.Message := 'Подключение выполнено';
-          Sleep(100);
-          fgActivityDialog.Message := 'Загружаем данные...';
-          // Грузим список контактов
-          LoadContactList;
-          Sleep(100);
-        end
-        else
-        begin
-          fgActivityDialog.Message := 'Подключение не выполнено';
-          Sleep(1000);
+        except
+          on E: Exception do
+             ShowMessage(E.Message);
         end;
-      except
-        on E: Exception do
-           ShowMessage(E.Message);
+      finally
+        fgActivityDialog.Hide;
       end;
-    finally
-      fgActivityDialog.Hide;
-    end;
-    if UniConnection1.Connected then
-    begin
-      ChangeTabAction1.Tab := TabItemList;
-      ChangeTabAction1.ExecuteTarget(Self);
-      ButtonExit.Visible := True;
-      ButtonSettings.Visible := True;
-    end;
-  end
-  else
-    ShowMessage('Вы не подключены к сети Интернет.');
+      if UniConnection1.Connected then
+      begin
+        ChangeTabAction1.Tab := TabItemList;
+        ChangeTabAction1.ExecuteTarget(Self);
+        ButtonExit.Visible := True;
+        ButtonSettings.Visible := True;
+      end;
+    end
+    else
+      ShowMessage('Вы не подключены к сети Интернет.');
+  finally
+    NS.Free;
+  end;
 end;
 
 procedure TMainForm.LoadContactList;

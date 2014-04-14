@@ -26,7 +26,8 @@ mi.pszPopupName = Translate("Popups");
 mi.position = 0; //You don't need it and it's better if you put it to zero.
 }
 
-const POPUP_VERSION = $02010003;
+const
+  POPUP_VERSION = $02010003;
 
 const
   MAX_CONTACTNAME = 2048;
@@ -48,7 +49,7 @@ type
     // Action title text. Please use module name as prefix
     // (e.g. "Popup Plus/Dismiss Popup") and don't translate
     lpzTitle:array [0..MAX_ACTIONTITLE-1] of AnsiChar;
-    flags   :DWORD;  // set of PAF_* flags
+    flags   :dword;  // set of PAF_* flags
     wParam  :WPARAM; // wParam for UM_POPUPACTION message
     lParam  :LPARAM; // lParam for UM_POPUPACTION message
   end;
@@ -56,49 +57,49 @@ type
 type
   PPOPUPDATA = ^TPOPUPDATA;
   TPOPUPDATA = record
-    lchContact      : THANDLE;
+    lchContact      : TMCONTACT;
     lchIcon         : HICON;
     lpszContactName : array [0..MAX_CONTACTNAME-1] of AnsiChar;
     lpszText        : array [0..MAX_SECONDLINE -1] of AnsiChar;
     colorBack       : COLORREF;
     colorText       : COLORREF;
     PluginWindowProc: pointer;
-    PluginData      : Pointer;
-    iSeconds        : int;      // Custom delay time in seconds.
-                                // -1 means "forever", 0 means = 'default time".
+    PluginData      : pointer;
+    iSeconds        : int;          // Custom delay time in seconds.
+                                    // -1 means "forever", 0 means = 'default time".
 { Data prior $02010003 version
     lpzClass        : PAnsiChar;    // Popup class. Used with skinning. See Popup/AddClass for details
     skinBack        : COLORREF; // Background color for colorizable skins
     cZero: array [0..15-SizeOf(PAnsiChar)-SizeOf(COLORREF)] of byte;
 }
   // you *MUST* pass APT_NEWDATA flag for services to take care of this data
-    hReserved       : THANDLE;  // Reserved. Must be NULL
-    actionCount     : int;      // Amount of passed actions
+    hReserved       : THANDLE;      // Reserved. Must be NULL
+    actionCount     : int;          // Amount of passed actions
     lpActions       : PPOPUPACTION; // Popup Actions
-    icbSize         : int;      // struct size for future
+    icbSize         : int;          // struct size for future
   end;
 
 type
   PPOPUPDATAW = ^TPOPUPDATAW;
   TPOPUPDATAW = record
-    lchContact      : THANDLE;
+    lchContact      : TMCONTACT;
     lchIcon         : HICON;
     lpwzContactName : array [0..MAX_CONTACTNAME-1] of WideChar;
     lpwzText        : array [0..MAX_SECONDLINE -1] of WideChar;
     colorBack       : COLORREF;
     colorText       : COLORREF;
-    PluginWindowProc: Pointer;  // must be a window procedure using stdcall
-    PluginData      : Pointer;
-    iSeconds        : int;      // Custom delay time in seconds.
-                                //  -1 means = 'forever", 0 means = 'default time".
+    PluginWindowProc: pointer;      // must be a window procedure using stdcall
+    PluginData      : pointer;
+    iSeconds        : int;          // Custom delay time in seconds.
+                                    //  -1 means = 'forever", 0 means = 'default time".
 { Data prior $02010003 version
     cZero: array [0..15] of AnsiChar; //16 unused bytes which may come useful in the future.
 }
   // you *MUST* pass APT_NEWDATA flag for services to take care of this data
-    hReserved       : THANDLE;  // Reserved. Must be NULL
-    actionCount     : int;      // Amount of passed actions
+    hReserved       : THANDLE;      // Reserved. Must be NULL
+    actionCount     : int;          // Amount of passed actions
     lpActions       : PPOPUPACTION; // Popup Actions
-    icbSize         : int;      // struct size for future
+    icbSize         : int;          // struct size for future
   end;
 
 {
@@ -284,7 +285,7 @@ type
   end;
 
 const
-   UM_POPUPMODIFYACTIONICON = WM_USER + $0205;
+  UM_POPUPMODIFYACTIONICON = WM_USER + $0205;
 
 const
   SM_WARNING      = $01; //Triangle icon.
@@ -302,6 +303,17 @@ const
   MS_POPUP_SHOWMESSAGE :PAnsiChar = 'Popup/ShowMessage';
   MS_POPUP_SHOWMESSAGEW:PAnsiChar = 'Popup/ShowMessageW';
 
+{ Popup/Filter
+Filters Popups out
+
+wParam = (HANDLE)hContact
+lParam = (void*)pWindowProc;
+
+returns: 0 = Popup allowed, 1 = Popup filtered out
+}
+
+  ME_Popup_FILTER:PAnsiChar = 'Popup/Filter';
+
 { Popup/RegisterActions
 Registers your action in popup action list
 
@@ -318,7 +330,7 @@ type
   TPOPUPCLASS = record
     cbSize          :int;
     flags           :int;
-    pszName         :pAnsiChar;
+    pszName         :PAnsiChar;
     szDescription   :TChar;
     hIcon           :HICON;
     colorBack       :TCOLORREF;
@@ -326,26 +338,24 @@ type
     PluginWindowProc:pointer;
     iSeconds        :int;
   end;
-  POPUPCLASS = TPOPUPCLASS;
 
 const
   PCF_UNICODE = $0001;
 
 // wParam = 0
 // lParam = (POPUPCLASS *)&pc
-  MS_POPUP_REGISTERCLASS = 'Popup/RegisterClass';
+  MS_POPUP_REGISTERCLASS   = 'Popup/RegisterClass';
   MS_POPUP_UNREGISTERCLASS = 'Popup/UnregisterClass';
 
 type
   TPOPUPDATACLASS = record
 	  cbSize      :int;
-  	pszClassName:pAnsiChar;
+  	pszClassName:PAnsiChar;
 		szTitle     :TChar;
 		szText      :TChar;
 	  PluginData  :pointer;
-	  hContact    :THANDLE;
+	  hContact    :TMCONTACT;
   end;
-  POPUPDATACLASS = TPOPUPDATACLASS;
 
 const
 // wParam = 0

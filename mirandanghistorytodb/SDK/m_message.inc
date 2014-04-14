@@ -57,16 +57,16 @@ type
   PMessageWindowEventData = ^TMessageWindowEventData;
   TMessageWindowEventData = record
     cbSize    : int;
-    hContact  : THANDLE;
-    hwndWindow: HWND;    // top level window for the contact
-    szModule  : PAnsiChar;   // used to get plugin type (which means you could use
-                         // local if needed)
-    uType     : uint;   // see event types above
-    uFlags    : uint;   // used to indicate message direction for all event
-                         // types except custom
-    local     : pointer; // used to store pointer to custom data
-    hwndInput : HWND;    // input area window for the contact (or NULL if there is none)
-    hwndLog   : HWND;    // log area window for the contact (or NULL if there is none)
+    hContact  : TMCONTACT;
+    hwndWindow: HWND;      // top level window for the contact
+    szModule  : PAnsiChar; // used to get plugin type (which means you could use
+                           // local if needed)
+    uType     : uint;      // see event types above
+    uFlags    : uint;      // used to indicate message direction for all event
+                           // types except custom
+    local     : pointer;   // used to store pointer to custom data
+    hwndInput : HWND;      // input area window for the contact (or NULL if there is none)
+    hwndLog   : HWND;      // log area window for the contact (or NULL if there is none)
   end;
 
 const
@@ -87,7 +87,7 @@ type
   PMessageWindowInputData = ^TMessageWindowInputData;
   TMessageWindowInputData = record
     cbSize  : int;
-    hContact: THANDLE;
+    hContact: TMCONTACT;
     uFlags  : int; // see uflags above
   end;
 
@@ -102,7 +102,7 @@ type
   PMessageWindowOutputData = ^TMessageWindowOutputData;
   TMessageWindowOutputData = record
     cbSize    : int;
-    hContact  : THANDLE;
+    hContact  : TMCONTACT;
     uFlags    : int;     // should be same as input data unless 0, then it
                          // will be the actual type
     hwndWindow: HWND;    // top level window for the contact or NULL if no window exists
@@ -121,22 +121,32 @@ const
   MS_MSG_GETWINDOWDATA:PAnsiChar = 'MessageAPI/GetWindowData';
 
 { wparam=(THANDLE)hContact
-  lparam=(pWideChar)ptszMessageText
+  lparam=(PWideChar)ptszMessageText
   Sets a status line text for the appropriate contact
 }
   MS_MSG_SETSTATUSTEXT:PAnsiChar = 'MessageAPI/SetStatusText';
 
+type
+  pMessageWindowEvent = ^tMessageWindowEvent;
+  tMessageWindowEvent = record
+    cbSize   :int;
+    seq      :int;          // number returned by PSS_MESSAGE
+    hContact :TMCONTACT;
+    dbei     :PDBEVENTINFO; // database event written on the basis of message sent
+  end;
+
+const
 { wparam=0(unused)
-  lparam=(pMessageWindowEvent) event being written
+  lparam=(pMessageWindowEvent) event written
   fired before SRMM writes an entered message into the database
 }
   ME_MSG_PRECREATEEVENT:PAnsiChar = 'MessageAPI/PreCreateEvent';
 
 { wParam = 0
-  lParam = (MessageWindowPopupData *)&MessageWindowPopupData;
-  Fired to allow plugins to add itens to the msg window popup menu
-  Always fired twice: once with MSG_WINDOWPOPUP_SHOWING and once with MSG_WINDOWPOPUP_SELECTED.
-  This is done to allow cleaning of resources.
+ lParam = (MessageWindowPopupData *)&MessageWindowPopupData;
+ Fired to allow plugins to add itens to the msg window popup menu
+ Always fired twice: once with MSG_WINDOWPOPUP_SHOWING and once with MSG_WINDOWPOPUP_SELECTED.
+ This is done to allow cleaning of resources.
 }
   ME_MSG_WINDOWPOPUP:PAnsiChar = 'MessageAPI/WindowPopupRequested';
 
@@ -147,24 +157,15 @@ const
   MSG_WINDOWPOPUP_LOG   = 2;
 
 type
-  MessageWindowPopupData = record
+  tMessageWindowPopupData = record
     cbSize   :int;
-    uType    :uint;    // see popup types above
-    uFlags   :uint;    // used to indicate in which window the popup was requested
-    hContact :THANDLE;
-    hwnd     :HWND;    // window where the popup was requested
-    hMenu    :HMENU;   // The handle to the menu
-    pt       :TPOINT;  // The point, in screen coords
-    selection:int;     // The menu control id or 0 if no one was selected
-  end;
-
-type
-  pMessageWindowEvent = ^MessageWindowEvent;
-  MessageWindowEvent = record
-    cbSize   :int;
-    seq      :int;     // number returned by PSS_MESSAGE
-    hContact :THANDLE;
-    dbei     :pDbEventInfo; // database event written on the basis of message sent
+    uType    :uint;     // see popup types above
+    uFlags   :uint;     // used to indicate in which window the popup was requested
+    hContact :TMCONTACT;
+    hwnd     :HWND;     // window where the popup was requested
+    hMenu    :HMENU;    // The handle to the menu
+    pt       :TPOINT;   // The point, in screen coords
+    selection:int;      // The menu control id or 0 if no one was selected
   end;
 
 // status icons
@@ -178,7 +179,7 @@ type
   tStatusIconData = record
     cbSize       :int;       // must be equal to sizeof(StatusIconData)
     szModule     :PAnsiChar; // used in combo with the dwId below to create a unique identifier
-    dwId         :DWORD;     // uniquely defines a button inside a module
+    dwId         :dword;     // uniquely defines a button inside a module
     hIcon,
     hIconDisabled:HICON;     // hIconDisabled is optional - if null, will use hIcon in the disabled state
     flags        :int;       // one of MBF_* above
@@ -195,7 +196,7 @@ type
     cbSize       :int;
     clickLocation:TPOINT;    // click location, in screen coordinates
     szModule     :PAnsiChar;
-    dwId         :DWORD;
+    dwId         :dword;
     flags        :int;       // one of MBCF_* above
   end;
 

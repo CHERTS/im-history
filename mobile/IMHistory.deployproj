@@ -33,7 +33,7 @@
             <LocalCommand/>
             <RemoteCommand/>
         </DeployFile>
-        <DeployFile Include="c:\program files\embarcadero\rad studio\12.0\lib\android\debug\classes.dex" Condition="'$(Config)'=='Release'">
+        <DeployFile Include="c:\program files (x86)\embarcadero\rad studio\12.0\lib\android\debug\classes.dex" Condition="'$(Config)'=='Release'">
             <RemoteDir>IMHistory\classes\</RemoteDir>
             <RemoteName>classes.dex</RemoteName>
             <Operation>1</Operation>
@@ -62,7 +62,7 @@
             <RemoteCommand/>
             <Required>True</Required>
         </DeployFile>
-        <DeployFile Include="C:\Documents and Settings\All Users\My documents\RAD Studio\12.0\PlatformSDKs\android-ndk-r8e\prebuilt\android-arm\gdbserver\gdbserver" Condition="'$(Config)'=='Release'">
+        <DeployFile Include="C:\Users\Public\Documents\RAD Studio\12.0\PlatformSDKs\android-ndk-r8e\prebuilt\android-arm\gdbserver\gdbserver" Condition="'$(Config)'=='Release'">
             <RemoteDir>IMHistory\library\lib\armeabi\</RemoteDir>
             <RemoteName>gdbserver</RemoteName>
             <Operation>1</Operation>

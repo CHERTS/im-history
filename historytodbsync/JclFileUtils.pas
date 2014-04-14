@@ -51,9 +51,9 @@
 {                                                                                                  }
 {**************************************************************************************************}
 {                                                                                                  }
-{ Last modified: $Date:: 2013-06-24 21:45:39 +0200                                               $ }
-{ Revision:      $Rev:: d7f844c45a2a90b08858145d52e32331e0fbbe53                                 $ }
-{ Author:        $Author:: jfudickar                                                             $ }
+{ Last modified: $Date::                                                                         $ }
+{ Revision:      $Rev::                                                                          $ }
+{ Author:        $Author::                                                                       $ }
 {                                                                                                  }
 {**************************************************************************************************}
 
@@ -1068,9 +1068,9 @@ function ParamPos (const SearchName : string; const Separator : string = '=';
 {$IFDEF UNITVERSIONING}
 const
   UnitVersioning: TUnitVersionInfo = (
-    RCSfile: '$URL: jcl/source/common/JclFileUtils.pas $';
-    Revision: '$Revision: d7f844c45a2a90b08858145d52e32331e0fbbe53 $';
-    Date: '$Date: 2013-06-24 21:45:39 +0200 $';
+    RCSfile: '$URL$';
+    Revision: '$Revision$';
+    Date: '$Date$';
     LogPath: 'JCL\source\common';
     Extra: '';
     Data: nil
@@ -4850,7 +4850,7 @@ begin
   Result := '';
   if Window <> 0 then
   begin
-    if GetWindowsVersion < WVWin2000 then
+    if not JclCheckWinVersion(5, 0) then // Win2k or newer required
       raise EJclWin32Error.CreateRes(@RsEWindowsVersionNotSupported);
 
     {$IFDEF HAS_UNITSCOPE}Winapi.{$ENDIF}Windows.GetWindowThreadProcessId(Window, @ProcessID);
@@ -4858,7 +4858,7 @@ begin
     if hProcess <> 0 then
     begin
       try
-        if GetWindowsVersion >= WvWinVista then
+        if JclCheckWinVersion(6, 0) then // WinVista or newer
         begin
           DllHinst := LoadLibrary('Kernel32.dll');
           if DllHinst < HINSTANCE_ERROR then

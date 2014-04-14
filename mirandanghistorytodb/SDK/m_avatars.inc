@@ -41,7 +41,7 @@
   have been disabled in the option dialog). It also does not actively fetch avatars for
   protocols which are in invisible status mode (may cause privacy issues and some protocols
   like MSN don't allow any outbound client communication when in invisible status mode)
-  unless AF_FETCHALWAYS is set.
+  unless AF_FETCHIFPROTONOTVISIBLE is set.
 
   - TODO
   - maintain recent avatars (store the last hashes to avoid re-fetching)
@@ -70,13 +70,13 @@ const
 type
   PavatarCacheEntryW = ^TavatarCacheEntryW;
   TavatarCacheEntryW = record
-    cbSize      : DWORD;    // set to sizeof(struct)
-    hContact    : THANDLE;  // contacts handle, 0, if it is a protocol avatar
+    cbSize      : dword;    // set to sizeof(struct)
+    hContact    : TMCONTACT; // contacts handle, 0, if it is a protocol avatar
     hbmPic      : HBITMAP;  // bitmap handle of the picture itself
-    dwFlags     : DWORD;    // see above for flag values
+    dwFlags     : dword;    // see above for flag values
     bmHeight    : long;     // bitmap dimensions
     bmWidth     : long;
-    t_lastAccess: DWORD;    // last access time (currently unused, but plugins should still
+    t_lastAccess: dword;    // last access time (currently unused, but plugins should still
                             // use it whenever they access the avatar. may be
                             // used in the future to implement cache expiration
     lpDIBSection: pointer;
@@ -85,28 +85,17 @@ type
 
   PavatarCacheEntry = ^TavatarCacheEntry;
   TavatarCacheEntry = record
-    cbSize      : DWORD;    // set to sizeof(struct)
-    hContact    : THANDLE;  // contacts handle, 0, if it is a protocol avatar
+    cbSize      : dword;    // set to sizeof(struct)
+    hContact    : TMCONTACT; // contacts handle, 0, if it is a protocol avatar
     hbmPic      : HBITMAP;  // bitmap handle of the picture itself
-    dwFlags     : DWORD;    // see above for flag values
+    dwFlags     : dword;    // see above for flag values
     bmHeight    : long;     // bitmap dimensions
     bmWidth     : long;
-    t_lastAccess: DWORD;    // last access time (currently unused, but plugins should still
+    t_lastAccess: dword;    // last access time (currently unused, but plugins should still
                             // use it whenever they access the avatar. may be
                             // used in the future to implement cache expiration
     lpDIBSection: pointer;
     szFilename  : array[0..MAX_PATH-1] of AnsiChar; // filename of the avatar (absolute path)
-  end;
-
-  PCacheNode = ^TCacheNode;
-  TCacheNode = record
-    pNextNode:pCacheNode;
-    ace      :TavatarCacheEntry;
-//    cs       :RTL_CRITICAL_SECTION;
-    loaded   :bool;
-    mustLoad :int;
-    dwFlags  :DWORD;
-    pa_format:int;
   end;
 
 const
@@ -129,16 +118,16 @@ const
 type
   PavatarDrawRequest = ^TavatarDrawRequest;
   TavatarDrawRequest = record
-    cbSize    : DWORD;     // set this to sizeof(AVATARDRAWREQUEST) - mandatory,
+    cbSize    : dword;     // set this to sizeof(AVATARDRAWREQUEST) - mandatory,
                            // service will return failure code if cbSize is wrong
-    hContact  : THANDLE;   // the contact for which the avatar should be drawn.
+    hContact  : TMCONTACT;  // the contact for which the avatar should be drawn.
                            // set it to 0 to draw a protocol picture
     hTargetDC : HDC;       // target device context
     rcDraw    : TRECT;     // target rectangle. The avatar will be centered
                            // within the rectangle and scaled to fit.
-    dwFlags   : DWORD;     // flags (see above for valid bitflags)
-    dwReserved: DWORD;     // for future use
-    dwInternal: DWORD;     // don't use it
+    dwFlags   : dword;     // flags (see above for valid bitflags)
+    dwReserved: dword;     // for future use
+    dwInternal: dword;     // don't use it
     clrBorder : TCOLORREF; // color for the border  (used with AVDRQ_DRAWBORDER)
     radius    : byte;      // radius (used with AVDRQ_ROUNDEDCORNER)
     alpha     : byte;      // alpha value for semi-transparent avatars (valid
@@ -253,17 +242,17 @@ const
 
 type
   TContactAvatarChangedNotificationW = record
-    cbSize  :int;     // sizeof()
-    hContact:THANDLE; // this might have to be set by the caller too
-    format  :int;     // PA_FORMAT_*
+    cbSize  :int;      // sizeof()
+    hContact:TMCONTACT; // this might have to be set by the caller too
+    format  :int;      // PA_FORMAT_*
     filename:array [0..MAX_PATH-1] of WideChar; // full path to filename which contains the avatar
     hash    :array [0..127] of WideChar;        // avatar hash (always an empty string by now)
   end;
 
   TContactAvatarChangedNotification = record
-    cbSize  :int;     // sizeof()
-    hContact:THANDLE; // this might have to be set by the caller too
-    format  :int;     // PA_FORMAT_*
+    cbSize  :int;      // sizeof()
+    hContact:TMCONTACT; // this might have to be set by the caller too
+    format  :int;      // PA_FORMAT_*
     filename:array [0..MAX_PATH-1] of AnsiChar; // full path to filename which contains the avatar
     hash    :array [0..127] of AnsiChar;        // avatar hash (always an empty string by now)
   end;
@@ -272,7 +261,7 @@ const
   {
     fired when the contacts avatar is changed by the contact
     wParam = hContact
-    lParam = struct CONTACTAVATARCHANGENOTIFICATION *cacn
+    lParam = struct CONTACTAVATARCHANGEDNOTIFICATION *cacn
     the event CAN pass a NULL pointer in lParam which means that the contact deleted its avatar
   } 
   ME_AV_CONTACTAVATARCHANGED:PAnsiChar = 'SV_Avatars/ContactAvatarChanged';
@@ -390,11 +379,16 @@ const
 // return = the time, in ms
   AF_DELAYAFTERFAIL = 7;
 
-// Fetching avatars is always possible and allowed
+// Fetching avatars is allowed when protocol's status is invisible
 // lParam = 0
-// return = 1 (always) or 0 (depending on our or contacts status mode)
-  AF_FETCHALWAYS = 8;
+// return = 1 (allowed) or 0 (depending on our protocol status mode)
+  AF_FETCHIFPROTONOTVISIBLE = 8;
 
+// Fetching avatars is allowed when contact is in offline status
+// lParam = 0
+// return = 1 (allowed) or 0 (depending on remote contact status mode)
+  AF_FETCHIFCONTACTOFFLINE = 9;
+ 
 {
   Query avatar caps for a protocol
   wParam = One of AF_*

@@ -1,6 +1,6 @@
 { ################################################################################ }
 { #                                                                              # }
-{ #  MirandaNG HistoryToDB Plugin v2.5                                           # }
+{ #  MirandaNG HistoryToDB Plugin v2.6                                           # }
 { #                                                                              # }
 { #  License: GPLv3                                                              # }
 { #                                                                              # }
@@ -36,29 +36,27 @@ unit Contacts;
 interface
 
 uses
-  Windows, SysUtils, Forms, Classes, Global;
+  Windows, SysUtils, Forms, Classes, Global, m_api;
 
-function GetContactDisplayName(hContact: THandle; Proto: AnsiString = ''; Contact: Boolean = False): String;
-function GetContactProto(hContact: THandle): AnsiString; overload;
-function GetContactProto(hContact: THandle; var SubContact: THandle; var SubProtocol: AnsiString): AnsiString; overload;
-function GetContactID(hContact: THandle; Proto: AnsiString = ''; Contact: boolean = false): AnsiString;
+function GetContactDisplayName(hContact: TMCONTACT; Proto: AnsiString = ''; Contact: boolean = false): String;
+function GetContactProto(hContact: TMCONTACT): AnsiString; overload;
+function GetContactProto(hContact: TMCONTACT; var SubContact: TMCONTACT; var SubProtocol: AnsiString): AnsiString; overload;
+function GetContactID(hContact: TMCONTACT; Proto: AnsiString = ''; Contact: boolean = false): AnsiString;
 function TranslateAnsiW(const S: AnsiString): WideString;
 function GetMyContactDisplayName(Proto: AnsiString): String;
 function GetMyContactID(Proto: AnsiString): String;
 
 implementation
 
-uses m_api;
-
-function GetContactProto(hContact: THandle): AnsiString;
+function GetContactProto(hContact: TMCONTACT): AnsiString;
 begin
   Result := PAnsiChar(CallService(MS_PROTO_GETCONTACTBASEPROTO, hContact, 0));
 end;
 
-function GetContactProto(hContact: THandle; var SubContact: THandle; var SubProtocol: AnsiString): AnsiString;
+function GetContactProto(hContact: TMCONTACT; var SubContact: TMCONTACT; var SubProtocol: AnsiString): AnsiString;
 begin
   Result := PAnsiChar(CallService(MS_PROTO_GETCONTACTBASEPROTO, hContact, 0));
-  if MetaContactsEnabled and (Result = MetaContactsProto) then
+  if (Result = META_PROTO) then
   begin
     SubContact := CallService(MS_MC_GETMOSTONLINECONTACT, hContact, 0);
     SubProtocol := PAnsiChar(CallService(MS_PROTO_GETCONTACTBASEPROTO, SubContact, 0));
@@ -70,7 +68,7 @@ begin
   end;
 end;
 
-function GetContactDisplayName(hContact: THandle; Proto: AnsiString = ''; Contact: Boolean = False): String;
+function GetContactDisplayName(hContact: TMCONTACT; Proto: AnsiString = ''; Contact: boolean = false): String;
 var
   ci: TContactInfo;
   RetPWideChar, UW: PChar;
@@ -82,7 +80,7 @@ begin
     if Proto = '' then
       Proto := GetContactProto(hContact);
     if Proto = '' then
-      Result := TranslateW('Unknown Contact')
+      Result := TranslateW('''(Unknown Contact)''' { TRANSLATE-IGNORE } )
     else
     begin
       ci.cbSize := SizeOf(ci);
@@ -92,25 +90,25 @@ begin
       if CallService(MS_CONTACT_GETCONTACTINFO, 0, LPARAM(@ci)) = 0 then
       begin
         RetPWideChar := ci.retval.szVal.w;
-        UW := TranslateW('Unknown Contact');
+        UW := TranslateW('''(Unknown Contact)''' { TRANSLATE-IGNORE } );
         if WideCompareText(RetPWideChar, UW) = 0 then
           Result := AnsiToWideString(GetContactID(hContact, Proto), CP_ACP)
         else
           Result := RetPWideChar;
+        mir_free(RetPWideChar);
       end
       else
         Result := String(GetContactID(hContact, Proto));
       if Result = '' then
-        Result := TranslateAnsiW(Proto);
+        Result := TranslateAnsiW(Proto { TRANSLATE-IGNORE } );
     end;
   end;
 end;
 
-function GetContactID(hContact: THandle; Proto: AnsiString = ''; Contact: Boolean = False): AnsiString;
+function GetContactID(hContact: TMCONTACT; Proto: AnsiString = ''; Contact: boolean = false): AnsiString;
 var
   uid: PAnsiChar;
   dbv: TDBVARIANT;
-  cgs: TDBCONTACTGETSETTING;
   tmp: String;
 begin
   Result := '';
@@ -119,34 +117,29 @@ begin
     if Proto = '' then
       Proto := GetContactProto(hContact);
     uid := PAnsiChar(CallProtoService(PAnsiChar(Proto), PS_GETCAPS, PFLAG_UNIQUEIDSETTING, 0));
-    if (Cardinal(uid) <> CALLSERVICE_NOTFOUND) and (uid <> nil) then
+    if (uid <> pAnsiChar(CALLSERVICE_NOTFOUND)) and (uid <> nil) then
     begin
-      cgs.szModule := PAnsiChar(Proto);
-      cgs.szSetting := uid;
-      cgs.pValue := @dbv;
-      try
-        if CallService(MS_DB_CONTACT_GETSETTING, hContact, LPARAM(@cgs)) = 0 then
-        begin
-          case dbv._type of
-            DBVT_BYTE:
-              Result := AnsiString(intToStr(dbv.bVal));
-            DBVT_WORD:
-              Result := AnsiString(intToStr(dbv.wVal));
-            DBVT_DWORD:
-              Result := AnsiString(intToStr(dbv.dVal));
-            DBVT_ASCIIZ:
-              Result := AnsiString(dbv.szVal.a);
-            DBVT_UTF8:
-              begin
-                tmp := AnsiToWideString(dbv.szVal.a, CP_UTF8);
-                Result := WideToAnsiString(tmp, hppCodepage);
-              end;
-            DBVT_WCHAR:
-              Result := WideToAnsiString(dbv.szVal.w, hppCodepage);
-          end;
-          DBFreeVariant(@dbv);
+      if db_get(hContact, PAnsiChar(Proto), uid, @dbv) = 0 then
+      begin
+        case dbv._type of
+          DBVT_BYTE:
+            Result := AnsiString(intToStr(dbv.bVal));
+          DBVT_WORD:
+            Result := AnsiString(intToStr(dbv.wVal));
+          DBVT_DWORD:
+            Result := AnsiString(intToStr(dbv.dVal));
+          DBVT_ASCIIZ:
+            Result := AnsiString(dbv.szVal.a);
+          DBVT_UTF8:
+            begin
+              tmp := AnsiToWideString(dbv.szVal.a, CP_UTF8);
+              Result := WideToAnsiString(tmp, hppCodepage);
+            end;
+          DBVT_WCHAR:
+            Result := WideToAnsiString(dbv.szVal.w, hppCodepage);
         end;
-      except
+        // free variant
+        DBFreeVariant(@dbv);
       end;
     end;
   end;

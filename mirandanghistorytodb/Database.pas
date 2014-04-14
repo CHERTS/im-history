@@ -1,6 +1,6 @@
 { ################################################################################ }
 { #                                                                              # }
-{ #  MirandaNG HistoryToDB Plugin v2.5                                           # }
+{ #  MirandaNG HistoryToDB Plugin v2.6                                           # }
 { #                                                                              # }
 { #  License: GPLv3                                                              # }
 { #                                                                              # }
@@ -101,12 +101,8 @@ end;
 function DBExists(const hContact: THandle; const Module, Param: AnsiString): Boolean;
 var
   dbv: TDBVARIANT;
-  cgs: TDBCONTACTGETSETTING;
 begin
-  cgs.szModule := PAnsiChar(Module);
-  cgs.szSetting := PAnsiChar(Param);
-  cgs.pValue := @dbv;
-  Result := (CallService(MS_DB_CONTACT_GETSETTING, hContact, lParam(@cgs)) = 0);
+  Result := (db_get(hContact, PAnsiChar(Module), PAnsiChar(Param), @dbv) = 0);
   if Result then
     DBFreeVariant(@dbv);
 end;
@@ -118,15 +114,10 @@ end;
 
 function GetDBBlob(const hContact: THandle; const Module,Param: AnsiString; var Value: Pointer; var Size: Integer): Boolean;
 var
-  cgs: TDBContactGetSetting;
   dbv: TDBVARIANT;
 begin
   Result := False;
-  ZeroMemory(@cgs,SizeOf(cgs));
-  cgs.szModule := PAnsiChar(Module);
-  cgs.szSetting := PAnsiChar(Param);
-  cgs.pValue := @dbv;
-  if CallService(MS_DB_CONTACT_GETSETTING, hContact, lParam(@cgs)) <> 0 then exit;
+  if db_get(hContact, PAnsiChar(Module), PAnsiChar(Param), @dbv) <> 0 then exit;
   Size := dbv.cpbVal;
   Value := nil;
   if dbv.cpbVal = 0 then exit;
@@ -183,15 +174,11 @@ end;
 
 function GetDBInt(const hContact: THandle; const Module,Param: AnsiString; Default: Integer): Integer;
 var
-  cws:TDBCONTACTGETSETTING;
   dbv:TDBVariant;
 begin
   dbv._type := DBVT_DWORD;
   dbv.dVal:=Default;
-  cws.szModule:=PAnsiChar(Module);
-  cws.szSetting:=PAnsiChar(Param);
-  cws.pValue:=@dbv;
-  if CallService(MS_DB_CONTACT_GETSETTING,hContact,LPARAM(@cws))<>0 then
+  if db_get(hContact,PAnsiChar(Module),PAnsiChar(Param),@dbv)<>0 then
     Result:=default
   else
     Result:=dbv.dval;
@@ -210,13 +197,9 @@ end;
 function DBGetContactSettingString(hContact: THandle; const szModule: PAnsiChar; const szSetting: PAnsiChar; ErrorValue: PAnsiChar): AnsiString;
 var
   dbv: TDBVARIANT;
-  cgs: TDBCONTACTGETSETTING;
   tmp: WideString;
 begin
-  cgs.szModule := szModule;
-  cgs.szSetting := szSetting;
-  cgs.pValue := @dbv;
-  if CallService(MS_DB_CONTACT_GETSETTING, hContact, lParam(@cgs)) <> 0 then
+  if db_get(hContact, szModule, szSetting, @dbv) <> 0 then
     Result := ErrorValue
   else begin
     case dbv._type of
@@ -247,12 +230,8 @@ end;
 function DBGetContactSettingWideString(hContact: THandle; const szModule: PAnsiChar; const szSetting: PAnsiChar; ErrorValue: PWideChar): WideString;
 var
   dbv: TDBVARIANT;
-  cgs: TDBCONTACTGETSETTING;
 begin
-  cgs.szModule := szModule;
-  cgs.szSetting := szSetting;
-  cgs.pValue := @dbv;
-  if CallService(MS_DB_CONTACT_GETSETTING, hContact, lParam(@cgs)) <> 0 then
+  if db_get(hContact, szModule, szSetting, @dbv) <> 0 then
     Result := ErrorValue
   else begin
     case dbv._type of
@@ -344,14 +323,8 @@ begin
 end;
 
 function WriteDBInt(const hContact: THandle; const Module,Param: AnsiString; Value: Integer): Integer;
-var
-  cws: TDBCONTACTWRITESETTING;
 begin
-  cws.szModule := PAnsiChar(Module);
-  cws.szSetting := PAnsiChar(Param);
-  cws.value._type := DBVT_DWORD;
-  cws.value.dVal := Value;
-  Result := CallService(MS_DB_CONTACT_WRITESETTING, hContact, lParam(@cws));
+  Result := db_set_dw(hContact, PAnsiChar(Module), PAnsiChar(Param), Value);
 end;
 
 function WriteDBStr(const Module,Param: AnsiString; Value: AnsiString): Integer;
@@ -375,14 +348,8 @@ begin
 end;
 
 function DBWriteContactSettingWideString(hContact: THandle; const szModule: PAnsiChar; const szSetting: PAnsiChar; const val: PWideChar): Integer;
-var
-  cws: TDBCONTACTWRITESETTING;
 begin
-  cws.szModule := szModule;
-  cws.szSetting := szSetting;
-  cws.value._type := DBVT_WCHAR;
-  cws.value.szVal.w := val;
-  Result := CallService(MS_DB_CONTACT_WRITESETTING, hContact, lParam(@cws));
+  Result := db_set_ws(hContact, szModule, szSetting, val);
 end;
 
 function WriteDBBlob(const Module,Param: AnsiString; Value: Pointer; Size: Integer): Integer;
@@ -391,16 +358,8 @@ begin
 end;
 
 function WriteDBBlob(const hContact: THandle; const Module,Param: AnsiString; Value: Pointer; Size: Integer): Integer;
-var
-  cws: TDBContactWriteSetting;
 begin
-  ZeroMemory(@cws,SizeOf(cws));
-  cws.szModule := PAnsiChar(Module);
-  cws.szSetting := PAnsiChar(Param);
-  cws.value._type := DBVT_BLOB;
-  cws.value.pbVal := Value;
-  cws.value.cpbVal := Word(Size);
-  Result := CallService(MS_DB_CONTACT_WRITESETTING,hContact,lParam(@cws));
+  Result := db_set_blob(hContact, PAnsiChar(Module), PAnsiChar(Param), Value, Size);
 end;
 
 function WriteDBDateTime(const hContact: THandle; const Module,Param: AnsiString; Value: TDateTime): Integer; overload;

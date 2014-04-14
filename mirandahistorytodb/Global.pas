@@ -1,6 +1,6 @@
 { ############################################################################ }
 { #                                                                          # }
-{ #  Miranda HistoryToDB Plugin v2.4                                         # }
+{ #  Miranda HistoryToDB Plugin v2.6                                         # }
 { #                                                                          # }
 { #  License: GPLv3                                                          # }
 { #                                                                          # }
@@ -32,11 +32,11 @@ const
   htdAuthor_EN       = 'Michael Grigorev';
   htdAuthor_RU       = 'Michael Grigorev';
   htdAuthorEmail     = 'sleuthhound@gmail.com';
-  htdCopyright_EN    = '(c) 2011-2013 Michael Grigorev';
-  htdCopyright_RU    = '(c) 2011-2013 Michael Grigorev';
+  htdCopyright_EN    = '(c) 2011-2014 Michael Grigorev';
+  htdCopyright_RU    = '(c) 2011-2014 Michael Grigorev';
   htdHomePageURL  = 'http://www.im-history.ru/';
   htdVerMajor     = {MAJOR_VER}2{/MAJOR_VER};
-  htdVerMinor     = {MINOR_VER}5{/MINOR_VER};
+  htdVerMinor     = {MINOR_VER}6{/MINOR_VER};
   htdVerRelease   = {SUB_VER}0{/SUB_VER};
   htdVerBuild     = {BUILD}0{/BUILD};
   htdVersion      = htdVerMajor shl 24 + htdVerMinor shl 16 + htdVerRelease shl 8 + htdVerBuild;

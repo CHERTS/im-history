@@ -1,6 +1,6 @@
 { ############################################################################ }
 { #                                                                          # }
-{ #  Просмотр истории HistoryToDBViewer v2.4                                 # }
+{ #  Просмотр истории HistoryToDBViewer v2.6                                 # }
 { #                                                                          # }
 { #  License: GPLv3                                                          # }
 { #                                                                          # }
@@ -23,7 +23,7 @@ type
 
 const
   ProgramsName = 'HistoryToDBViewer';
-  ProgramsVer : WideString = '2.5.0.0';
+  ProgramsVer : WideString = '2.6.0.0';
   DefaultDBAddres = 'db01.im-history.ru';
   DefaultDBName = 'imhistory';
   ININame = 'HistoryToDB.ini';

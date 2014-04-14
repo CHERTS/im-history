@@ -11,11 +11,13 @@
 program HistoryToDBSync;
 
 uses
+  {$IFDEF DEBUG}
   madExcept,
   madLinkDisAsm,
   madListHardware,
   madListProcesses,
   madListModules,
+  {$ENDIF}
   Forms,
   Main in 'Main.pas' {MainSyncForm},
   Global in 'Global.pas',

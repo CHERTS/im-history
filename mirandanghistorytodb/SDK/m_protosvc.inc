@@ -27,9 +27,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 ******************************************
 
 Only new style protocols (Miranda 0.9+) with m_iVersion set to 2 or higher
-support Unicode services documented below, all other support only ANSI. 
+support Unicode services documented below, all other support only ANSI.
 
-For all other that do not support Unicode services, Miranda core will 
+For all other that do not support Unicode services, Miranda core will
 convert Unicode to ANSI and call the appropriate service.
 }
 
@@ -179,10 +179,11 @@ const
 
   // for PSR_MESSAGE
 
-  PREF_CREATEREAD = 1; // create the database event with the 'read' flag set
-  PREF_UNICODE    = 2;
-  PREF_RTL        = 4; // 0.5+ addition: support for right-to-left messages
-  PREF_UTF        = 8; // message is in utf-8 (0.7.0+)
+  PREF_CREATEREAD =  1; // create the database event with the 'read' flag set
+  PREF_UNICODE    =  2;
+  PREF_RTL        =  4; // 0.5+ addition: support for right-to-left messages
+  PREF_UTF        =  8; // message is in utf-8 (0.7.0+)
+  PREF_SENT       = 16; // message will be created with the DBEF_SENT flag
 
   // for PS_FILERESUME
 
@@ -204,7 +205,7 @@ type
     email    : TFNAMECHAR;
     id       : TFNAMECHAR;
     flags    : int;
-    reserved : array [0..(8*SizeOf(THANDLE) div SizeOf(dword))-1] of Byte;
+    reserved : array [0..(8*SizeOf(THANDLE) div SizeOf(dword))-1] of byte;
     // Protocols may extend this structure with extra members at will and supply
     // a larger cbSize to reflect the new information, but they must not change
     // any elements above this comment
@@ -223,16 +224,18 @@ type
 
   PPROTORECVEVENT = ^TPROTORECVEVENT;
   TPROTORECVEVENT = record
-    flags    : DWORD;
-    timestamp: DWORD;
-    szMessage: TChar;
-    lParam   : LPARAM;
+    flags           : dword;
+    timestamp       : dword;
+    szMessage       : TChar;
+    lParam          : LPARAM;
+    pCustomData     : pointer;
+    cbCustomDataSize: dword;
   end;
 
   PPROTORECVFILE = ^TPROTORECVFILE;
   TPROTORECVFILE = record
-    flags        : DWORD;
-    timestamp    : DWORD;   // unix time
+    flags        : dword;
+    timestamp    : dword;   // unix time
     szDescription: PAnsiChar;
     pFiles       : ^PAnsiChar;     // pointer to an array of PAnsiChar's
     lParam       : LPARAM;
@@ -292,8 +295,6 @@ const
     Returns: 0 on success, [non zero] on failure
     Notes  : This service is not available unless PF1_MODEMSGSEND is set,
              and PF1_INDIVMODEMSG is *not* set.
-             If PF1_INDIVMODEMSG is set, then see PSS_AWAYMSSG for details
-             of operations of away messages.
              -
              Protocol modules smust support lParam=NULL, it may eithere mean
              to use an empty message or (preferably) not to reply at all to
@@ -346,23 +347,23 @@ const
   PS_GETSTATUS = '/GetStatus';
 
   {
-    wParam : HANDLE
+    wParam : HDBEVENT
     lParam : 0
     Affect : allow 'somebody' to add the user to their contact list, see notes
     Returns: 0 on success, [non zero] on failure
     Notes  : Auth request come in the form of an event added to the database
              for the NULL(0) user, the form is:
              -
-             protocolSpecific: DWORD;
+             protocolSpecific: dword;
              nick, firstname, lastName, e-mail, requestReason: ASCIIZ;
              -
-             HANDLE musts be the handle of such an event, one or more
+             HDBEVENT musts be the handle of such an event, one or more
              fields may be empty if the protocol doesn't support them
   }
   PS_AUTHALLOW = '/Authorize';
 
   {
-    wParam : HANDLE
+    wParam : HDBEVENT
     lParam : TChar - Reason
     Affect : Deny an authorisation request
     Returns: 0 on success, [non zero] on failure
@@ -472,7 +473,7 @@ const
   PS_SEARCHBYADVANCED = '/SearchByAdvanced';
 
 type
-  CUSTOMSEARCHRESULTS = record
+  TCUSTOMSEARCHRESULTS = record
     nSize      :size_t;
     nFieldCount:int;
     szFields   :^TCHAR;
@@ -483,12 +484,12 @@ type
     wParam : flags
     lParam : Pointer to a TPROTOSEARCHRESULT structure
     Affect : Adds a search result to the contact list, see notes
-    Returns: A handle to the new contact (HCONTACT) or NULL(0) on failure
+    Returns: A handle to the new contact (TMCONTACT) or NULL(0) on failure
     Notes  : The pointer MUST be a result returned by a search function
              since there maybe extra protocol-spec data required by the protocol.
              -
              the protocol module should not allow duplicate contains to be added,
-             but if such a request *is* received it should return a HCONTACT
+             but if such a request *is* received it should return a TMCONTACT
              to the original user,
              -
              If flags is PALF_TEMPORARY set, the contact should be added
@@ -500,10 +501,10 @@ const
 
   {
     wParam : MAKEWPARAM(flags, iContact)
-    lParam : HANDLE
+    lParam : HDBEVENT
     Affects: Add a contact to the contact list given an auth/added/contacts events, see notes
-    Returns: A HCONTACT or NULL(0) on failure
-    Notes  : HANDLE must be either EVENTTYPE_AUTHREQ or EVENTTYPE_ADDED
+    Returns: A TMCONTACT or NULL(0) on failure
+    Notes  : HDBEVENT must be either EVENTTYPE_AUTHREQ or EVENTTYPE_ADDED
              flags are the same as PS_ADDTOLIST,
              -
              iContacts is only used for contacts vents, it is 0-based index
@@ -511,23 +512,6 @@ const
              contacts at once, you should just call this as many times as needed.
   }
   PS_ADDTOLISTBYEVENT = '/AddToListByEvent';
-
-  {
-    wParam : InfoType
-    lParam : Pointer to InfoData
-    Affect : Changes user details as stored on the server, see notes
-    Returns: A Handle to the change request or NULL(0) on failure
-    Notes  : the details stored on the server are very protocol spec'd
-             so this service just supplies an outline for protocols to use.
-             See protocol-specific documentation for what infoTypes are available
-             and what InfoData should be for each infoTypes.
-             -
-             Sends an ack type=ACKTYPE_SETINFO, result=ACKRESULT_SUCCESS/FAILURE, lParam=0
-             -
-             This description just leaves me cold.
-    Version: v0.1.2.0+
-  }
-  PS_CHANGEINFO = '/ChangeInfo';
 
   {
     wParam : HFILETRANSFER
@@ -592,9 +576,9 @@ const
 
 {
  Asks protocol for the status message for a status
- wParam=(WORD) 0 for current status or a status id
+ wParam=(word) 0 for current status or a status id
  lParam=SGMA_xxx
- Returns status msg or NULL if there is none.  The protocol have to handle only the current 
+ Returns status msg or NULL if there is none.  The protocol have to handle only the current
  status. Handling messages for other statuses is optional.
  Remember to mir_free the return value
 }
@@ -649,6 +633,14 @@ const
 }
   PS_GETMYWAYDMAXLENGTH = '/GetMyWAYDMaxLength';
 
+{
+  Get the unread email message count, optional
+  wParam = (WPARAM)0
+  lParam = (LPARAM)0
+  Returns the number of unread emails
+}
+  PS_GETUNREADEMAILCOUNT = '/GetUnreadEmailCount';
+
 // these should be called with CallContactService()
 
 {<</
@@ -680,7 +672,7 @@ const
              flags which may have SGIF_MINIMAL set to only get
              "basic" information, such as nickname, email address.
 
-             PCCSDATA(lParam)^.hContact has the HCONTACT handle to get user
+             PCCSDATA(lParam)^.hContact has the TMCONTACT handle to get user
              information for.
 
              Will update all the information in the database and then
@@ -765,7 +757,7 @@ const
     CCSDATA: Yes
     wParam : 0
     lParam : 0
-    Affect : Send a request to retrieve HCONTACT's mode message, see notes
+    Affect : Send a request to retrieve TMCONTACT's mode message, see notes
     Returns: a hProcess which will be ack'd later, NULL(0) on failure
     Notes  : the reply will come in a form of an ack :
 
@@ -773,22 +765,6 @@ const
              lParam=pointer to a null terminated string the containing message
   }
   PSS_GETAWAYMSG = '/GetAwayMsg';
-
-  {
-    CCSDATA: Yes
-    wParam : hProcess
-    lParam : pointer to a buffer to fill with away message to reply with
-    Affect : Sends an away message reply to a user, see notes
-    Returns: 0 on success, [non zero] on failure
-    Notes  : This service must only be called is caps has PF1_MODEMSGSEND set
-             as well as PF1_INDIVMODEMSG otherwise PS_SETAWAYMESSAGE should
-             be used.
-             -
-             Reply will be sent in the form of an ack :
-
-             type=ACKTYPE_AWAYMSG, result=ACKRESULT_SENTREQUEST, lParam=0
-  }
-  PSS_AWAYMSG = '/SendAwayMsg';
 
   {
     CCSDATA: Yes
@@ -817,7 +793,7 @@ const
              -
              File transfers are marked by a EVENTTYPE_FILE added to the database.
              The format is :
-             hTransfer: DWORD
+             hTransfer: dword
              filename(s), description: ASCIIZ
   }
   PSS_FILEALLOW  = '/FileAllow';
@@ -924,7 +900,7 @@ Returns the result of MS_DB_EVENT_ADD
 //lParam = (LPARAM)(PROTORECVFILET*)&prf
 
 type
-  PROTORECVFILET = record
+  TPROTORECVFILET = record
     flags:dword;
     timestamp:dword;    // unix time
     szDescription:TChar;
@@ -968,7 +944,7 @@ const
              userNick should be a human-readable description of the user. It need not
              be the nick, or even confined to displaying just one type of
              information. The dbe.flags can contain DBEF_UTF defining userNick as
-             utf-8 encoded. 
+             utf-8 encoded.
              userId should be a machine-readable representation of the unique
              protocol identifying field of the user. Because of the need to be
              zero-terminated, binary data should be converted to text.

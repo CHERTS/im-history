@@ -32,7 +32,7 @@
 type
   PCCSDATA = ^TCCSDATA;
   TCCSDATA = record
-    hContact      : THANDLE;
+    hContact      : TMCONTACT;
     szProtoService: PAnsiChar;      // a PS_* constant
     wParam        : WPARAM;
     lParam        : LPARAM;
@@ -51,12 +51,12 @@ type
   PACKDATA = ^TACKDATA;
   TACKDATA = record
     cbSize  : int;
-    szModule: PAnsiChar;   // the name of the protocol module which initiated this ack
-    hContact: THANDLE;
-    _type   : int;     // an ACKTYPE_* constant
-    _result : int;     // an ACKRESULT_* constant
-    hProcess: THANDLE; // caller defined seq, I mean process code
-    lParam  : LPARAM;  // caller defined data
+    szModule: PAnsiChar; // the name of the protocol module which initiated this ack
+    hContact: TMCONTACT;
+    _type   : int;       // an ACKTYPE_* constant
+    _result : int;       // an ACKRESULT_* constant
+    hProcess: THANDLE;   // caller defined seq, I mean process code
+    lParam  : LPARAM;    // caller defined data
   end;
 
 const
@@ -123,7 +123,7 @@ type
   PPROTOFILETRANSFERSTATUS = ^TPROTOFILETRANSFERSTATUS;
   TPROTOFILETRANSFERSTATUS = record
     cbSize             : size_t;
-    hContact           : THANDLE;
+    hContact           : TMCONTACT;
     flags              : dword;     // one of PFTS_* constants
     files              : ^TCHAR;
     totalFiles         : int;
@@ -199,7 +199,7 @@ const
 { determines if a protocol module is loaded or not
   wParam=0
   lParam=(LPARAM)(const AnsiChar*)szName
-  Returns a pointer to the PROTOCOLDESCRIPTOR if the protocol is loaded, or
+  Returns a pointer to the PROTOACCOUNT if the protocol is loaded, or
   NULL if it isn't.
 }
   MS_PROTO_ISPROTOCOLLOADED:PAnsiChar = 'Proto/IsProtocolLoaded';
@@ -261,15 +261,15 @@ type
     szModuleName    :PAnsiChar;        // unique physical account name (matches database module name)
     tszAccountName  :TChar;            // user-defined account name
     szProtoName     :PAnsiChar;        // physical protocol name
-    bIsEnabled      :int;              // is account enabled?
-    bIsVisible      :int;              // is account visible?
-    iOrder          :int;              // account order in various menus & lists
-    bOldProto       :bool;             // old-styled account (one instance per dll)
-    ppro            :PPROTO_INTERFACE; // pointer to the underlying object
-
+    bIsEnabled      :ByteBool;         // is account enabled?
+    bIsVisible      :ByteBool;         // is account visible?
+    bIsVirtual      :ByteBool;         // is account virtual?
+    bOldProto       :ByteBool;         // old-styled account (one instance per dll)
+    bDynDisabled    :ByteBool;         // dynamic disable flag, is never written to db
+    bAccMgrUIChanged:ByteBool;
     hwndAccMgrUI    :HWND;
-    bAccMgrUIChanged:Bool;
-	  bDynDisabled    :Bool;             // dynamic disable flag, is never written to db
+    iOrder          :int;              // account order in various menus & lists
+    ppro            :PPROTO_INTERFACE; // pointer to the underlying object
   end;
   tagACCOUNT = TPROTOACCOUNT;
 
@@ -338,7 +338,7 @@ __inline PROTOACCOUNT* ProtoGetAccount( const AnsiChar* accName )
   gets the account associated with a contact
   wParam=(WPARAM)(HANDLE)hContact
   lParam=0
-  Returns a pAnsiChar pointing to the asciiz name of the protocol or NULL if the
+  Returns a PAnsiChar pointing to the asciiz name of the protocol or NULL if the
   contact has no protocol. There is no need to mir_free() it or anything.
   This is the name of the module that actually accesses the network for that contact.
 }
@@ -388,18 +388,18 @@ const
 type
   PPROTO_AVATAR_INFORMATIONW = ^TPROTO_AVATAR_INFORMATIONW;
   TPROTO_AVATAR_INFORMATIONW = record
-    cbSize  : int;     // sizeof()
-    hContact: THANDLE; // this might have to be set by the caller too
-    format  : int;     // PA_FORMAT_*
+    cbSize  : int;       // sizeof()
+    hContact: TMCONTACT; // this might have to be set by the caller too
+    format  : int;       // PA_FORMAT_*
     // full path to filename which contains the avatar
     filename: array[0..(MAX_PATH)-1] of WideChar;
   end;
 
   PPROTO_AVATAR_INFORMATION = ^TPROTO_AVATAR_INFORMATION;
   TPROTO_AVATAR_INFORMATION = record
-    cbSize  : int;     // sizeof()
-    hContact: THANDLE; // this might have to be set by the caller too
-    format  : int;     // PA_FORMAT_*
+    cbSize  : int;       // sizeof()
+    hContact: TMCONTACT; // this might have to be set by the caller too
+    format  : int;       // PA_FORMAT_*
     // full path to filename which contains the avatar
     filename: array[0..(MAX_PATH)-1] of AnsiChar;
   end;

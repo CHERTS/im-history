@@ -46,16 +46,6 @@ const
   MS_CLUI_GETHWNDTREE:PAnsiChar = 'CLUI/GetHwndTree';
 
   {
-    wParam : new status
-    lParam : null terminated string to a protocol ID
-    Affects: Change the protocol specific status indicators, see notes!
-    Returns: 0 on success, [non zero] on failure
-    Notes  : protocol modules don't want to call this, they want
-             clist/protocolstatuschanged instead
-  }
-  MS_CLUI_PROTOCOLSTATUSCHANGED:PAnsiChar = 'CLUI/ProtocolStatusChanged';
-
-  {
     wParam : Handle to a group
     lParam : 1 or 0
     Affect : A new group was created, add it to the list, see notes
@@ -68,7 +58,7 @@ const
   MS_CLUI_GROUPADDED:PAnsiChar = 'CLUI/GroupCreated';
 
   {
-    wParam : HCONTACT
+    wParam : TMCONTACT
     lParam : ICON_ID
     Affect : Change the icon for a contact, see notes
     Returns: 0 on success, [non zero] on failure
@@ -77,7 +67,7 @@ const
   MS_CLUI_CONTACTSETICON:PAnsiChar = 'CLUI/ContactSetIcon';
 
   {
-    wParam : HCONTACT
+    wParam : TMCONTACT
     lParam : 0
     Affect : Remove a contact from the list, see notes
     Returns: 0 on success, [non zereo] on failure
@@ -88,7 +78,7 @@ const
   MS_CLUI_CONTACTDELETED:PAnsiChar = 'CLUI/ContactDeleted';
 
   {
-    wParam : HCONTACT
+    wParam : TMCONTACT
     lParam : ICON_ID
     Affect : Add a contact to the list, see note
     returns: 0 on success, [non zero] on failure
@@ -113,7 +103,7 @@ const
   MS_CLUI_CONTACTADDED:PAnsiChar = 'CLUI/ContactAdded';
 
   {
-    wParam : HCONTACT
+    wParam : TMCONTACT
     lParam : 0
     Affect : Reename a contact in the lists, see notes
     Returns: 0 on success, [non zero] on failure
@@ -145,16 +135,6 @@ const
              here, you do not need to explicitly sort the list
   }
   MS_CLUI_LISTENDREBUILD:PAnsiChar = 'CLUI/ListEndRebuild';
-
-  {
-    wParam : 0
-    lParam : 0
-    Affect : Sort the contact list now, see notes
-    Returns: 0 success, [non zero] on failure
-    Notes  : Sorts are buffered so you won't get this message lots of times
-             if the lists needs to be resorted many times rapidly
-  }
-  MS_CLUI_SORTLIST:PAnsiChar = 'CLUI/SortList';
 
   {
     wParam : CLUICAPS_*
@@ -194,18 +174,10 @@ const
   CLUICAPS_FLAGS2 = 1; // Returns info about extra icons
                        // HIWORD is the first extra icon number, LOWORD is the extra icons count
 
-//LPARAMS for CLUICAPS_FLAGS1 
-  CLUIF2_PLUGININFO = 1; //returns pointer to plugininfo
-  CLUIF2_CLISTTYPE  = 2; // the genaration of list in chronologic 
-// modern layered return 0x07
-// (assuming classic, mw, meta, nicer1, modern1, nicer++, modernLayered)
-// +0x0100 for unicode
-  CLUIF2_EXTRACOLUMNCOUNT = 3; // return max number of extra icon available to be set in main window
-
   MS_CLUI_GETCAPS:PAnsiChar = 'CLUI/GetCaps';
 
   {
-    wParam : HCONTACT
+    wParam : TMCONTACT
     lParam : MAKELPARAM(screenX, screenY)
     Affect : A contact is being dragged outside the main window
     Return : return [non zero] to show the drag cursor as "accepting" the drag
@@ -215,7 +187,7 @@ const
   ME_CLUI_CONTACTDRAGGING:PAnsiChar = 'CLUI/ContactDragging';
 
   {
-    wParam : HCONTACT
+    wParam : TMCONTACT
     lParam : MAKELPARAM(screenX, screenY)
     Affect : a contact has just been dropped outside the main window, see notes
     Notes  : return non zero to stop other hooks processing this event.
@@ -224,7 +196,7 @@ const
   ME_CLUI_CONTACTDROPPED:PAnsiChar = 'CLUI/ContactDropped';
 
   {
-    wParam : HCONTACT
+    wParam : TMCONTACT
     lParam : 0
     Affect : A contact that *was* being dragged outside the main window
              has gone back to the main window
