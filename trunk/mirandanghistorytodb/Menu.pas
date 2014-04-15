@@ -168,7 +168,31 @@ var
   ContactProto, ContactID, ContactName, GroupName: AnsiString;
   AccountCount: Integer;
   AccountName: ^PPROTOACCOUNT;
+  ICQAccount: TArrayOfString;
+  ICQAccountCount: Integer;
 begin
+  AccountCount := 0;
+  // Выгружаем список протоколов в файл ProtoList.csv
+  if (CallService(MS_PROTO_ENUMACCOUNTS, Integer(@AccountCount), Integer(@AccountName)) = 0) and (AccountCount <> 0) then
+  begin
+    SetLength(ICQAccount, 0);
+    while AccountCount > 0 do
+    begin
+      // Сохраняем данные о аккаунтах ICQ
+      // Данный хак нужен потому, что далее в цикле while вызов GetContactProto(hContact)
+      // для профилей с протоколом ICQ выдает не протокол, а AccountName^.szModuleName
+      if MatchStrings(LowerCase(AccountName^.szProtoName), 'icq*') then
+      begin
+        SetLength(ICQAccount, Length(ICQAccount)+1);
+        ICQAccount[Length(ICQAccount)-1] := AccountName^.szModuleName;
+      end;
+      if not((AccountName^.szModuleName = 'MetaContacts') or (MatchStrings(LowerCase(AccountName^.szModuleName), 'skype*'))) then
+      //if not MatchStrings(LowerCase(AccountName^.szModuleName), 'skype*') then
+        WriteInLog(ProfilePath, Format('%s;%s;%d;%s;%s;%s', [AccountName^.szModuleName, GetMyContactID(AccountName^.szModuleName), StrContactProtoToInt(AccountName^.szProtoName), GetMyContactDisplayName(AccountName^.szModuleName), '', '']), 4);
+      Inc(AccountName);
+      Dec(AccountCount);
+    end;
+  end;
   // Получаем список контактов
   hContact := db_find_first();
   while hContact <> 0 do
@@ -181,24 +205,20 @@ begin
       ContactName := TranslateW('Unknown Contact');
     if ContactID = '' then
       ContactID := TranslateW('Unknown Contact');
+    // Хак с заменой протокола
+    for ICQAccountCount := 0 to High(ICQAccount) do
+    begin
+      if ICQAccount[ICQAccountCount] = ContactProto then
+        ContactProto := 'icq';
+    end;
+    // End
     if not ((MatchStrings(LowerCase(ContactProto), 'skype*')) or (ContactID = TranslateW('Unknown Contact')) or MatchStrings(LowerCase(ContactProto), 'metacontacts*')) then
       WriteInLog(ProfilePath, Format('%s;%s;%s;%d', [ContactID, ContactName, GroupName, StrContactProtoToInt(ContactProto)]), 3);
     hContact := db_find_next(hContact);
   end;
-  AccountCount := 0;
-  // Выгружаем список протоколов в файл ProtoList.csv
-  if (CallService(MS_PROTO_ENUMACCOUNTS, Integer(@AccountCount), Integer(@AccountName)) = 0) and (AccountCount <> 0) then
-  begin
-    while AccountCount > 0 do
-    begin
-      if not((AccountName^.szModuleName = 'MetaContacts') or (MatchStrings(LowerCase(AccountName^.szModuleName), 'skype*'))) then
-      //if not MatchStrings(LowerCase(AccountName^.szModuleName), 'skype*') then
-        WriteInLog(ProfilePath, Format('%s;%s;%d;%s;%s;%s', [AccountName^.szModuleName, GetMyContactID(AccountName^.szModuleName), StrContactProtoToInt(AccountName^.szProtoName), GetMyContactDisplayName(AccountName^.szModuleName), '', '']), 4);
-      Inc(AccountName);
-      Dec(AccountCount);
-    end;
-  end;
   // Закрываем файлы
+  if DebugLogOpened then
+    CloseLogFile(2);
   if ContactListLogOpened then
     CloseLogFile(3);
   if ProtoListLogOpened then

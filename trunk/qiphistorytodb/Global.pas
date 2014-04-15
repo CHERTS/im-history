@@ -71,13 +71,6 @@ const
   PlatformType = 'x64';
   {$ENDIF}
 
-type
-  TCopyDataStruct = packed record
-    dwData: DWORD;
-    cbData: DWORD;
-    lpData: Pointer;
-  end;
-
 var
   ERR_SAVE_TO_DB_CONNECT_ERR : WideString = '[%s] Ошибка: Не удаётся подключиться к БД. Ошибка: %s';
   ERR_SAVE_TO_DB_SERVICE_MODE : WideString = '[%s] Ошибка: БД на сервисном обслуживании. Сохранение сообщений в БД невозможно.';
