@@ -18,12 +18,6 @@ uses
 
 type
   TCopyDataType = (cdtString = 0, cdtImage = 1, cdtRecord = 2);
-  TCopyDataStruct = packed record
-    dwData: DWORD;
-    cbData: DWORD;
-    lpData: Pointer;
-  end;
-  //TByteArr = Array of Byte;
   TArrayOfString = Array of String;
 
 const

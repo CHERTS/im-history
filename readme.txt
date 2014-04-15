@@ -98,6 +98,6 @@ set cert_url=http://time.certum.pl/authenticode
 Файл vars.cmd - устанавливает переменные для сборки.
 Содержимое vars.cmd:
 @echo off
-set ver=2.5.0
+set ver=2.6.0
   
 Файл sign.pfx - контейнер с приватным и публичным ключом для подписи программ.

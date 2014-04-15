@@ -5,7 +5,7 @@
         <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
         <DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
         <DCC_DependencyCheckOutputName>RnQHistoryToDB.dll</DCC_DependencyCheckOutputName>
-        <ProjectVersion>14.6</ProjectVersion>
+        <ProjectVersion>15.3</ProjectVersion>
         <Config Condition="'$(Config)'==''">Release</Config>
         <Base>True</Base>
         <AppType>Library</AppType>

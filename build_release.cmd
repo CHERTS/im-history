@@ -1,0 +1,30 @@
+@echo off
+
+cd historytodbcreatedb
+call copy_to_work.cmd
+cd ..
+cd historytodbimport
+call copy_to_work.cmd
+cd ..
+cd historytodbsync
+call copy_to_work.cmd
+cd ..
+cd historytodbupdater
+call copy_to_work.cmd
+cd ..
+cd historytodbviewer
+call copy_to_work.cmd
+cd ..
+cd mirandahistorytodb
+call copy_to_work.cmd
+cd ..
+cd mirandanghistorytodb
+call copy_to_work.cmd
+cd ..
+cd qiphistorytodb
+call copy_to_work.cmd
+cd ..
+cd rnqhistorytodb
+call copy_to_work.cmd
+cd ..
+pause
