@@ -15,11 +15,11 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, JvWizard, JvExControls, JvWizardRouteMapNodes, ComCtrls, StdCtrls,
-  JvComponentBase, JvThread, JclStringConversions, Global, Contacts, m_api;
+  JvComponentBase, JvThread, JclStringConversions, Global, Contacts, m_api, Event;
 
 type
   TContactRecord = record
-    hContact: Cardinal;
+    hContact: TMCONTACT;
     ContactID: AnsiString;
     ContactName: AnsiString;
     ProtoName: AnsiString;
@@ -86,7 +86,7 @@ end;
 procedure TExportForm.FormShow(Sender: TObject);
 var
   ListItem: TListItem;
-  hContact: THandle;
+  hContact: TMCONTACT;
   ContactProto, ContactID, ContactName: AnsiString;
   Count: Integer;
 begin
@@ -133,6 +133,8 @@ end;
 
 procedure TExportForm.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
+  if ImportLogOpened then
+    CloseLogFile(5);
   ExportFormDestroy := True;
   Action := caFree;
 end;
@@ -172,18 +174,19 @@ end;
 
 procedure TExportForm.IMExportThreadExecute(Sender: TObject; Params: Pointer);
 var
-  I, J, K, ProtoType: Integer;
-  SelectedCount, BlobSize: Integer;
-  hDbEvent: THandle;
-  DBEventInfo: TDBEventInfo;
-  msgA: PAnsiChar;
-  msgW: PChar;
-  msgLen, LenW: Cardinal;
+  ContactRecordCnt, J, ProtoType: Integer;
+  SelectedCount: Integer;
+  hDBEvent: THandle;
   Msg_Date: TDateTime;
   Msg_RcvrNick, Msg_RcvrAcc, Msg_SenderNick, Msg_SenderAcc, Msg_Text, MD5String: WideString;
   Date_Str, MsgStatus: String;
   ContactProto, ContactID, ContactName: AnsiString;
   MyContactName, MyContactID: AnsiString;
+  HI: THistoryItem;
+  UserCodepage: Cardinal;
+  UserContactProto: AnsiString;
+  UseDefaultCP: Boolean;
+  DBEventCount: Integer;
 begin
   LExportDesc2.Caption := 'Export...';
   // Подсчитываем количество выделенных элементов
@@ -200,71 +203,31 @@ begin
   PBTotalExport.Position := 0;
   PBTotalExport.Max := SelectedCount;
   SelectedCount := 0;
-  for I := 0 to Length(ExportContactRecords) do
+  for ContactRecordCnt := 0 to Length(ExportContactRecords) do
   begin
     // Если выделен, то экспортируем его историю
-    if ExportContactRecords[I].Selected = True then
+    if ExportContactRecords[ContactRecordCnt].Selected = True then
     begin
-      LExportDesc2.Caption := Format(GetLangStr('ContactExport'), [ExportContactRecords[I].ContactName, ExportContactRecords[I].ContactID]);
+      LExportDesc2.Caption := Format(GetLangStr('ContactExport'), [ExportContactRecords[ContactRecordCnt].ContactName, ExportContactRecords[ContactRecordCnt].ContactID]);
       Inc(SelectedCount);
       PBTotalExport.Position := SelectedCount;
-      if IMExportThread.Terminated then // Выход из потока в случае закрытия окна
-        Exit;
-      hDBEvent := db_event_first(ExportContactRecords[I].hContact);
-      while hDbEvent <> 0 do
+      UserContactProto := GetContactProto(ExportContactRecords[ContactRecordCnt].hContact);
+      UserCodepage := GetContactCodePage(ExportContactRecords[ContactRecordCnt].hContact, UserContactProto, UseDefaultCP);
+      DBEventCount := db_event_count(ExportContactRecords[ContactRecordCnt].hContact);
+      hDBEvent := db_event_first(ExportContactRecords[ContactRecordCnt].hContact);
+      if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Функция IMExportThreadExecute: Начинаем экспорт для Contact ID: ' + GetContactID(ExportContactRecords[ContactRecordCnt].hContact, UserContactProto) + ' | Proto: ' + UserContactProto + ' | DBEventCount: ' + IntToStr(DBEventCount), 2);
+      //while (hDBEvent <> 0) and not IMExportThread.Terminated do
+      while (hDBEvent <> 0) and not IMExportThread.Terminated do
       begin
-        ZeroMemory(@DBEventInfo, SizeOf(DBEventInfo));
-        DBEventInfo.cbSize := SizeOf(DBEventInfo);
-        DBEventInfo.pBlob := nil;
-        BlobSize := db_event_getBlobSize(hDbEvent);
-        GetMem(DBEventInfo.pBlob, BlobSize);
-        DBEventInfo.cbBlob := BlobSize;
-        if IMExportThread.Terminated then // Выход из потока в случае закрытия окна
+        HI := ReadEvent(hDBEvent, UserCodepage);
+        if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Функция IMExportThreadExecute: ' + 'Экспорт Contact ID: ' + GetContactID(ExportContactRecords[ContactRecordCnt].hContact, UserContactProto) + ' | Proto: ' + UserContactProto + ' | UserCodepage: ' + IntToStr(UserCodepage) + ' | hDBEvent: ' + IntToStr(hDBEvent) + ' | DBEventCount: ' + IntToStr(DBEventCount) + ' | HI.eventType: ' + IntToStr(HI.eventType), 2);
+        if (HI.eventType = EVENTTYPE_MESSAGE and EVENTTYPE_URL) then
         begin
-          if ImportLogOpened then
-            CloseLogFile(5);
-          Exit;
-        end;
-        if (db_event_get(hDbEvent, @DBEventInfo) = 0) and (DBEventInfo.eventType = EVENTTYPE_MESSAGE and EVENTTYPE_URL) then
-        begin
-          // Получаем текст сообщения
-          msgA := PAnsiChar(DBEventInfo.pBlob);
-          msgW := nil;
-          msgLen := lstrlenA(PAnsiChar(DBEventInfo.pBlob)) + 1;
-          if msgLen > DBEventInfo.cbBlob then
-            msgLen := DBEventInfo.cbBlob;
-          if Boolean(DBEventInfo.flags and DBEF_UTF) then
-          begin
-            SetLength(Msg_Text, msgLen);
-            LenW := Utf8ToWideChar(PChar(Msg_Text), msgLen, msgA, msgLen - 1, CP_ACP);
-            if Integer(LenW) > 0 then
-              SetLength(Msg_Text, LenW - 1)
-            else
-              Msg_Text := AnsiToWideString(msgA, CP_ACP, msgLen - 1);
-          end
-          else
-          begin
-            LenW := 0;
-            if DBEventInfo.cbBlob >= msgLen * SizeOf(Char) then
-            begin
-              msgW := PChar(msgA + msgLen);
-              for K := 0 to ((DBEventInfo.cbBlob - msgLen) div SizeOf(Char)) - 1 do
-                if msgW[K] = #0 then
-                begin
-                  LenW := K;
-                  Break;
-                end;
-            end;
-            if (LenW > 0) and (LenW < msgLen) then
-              SetString(Msg_Text, msgW, LenW)
-            else
-              Msg_Text := AnsiToWideString(msgA, CP_ACP, msgLen - 1);
-          end;
           // Тип истории
-          ContactProto := GetContactProto(ExportContactRecords[I].hContact);
+          ContactProto := GetContactProto(ExportContactRecords[ContactRecordCnt].hContact);
           // Данные собеседника
-          ContactID := GetContactID(ExportContactRecords[I].hContact, ContactProto);
-          ContactName := GetContactDisplayName(ExportContactRecords[I].hContact, '', True);
+          ContactID := GetContactID(ExportContactRecords[ContactRecordCnt].hContact, ContactProto);
+          ContactName := GetContactDisplayName(ExportContactRecords[ContactRecordCnt].hContact, '', True);
           // Мои данные
           MyContactName := GetMyContactDisplayName(ContactProto);
           MyContactID := GetMyContactID(ContactProto);
@@ -290,42 +253,40 @@ begin
           Msg_RcvrAcc := PrepareString(pWideChar(AnsiToWideString(ContactID, CP_ACP)));
           Msg_RcvrNick := WideStringToUTF8(Msg_RcvrNick);
           Msg_RcvrAcc := WideStringToUTF8(Msg_RcvrAcc);
-          Msg_Text := WideStringToUTF8(PrepareString(pWideChar(Msg_Text)));
-          MD5String := Msg_RcvrAcc + FormatDateTime('YYYY-MM-DD HH:MM:SS', UnixToLocalTime(DBEventInfo.timestamp)) + Msg_Text;
+          Msg_Text := WideStringToUTF8(PrepareString(pWideChar(HI.Text)));
+          MD5String := Msg_RcvrAcc + FormatDateTime('YYYY-MM-DD HH:MM:SS', TimestampToDateTime(HI.Time)) + Msg_Text;
           if (DBType = 'oracle') or (DBType = 'oracle-9i') then
-            Date_Str := FormatDateTime('DD.MM.YYYY HH:MM:SS', UnixToLocalTime(DBEventInfo.timestamp))
+            Date_Str := FormatDateTime('DD.MM.YYYY HH:MM:SS', TimestampToDateTime(HI.Time))
           else
-            Date_Str := FormatDateTime('YYYY-MM-DD HH:MM:SS', UnixToLocalTime(DBEventInfo.timestamp));
-          if MatchStrings(LowerCase(ContactProto), 'skype*') then
+            Date_Str := FormatDateTime('YYYY-MM-DD HH:MM:SS', TimestampToDateTime(HI.Time));
+          // Определяем направление отправки (мы отправили или нам прислали)
+          if (mtMessage in HI.MessageType) or (mtUrl in HI.MessageType) then
           begin
-            // Определяем направление отправки (мы отправили или нам прислали)
-            if (DBEventInfo.flags and DBEF_SENT) = 0 then
-              MsgStatus := '0'  // Входящее
-            else
-              MsgStatus := '1'; // Исходящее
-            // Лог отладки
-            if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Функция OnEventAdded: ' + 'Contact ID: ' + ContactID + ' | Contact Name: ' + ContactName + ' | Proto: ' + ContactProto + ' | My Contact ID: ' + MyContactID + ' | My Contact Name: ' + MyContactName + ' | Contact Proto = ' + ContactProto + ' | MsgStatus = ' + MsgStatus + ' | DateTime = ' + FormatDateTime('DD.MM.YYYY HH:MM:SS', UnixToLocalTime(DBEventInfo.timestamp)) + ' | Message = ' + Msg_Text, 2);
-            if (MatchStrings(DBType, 'oracle*')) then // Если Oracle, то пишем SQL-лог в формате CHAT_MSG_LOG_ORACLE
-              WriteInLog(ProfilePath, Format(CHAT_MSG_LOG_ORACLE, [DBUserName, MsgStatus, 'to_date('''+Date_Str+''', ''dd.mm.yyyy hh24:mi:ss'')', Msg_RcvrNick, 'Skype', Msg_RcvrNick+' ('+Msg_RcvrAcc+')', BoolToIntStr(True), BoolToIntStr(False), BoolToIntStr(False), Msg_Text, EncryptMD5(MD5String)]), 5)
-            else
-              WriteInLog(ProfilePath, Format(CHAT_MSG_LOG, [DBUserName, MsgStatus, Date_Str, Msg_RcvrNick, 'Skype', Msg_RcvrNick+' ('+Msg_RcvrAcc+')', BoolToIntStr(True), BoolToIntStr(False), BoolToIntStr(False), Msg_Text, EncryptMD5(MD5String)]), 5);
-          end
-          else
-          begin
-            // Определяем направление отправки (мы отправили или нам прислали)
-            if (DBEventInfo.flags and DBEF_SENT) = 0 then
+            if mtIncoming in HI.MessageType then
               MsgStatus := '1'  // Входящее
             else
               MsgStatus := '0'; // Исходящее
-            // Лог отладки
-            if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Функция OnEventAdded: ' + 'Contact ID: ' + ContactID + ' | Contact Name: ' + ContactName + ' | Proto: ' + ContactProto + ' | My Contact ID: ' + MyContactID + ' | My Contact Name: ' + MyContactName + ' | Contact Proto = ' + ContactProto + ' | MsgStatus = ' + MsgStatus + ' | DateTime = ' + FormatDateTime('DD.MM.YYYY HH:MM:SS', UnixToLocalTime(DBEventInfo.timestamp)) + ' | Message = ' + Msg_Text, 2);
-            if (MatchStrings(DBType, 'oracle*')) then // Если Oracle, то пишем SQL-лог в формате MSG_LOG_ORACLE
-              WriteInLog(ProfilePath, Format(MSG_LOG_ORACLE, [DBUserName, IntToStr(ProtoType), Msg_SenderNick, Msg_SenderAcc, Msg_RcvrNick, Msg_RcvrAcc, MsgStatus, 'to_date('''+Date_Str+''', ''dd.mm.yyyy hh24:mi:ss'')', Msg_Text, EncryptMD5(MD5String)]), 5)
-            else
-              WriteInLog(ProfilePath, Format(MSG_LOG, [DBUserName, IntToStr(ProtoType), Msg_SenderNick, Msg_SenderAcc, Msg_RcvrNick, Msg_RcvrAcc, MsgStatus, Date_Str, Msg_Text, EncryptMD5(MD5String)]), 5);
+            if MatchStrings(LowerCase(ContactProto), 'skype*') then // Для протокола skype
+            begin
+              // Лог отладки
+              if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Функция IMExportThreadExecute: ' + 'Экспорт сообщения Contact ID: ' + ContactID + ' | Contact Name: ' + ContactName + ' | Proto: ' + ContactProto + ' | My Contact ID: ' + MyContactID + ' | My Contact Name: ' + MyContactName + ' | Contact Proto = ' + ContactProto + ' | MsgStatus = ' + MsgStatus + ' | DateTime = ' + FormatDateTime('DD.MM.YYYY HH:MM:SS', TimestampToDateTime(HI.Time)) + ' | Message = ' + Msg_Text, 2);
+              if (MatchStrings(DBType, 'oracle*')) then // Если Oracle, то пишем SQL-лог в формате CHAT_MSG_LOG_ORACLE
+                WriteInLog(ProfilePath, Format(CHAT_MSG_LOG_ORACLE, [DBUserName, MsgStatus, 'to_date('''+Date_Str+''', ''dd.mm.yyyy hh24:mi:ss'')', Msg_RcvrNick, 'Skype', Msg_RcvrNick+' ('+Msg_RcvrAcc+')', BoolToIntStr(True), BoolToIntStr(False), BoolToIntStr(False), Msg_Text, EncryptMD5(MD5String)]), 5)
+              else
+                WriteInLog(ProfilePath, Format(CHAT_MSG_LOG, [DBUserName, MsgStatus, Date_Str, Msg_RcvrNick, 'Skype', Msg_RcvrNick+' ('+Msg_RcvrAcc+')', BoolToIntStr(True), BoolToIntStr(False), BoolToIntStr(False), Msg_Text, EncryptMD5(MD5String)]), 5);
+            end
+            else // Для остальных протоколов
+            begin
+              // Лог отладки
+              if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Функция IMExportThreadExecute: ' + 'Экспорт сообщения Contact ID: ' + ContactID + ' | Contact Name: ' + ContactName + ' | Proto: ' + ContactProto + ' | My Contact ID: ' + MyContactID + ' | My Contact Name: ' + MyContactName + ' | Contact Proto = ' + ContactProto + ' | MsgStatus = ' + MsgStatus + ' | DateTime = ' + FormatDateTime('DD.MM.YYYY HH:MM:SS', TimestampToDateTime(HI.Time)) + ' | Message = ' + Msg_Text, 2);
+              if (MatchStrings(DBType, 'oracle*')) then // Если Oracle, то пишем SQL-лог в формате MSG_LOG_ORACLE
+                WriteInLog(ProfilePath, Format(MSG_LOG_ORACLE, [DBUserName, IntToStr(ProtoType), Msg_SenderNick, Msg_SenderAcc, Msg_RcvrNick, Msg_RcvrAcc, MsgStatus, 'to_date('''+Date_Str+''', ''dd.mm.yyyy hh24:mi:ss'')', Msg_Text, EncryptMD5(MD5String)]), 5)
+              else
+                WriteInLog(ProfilePath, Format(MSG_LOG, [DBUserName, IntToStr(ProtoType), Msg_SenderNick, Msg_SenderAcc, Msg_RcvrNick, Msg_RcvrAcc, MsgStatus, Date_Str, Msg_Text, EncryptMD5(MD5String)]), 5);
+            end;
           end;
         end;
-        hDBEvent := db_event_next(ExportContactRecords[I].hContact, hDbEvent);
+        hDBEvent := db_event_next(ExportContactRecords[ContactRecordCnt].hContact, hDBEvent);
       end;
     end;
     if IMExportThread.Terminated then // Выход из потока в случае закрытия окна
