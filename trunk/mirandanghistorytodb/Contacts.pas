@@ -36,7 +36,7 @@ unit Contacts;
 interface
 
 uses
-  Windows, SysUtils, Forms, Classes, Global, m_api;
+  Windows, SysUtils, Forms, Classes, Global, m_api, Database;
 
 function GetContactDisplayName(hContact: TMCONTACT; Proto: AnsiString = ''; Contact: boolean = false): String;
 function GetContactProto(hContact: TMCONTACT): AnsiString; overload;
@@ -45,6 +45,8 @@ function GetContactID(hContact: TMCONTACT; Proto: AnsiString = ''; Contact: bool
 function TranslateAnsiW(const S: AnsiString): WideString;
 function GetMyContactDisplayName(Proto: AnsiString): String;
 function GetMyContactID(Proto: AnsiString): String;
+function GetContactCodePage(hContact: TMCONTACT; const Proto: AnsiString = ''): Cardinal; overload;
+function GetContactCodePage(hContact: TMCONTACT; const Proto: AnsiString; var UsedDefault: boolean): Cardinal; overload;
 
 implementation
 
@@ -199,6 +201,35 @@ begin
   end
   else
       Result := TranslateW('Unknown Contact');
+end;
+
+function _GetContactCodePage(hContact: TMCONTACT; Proto: AnsiString; var UsedDefault: boolean) : Cardinal;
+begin
+  if Proto = '' then
+    Proto := GetContactProto(hContact);
+  if Proto = '' then
+    Result := hppCodepage
+  else
+  begin
+    Result := GetDBWord(hContact, Proto, 'AnsiCodePage', $FFFF);
+    If Result = $FFFF then
+      Result := GetDBWord(0, Proto, 'AnsiCodePage', CP_ACP);
+    UsedDefault := (Result = CP_ACP);
+    if UsedDefault then
+      Result := GetACP();
+  end;
+end;
+
+function GetContactCodePage(hContact: TMCONTACT; const Proto: AnsiString = ''): Cardinal;
+var
+  def: boolean;
+begin
+  Result := _GetContactCodePage(hContact, Proto, def);
+end;
+
+function GetContactCodePage(hContact: TMCONTACT; const Proto: AnsiString; var UsedDefault: boolean): Cardinal; overload;
+begin
+  Result := _GetContactCodePage(hContact, Proto, UsedDefault);
 end;
 
 end.

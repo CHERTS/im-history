@@ -27,4 +27,3 @@ cd ..
 cd rnqhistorytodb
 call copy_to_work.cmd
 cd ..
-pause

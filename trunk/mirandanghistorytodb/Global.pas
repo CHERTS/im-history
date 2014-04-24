@@ -167,6 +167,7 @@ procedure OnSendMessageToAllComponent(Msg: String);
 procedure OnSendMessageToOneComponent(WinName, Msg: String);
 procedure WriteCustomINI(INIPath, CustomParams, ParamsStr: String);
 procedure ProfileDirChangeCallBack(pInfo: TInfoCallBack);
+function IsWideCharAlphaNumeric(WC: WideChar): Boolean;
 // Для мультиязыковой поддержки
 procedure CoreLanguageChanged;
 procedure MsgDie(Caption, Msg: WideString);
@@ -1235,6 +1236,16 @@ begin
   GetLongPathName(PChar(UserPath), PChar(UserPath), MAX_PATH);
   SetLength(UserPath, StrLen(PChar(UserPath)));
   Result := UserPath;
+end;
+
+function _WideCharType(WC: WideChar; dwInfoType: Cardinal): Word;
+begin
+  Win32Check(GetStringTypeExW(GetThreadLocale, dwInfoType, PWideChar(@WC), 1, Result))
+end;
+
+function IsWideCharAlphaNumeric(WC: WideChar): Boolean;
+begin
+  Result := (_WideCharType(WC, CT_CTYPE1) and (C1_ALPHA + C1_DIGIT)) <> 0;
 end;
 
 begin
