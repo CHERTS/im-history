@@ -68,7 +68,6 @@ object MainForm: TMainForm
     Anchors = [akLeft, akTop, akRight]
     Caption = ' '#1054#1073#1085#1086#1074#1083#1077#1085#1080#1077' '
     TabOrder = 0
-    ExplicitWidth = 472
     DesignSize = (
       474
       145)
@@ -157,7 +156,6 @@ object MainForm: TMainForm
       Height = 10
       Anchors = [akLeft, akTop, akRight]
       TabOrder = 0
-      ExplicitWidth = 444
     end
     object ButtonSettings: TButton
       Left = 114
@@ -191,11 +189,9 @@ object MainForm: TMainForm
     ActivePage = TabSheetSettings
     Anchors = [akLeft, akTop, akRight]
     TabOrder = 1
-    ExplicitWidth = 472
     object TabSheetSettings: TTabSheet
       Caption = #1054#1073#1097#1080#1077' '#1085#1072#1089#1090#1088#1086#1081#1082#1080
       ImageIndex = 2
-      ExplicitWidth = 464
       DesignSize = (
         466
         165)
@@ -207,7 +203,6 @@ object MainForm: TMainForm
         Anchors = [akLeft, akTop, akRight]
         Caption = ' '#1054#1073#1097#1080#1077' '#1085#1072#1089#1090#1088#1086#1081#1082#1080
         TabOrder = 0
-        ExplicitWidth = 458
         object LLanguage: TLabel
           Left = 16
           Top = 81
@@ -267,10 +262,6 @@ object MainForm: TMainForm
     end
     object TabSheetConnectSettings: TTabSheet
       Caption = #1053#1072#1089#1090#1088#1086#1081#1082#1080' '#1089#1086#1077#1076#1080#1085#1077#1085#1080#1103
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       DesignSize = (
         466
         165)
@@ -282,7 +273,6 @@ object MainForm: TMainForm
         Anchors = [akLeft, akTop, akRight]
         Caption = ' '#1053#1072#1089#1090#1088#1086#1081#1082#1080' '#1089#1086#1077#1076#1080#1085#1077#1085#1080#1103' '
         TabOrder = 0
-        ExplicitWidth = 458
         object LProxyAddress: TLabel
           Left = 16
           Top = 47
@@ -367,10 +357,6 @@ object MainForm: TMainForm
     object TabSheetLog: TTabSheet
       Caption = #1051#1086#1075#1080
       ImageIndex = 1
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       DesignSize = (
         466
         165)
@@ -383,7 +369,6 @@ object MainForm: TMainForm
         ReadOnly = True
         ScrollBars = ssVertical
         TabOrder = 0
-        ExplicitWidth = 458
       end
     end
   end
@@ -404,7 +389,7 @@ object MainForm: TMainForm
     Left = 384
     Top = 64
     Bitmap = {
-      494C010102000400300210001000FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
+      494C010102000400380210001000FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000400000001000000001002000000000000010
       0000000000000000000000000000000000000000000000000000000000000000
       0000112A1251235A26B72A6E2DE42C732EF52C732EF5286C2CE6027920FA0279
@@ -542,5 +527,9 @@ object MainForm: TMainForm
       0000000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
       000000000000}
+  end
+  object XPManifest1: TXPManifest
+    Left = 384
+    Top = 160
   end
 end

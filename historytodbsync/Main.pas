@@ -1819,6 +1819,8 @@ begin
       end;
       if (SQLVersion = '2.4') and (ProgramsVer = '2.5.0.0') then
         DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-24-to-25.sql');
+      if (SQLVersion = '2.5') and (ProgramsVer = '2.6.0.0') then
+        DBUpdate(PluginDllPath + 'update\' + DBPrefix + '-update-25-to-26.sql');
     finally
       UQuery.Free;
     end;
