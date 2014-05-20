@@ -81,7 +81,7 @@ type
   public
     constructor Create(CreateSuspennded: Boolean; const URL, Proxy, ProxyBypass, AuthUserName, AuthPassword, ProxyAuthUserName, ProxyAuthPassword, DirPath, SaveDirPath: String; Stream: PMemoryStream);
     property URL: string read fURL;
-    property Proxy: string read fProxy;			                           // Список прокси
+    property Proxy: string read fProxy;			               // Список прокси
     property ProxyBypass: string read fProxyBypass;                    // Дополниотельный список прокси
     property AuthUserName: string read fAuthUserName;                  // Логин для Authorization: Basic
     property AuthPassword: string read fAuthPassword;                  // Пароль для Authorization: Basic
@@ -141,13 +141,13 @@ type
     property MySizeCorrect: Boolean read fMySizeCorrect;
   published
     property URL: string read fURL write fURL;
-    property Proxy: string read fProxy write fProxy;			                               // Список прокси
+    property Proxy: string read fProxy write fProxy;			                 // Список прокси
     property ProxyBypass: string read fProxyBypass write fProxyBypass;                   // Дополниотельный список прокси
     property AuthUserName: string read fAuthUserName write fAuthUserName;                // Логин для Authorization: Basic
     property AuthPassword: string read fAuthPassword write fAuthPassword;                // Пароль для Authorization: Basic
     property ProxyAuthUserName: string read fProxyAuthUserName write fProxyAuthUserName; // Логин для прокси
     property ProxyAuthPassword: string read fProxyAuthPassword write fProxyAuthUserName; // Пароль для прокси
-    property DirPath: string read fDirPath write fDirPath;  	                           // Директория в которой будут проверяться MD5 файлов
+    property DirPath: string read fDirPath write fDirPath;  	                         // Директория в которой будут проверяться MD5 файлов
     property SaveDirPath: string read fSaveDirPath write fSaveDirPath;                   // Директория в которую предполагается сохранение скаченных файлов
     property OnError: TErrorEvent read fOnError write fOnError;
     property OnAccepted: TNotifyEvent read fOnAccepted write fOnAccepted;

@@ -25,6 +25,7 @@ package IMDownloader;
 {$IMAGEBASE $400000}
 {$DEFINE RELEASE}
 {$ENDIF IMPLICITBUILDING}
+{$DESCRIPTION 'IM-Downloader Component'}
 {$IMPLICITBUILD ON}
 
 requires

@@ -15,7 +15,7 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, StdCtrls, ComCtrls, XMLIntf, XMLDoc, Global, IniFiles, uIMDownloader, ShellApi,
-  ImgList;
+  ImgList, Vcl.XPMan;
 
 type
   TMainForm = class(TForm)
@@ -60,6 +60,7 @@ type
     CBDBType: TComboBox;
     ImageList_Main: TImageList;
     LPlatformType: TLabel;
+    XPManifest1: TXPManifest;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
@@ -316,6 +317,7 @@ begin
     CBDBType.Enabled := True;
     CBDBType.Items.Add('Unknown');
     CBDBType.Items.Add('mysql');
+    CBDBType.Items.Add('mariadb');
     CBDBType.Items.Add('postgresql');
     CBDBType.Items.Add('oracle');
     CBDBType.Items.Add('sqlite-3');

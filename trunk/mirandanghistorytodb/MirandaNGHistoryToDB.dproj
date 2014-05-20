@@ -83,10 +83,8 @@
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win32)'!=''">
         <VerInfo_AutoIncVersion>true</VerInfo_AutoIncVersion>
-        <DCC_LocalDebugSymbols>true</DCC_LocalDebugSymbols>
         <DCC_Define>madExcept;$(DCC_Define)</DCC_Define>
         <DCC_MapFile>3</DCC_MapFile>
-        <DCC_DebugInformation>true</DCC_DebugInformation>
         <VerInfo_MajorVer>2</VerInfo_MajorVer>
         <VerInfo_MinorVer>6</VerInfo_MinorVer>
         <VerInfo_Keys>CompanyName=http://www.im-history.ru;FileDescription=MirandaNGHistoryToDB;FileVersion=2.6.0.0;InternalName=MirandaNGHistoryToDB;LegalCopyright=Michael Grigorev;LegalTrademarks=http://www.im-history.ru;OriginalFilename=MirandaNGHistoryToDB.dll;ProductName=MirandaNGHistoryToDB;ProductVersion=2.6.0.0;Comments=http://www.im-history.ru</VerInfo_Keys>
@@ -189,8 +187,8 @@
                     <Parameters Name="DebugCWD">C:\Program Files\QIP Infium\</Parameters>
                 </Parameters>
                 <Excluded_Packages>
-                    <Excluded_Packages Name="$(BDSBIN)\dcloffice2k190.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
-                    <Excluded_Packages Name="$(BDSBIN)\dclofficexp190.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dcloffice2k200.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dclofficexp200.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
                 </Excluded_Packages>
             </Delphi.Personality>
             <Platforms>
