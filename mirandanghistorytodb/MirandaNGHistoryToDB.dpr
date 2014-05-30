@@ -93,7 +93,7 @@ begin
   PluginInterfaces[0]:=MIID_UIHISTORY;
   PluginInterfaces[1]:=MIID_LAST;
   {$else}
-  PluginInterfaces[0]:=PluginInfo.uuid;
+  PluginInterfaces[0]:=MIID_HISTORYTODBDLL;
   PluginInterfaces[1]:=MIID_LAST;
   {$endif REPLDEFHISTMOD}
   Result := @PluginInterfaces;
