@@ -37,7 +37,7 @@ interface
     // CompilerVersion defined in SYSTEM module, need to use not earlier
     {$IF CompilerVersion >= 22}
       {$DEFINE AllowInline}
-    {$IFEND}
+    {$ENDIF}
   {$ENDIF}
 {$ENDIF}
 
@@ -216,17 +216,17 @@ var
   {$include m_icolib.inc}
   {$include m_fontservice.inc}
   {$include m_chat.inc}
-//  {$include m_fingerprint.inc}
-//  {$include m_variables.inc}
+  {$include m_fingerprint.inc}
+  {$include m_variables.inc}
   {$include m_cluiframes.inc}
   {$include m_popup.inc}
   {$include m_avatars.inc}
-//  {$include m_smileyadd.inc}
-//  {$include m_tipper.inc}
+  {$include m_smileyadd.inc}
+  {$include m_tipper.inc}
   {$include m_button.inc}
   {$include m_button_int.inc}
-//  {$include m_dbeditor.inc}
-//  {$include m_userinfoex.inc}
+  {$include m_dbeditorpp.inc}
+  {$include m_userinfoex.inc}
   {$include m_imgsrvc.inc}
   {$include m_hotkeys.inc}
   {$include m_acc.inc}
@@ -235,7 +235,7 @@ var
   {$include m_descbutton.inc}
   {$include m_iconheader.inc}
   {$include m_extraicons.inc}
-//  {$include m_proto_listeningto.inc}
+  {$include m_proto_listeningto.inc}
   {$include m_toptoolbar.inc}
   {$include m_msg_buttonsbar.inc}
   {$include m_json.inc}
