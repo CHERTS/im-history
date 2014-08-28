@@ -1446,6 +1446,8 @@ var
   Msg_RcvrNick, Msg_RcvrAcc, Msg_Direction, Msg_Text: WideString;
   Msg_Time, MD5String: String;
   MsgDateTime: TDateTime;
+  Time: TTime;
+  Date: TDate;
   FirstNickNameFound, NickNameFound: Boolean;
   CurrentAccountName, CurrentAccountUIN: WideString;
   {$IFDEF DELPHI16_UP}
@@ -1543,13 +1545,17 @@ begin
     FileStringCount := 0;
     MsgFoundPos := 0;
     NickNameFound := False;
-    //DateSeparator := '/';
     {$IFDEF DELPHI16_UP}
-      FS := TFormatSettings.Create(GetThreadLocale);
+      //FS := TFormatSettings.Create(GetThreadLocale);
+      GetLocaleFormatSettings(GetThreadLocale, FS);
       FS.DateSeparator := '/';
+      FS.TimeSeparator := ':';
+      FS.ShortDateFormat := 'dd/mm/yyyy';
     {$ELSE}
       //GetLocaleFormatSettings(GetThreadLocale, FormatSettings);
       DateSeparator := '/';
+      TimeSeparator := ':';
+      ShortDateFormat := 'dd/mm/yyyy';
     {$ENDIF}
     if UnicodeFiles.Count > 0 then
     begin
@@ -1611,7 +1617,10 @@ begin
               end
               else
                 ReciverNick := EReciverNickName.Text;
-              MsgDateTime := StrToDateTime(StringReplace(RegExpNick.Match[5], '.', '/', [RFReplaceall])+ ' ' + RegExpNick.Match[3]);
+              // Уродский Embarcadero со своей неработающей StrToDateTime
+              Date := StrToDate(RegExpNick.Match[5], FS);
+              Time := StrToTime(RegExpNick.Match[3]);
+              MsgDateTime := Int(Date) + Frac(Time);
             end;
           end
           // Исход. сообщение
@@ -1624,7 +1633,10 @@ begin
             begin
               NickNameFound := True;
               CurrentAccountName := Trim(RegExpNick.Match[1]);
-              MsgDateTime := StrToDateTime(StringReplace(RegExpNick.Match[5], '.', '/', [RFReplaceall])+ ' ' + RegExpNick.Match[3]);
+              // Уродский Embarcadero со своей неработающей StrToDateTime
+              Date := StrToDate(RegExpNick.Match[5], FS);
+              Time := StrToTime(RegExpNick.Match[3]);
+              MsgDateTime := Int(Date) + Frac(Time);
             end;
           end;
           // Проверка на то, что найден Никнейм и его позиция MsgFoundPos+1 меньше общ. кол. строк TXT файла
