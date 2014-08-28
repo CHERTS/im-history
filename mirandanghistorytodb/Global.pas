@@ -19,6 +19,22 @@ uses
 type
   TCopyDataType = (cdtString = 0, cdtImage = 1, cdtRecord = 2);
   TArrayOfString = Array of String;
+  TProtocolName = (imICQ,
+                    imGTalk,
+                    imMRA,
+                    imJabber,
+                    imQIPru,
+                    imFacebook,
+                    imVKontakte,
+                    imTwitter,
+                    imLivejournal,
+                    imAIM,
+                    imIRC,
+                    imMSN,
+                    imYahoo,
+                    imGadu,
+                    imSkype,
+                    imMetaContact);
 
 const
   htdPluginShortName = 'MirandaNGHistoryToDB';

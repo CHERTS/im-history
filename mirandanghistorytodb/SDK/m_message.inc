@@ -120,10 +120,19 @@ const
 }
   MS_MSG_GETWINDOWDATA:PAnsiChar = 'MessageAPI/GetWindowData';
 
-{ wparam=(THANDLE)hContact
-  lparam=(PWideChar)ptszMessageText
-  Sets a status line text for the appropriate contact
+type
+  PStatusTextData = ^TStatusTextData;
+  TStatusTextData = record
+    cbSize :int;
+    hIcon  :HICON;
+    tszText:array [0..99] of WideChar;
+  end;
+
+{ wparam=(TMCONTACT)hContact
+  lparam=PStatusTextData or NIL to clear statusbar
+  Sets a statusbar line text for the appropriate contact
 }
+const
   MS_MSG_SETSTATUSTEXT:PAnsiChar = 'MessageAPI/SetStatusText';
 
 type

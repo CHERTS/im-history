@@ -235,6 +235,8 @@ var
   HI: THistoryItem;
   UserCodepage: Cardinal;
   UseDefaultCP: Boolean;
+  newSubContact: TMCONTACT;
+  newSubProtocol: AnsiString;
 begin
   Result := 0;
   hContact := wParam;
@@ -244,20 +246,32 @@ begin
   if (HI.eventType = EVENTTYPE_MESSAGE and EVENTTYPE_URL) then
   begin
     ProtoType := StrContactProtoToInt(ContactProto);
-    // Если сообщение от метаконтакта, то не пишем его в БД
-    // т.к. оно отправляется итак в БД через нужный протокол
+    // Если сообщение от метаконтакта, то извлекаем данные субконтакта
     if ProtoType = 15 then
-      Exit;
-    // Данные собеседника
-    ContactID := GetContactID(hContact, ContactProto);
-    ContactName := GetContactDisplayName(hContact, '', True);
+    begin
+      GetContactProto(hContact, newSubContact, newSubProtocol);
+      if (hContact <> newSubContact) or (ContactProto <> newSubProtocol) then
+      begin
+        ContactID := GetContactID(newSubContact, newSubProtocol);
+        ContactName := GetContactDisplayName(newSubContact, newSubProtocol, True);
+        ProtoType := StrContactProtoToInt(newSubProtocol);
+        if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Функция OnEventAdded: Metacontact: ' + 'Contact ID: ' + ContactID + ' | Contact Name: ' + ContactName + ' | ProtoType: ' + IntToStr(ProtoType), 2);
+      end;
+    end
+    else
+    begin
+      // Данные контакта
+      ContactID := GetContactID(hContact, ContactProto);
+      ContactName := GetContactDisplayName(hContact, '', True);
+      ProtoType := StrContactProtoToInt(ContactProto);
+      if EnableDebug then WriteInLog(ProfilePath, FormatDateTime('dd.mm.yy hh:mm:ss', Now) + ' - Функция OnEventAdded: Contact: ' + 'Contact ID: ' + ContactID + ' | Contact Name: ' + ContactName + ' | ProtoType: ' + IntToStr(ProtoType), 2);
+    end;
     // Мои данные
     MyContactName := GetMyContactDisplayName(ContactProto);
     MyContactID := GetMyContactID(ContactProto);
     // Доп. проверка протокола
     if ContactProto = MyAccount then
       ContactProto := 'ICQ';
-    ProtoType := StrContactProtoToInt(ContactProto);
     // End
     if ContactID = '' then
       ContactID := TranslateW('Unknown Contact');
@@ -269,10 +283,10 @@ begin
       MyContactName := TranslateW('Unknown Contact');
     // Корректируем MyContactID и ContactName если приходят и
     // отправляются сообщения для Метаконтакта
-    {if (ProtoType = 15) and (MyContactID = TranslateW('Unknown Contact')) and (MyContactName <> TranslateW('Unknown Contact')) then
+    if (ProtoType = 15) and (MyContactID = TranslateW('Unknown Contact')) and (MyContactName <> TranslateW('Unknown Contact')) then
       MyContactID := MyContactName;
     if (ProtoType = 15) and (ContactName = TranslateW('Unknown Contact')) and (ContactID <> TranslateW('Unknown Contact')) then
-      ContactName := ContactID;}
+      ContactName := ContactID;
     // Экранирование, перекодирование и т.п.
     Msg_SenderNick := PrepareString(pWideChar(AnsiToWideString(MyContactName, CP_ACP)));
     Msg_SenderAcc := PrepareString(pWideChar(AnsiToWideString(MyContactID, CP_ACP)));
@@ -434,7 +448,7 @@ begin
   // Инициализация шифрования
   EncryptInit;
   // Определяем локализацию
-  if FileExists(ExtractFilePath(ParamStr(0))+'Langpack_russian.txt') then
+  if (FileExists(ExtractFilePath(ParamStr(0))+'langpack_russian.txt')) or (FileExists(ExtractFilePath(ParamStr(0))+'Languages\langpack_russian.txt')) then
     AutoCoreLang := 'Russian'
   else
     AutoCoreLang := 'English';
