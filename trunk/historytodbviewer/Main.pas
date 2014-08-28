@@ -1503,6 +1503,8 @@ begin
       begin
         if (MatchStrings(DBType, 'firebird*')) then
           SQL_Zeos('select distinct nick,uin,proto_name from uin_'+ DBUserName + ' where nick is not null order by nick asc')
+        else if (MatchStrings(DBType, 'postgresql*')) then
+          SQL_Zeos('select nick,uin,proto_name from uin_'+ DBUserName + ' where nick is not null group by uin,nick,proto_name order by nick asc')
         else
           SQL_Zeos('select nick,uin,proto_name from uin_'+ DBUserName + ' where nick is not null group by uin order by nick asc');
       end;
