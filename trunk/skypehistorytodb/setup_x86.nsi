@@ -71,7 +71,7 @@
   ;!define MUI_FINISHPAGE_RUN_FUNCTION PageFinishRun
 
   !insertmacro MUI_PAGE_WELCOME
-;  !insertmacro MUI_PAGE_LICENSE "${HOME}\..\license.txt"
+  !insertmacro MUI_PAGE_LICENSE "license.txt"
   !insertmacro MUI_PAGE_COMPONENTS
   !insertmacro MUI_PAGE_DIRECTORY
   !insertmacro MUI_PAGE_INSTFILES
