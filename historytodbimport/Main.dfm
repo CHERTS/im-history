@@ -116,8 +116,8 @@ object MainForm: TMainForm
         Caption = '0'
       end
       object LStatus: TLabel
-        Left = 471
-        Top = 171
+        Left = 679
+        Top = 170
         Width = 59
         Height = 13
         Hint = 'ImportLStatusUnknown'
@@ -125,8 +125,8 @@ object MainForm: TMainForm
         Layout = tlCenter
       end
       object LStatusTitle: TLabel
-        Left = 427
-        Top = 171
+        Left = 635
+        Top = 170
         Width = 40
         Height = 13
         Caption = #1057#1090#1072#1090#1091#1089':'
@@ -163,15 +163,15 @@ object MainForm: TMainForm
         Caption = #1052#1086#1081' UserID:'
       end
       object LAddedInSQLFile: TLabel
-        Left = 587
-        Top = 144
+        Left = 427
+        Top = 171
         Width = 125
         Height = 13
         Caption = #1054#1073#1088#1072#1073#1086#1090#1072#1085#1086' '#1089#1086#1086#1073#1097#1077#1085#1080#1081':'
       end
       object LAddedInSQLFileCount: TLabel
-        Left = 716
-        Top = 144
+        Left = 558
+        Top = 171
         Width = 6
         Height = 13
         Caption = '0'
@@ -274,6 +274,32 @@ object MainForm: TMainForm
         MarqueeInterval = 1
         Step = 1
         TabOrder = 10
+      end
+      object ButtonToQIP2005: TButton
+        Left = 635
+        Top = 110
+        Width = 137
+        Height = 25
+        Hint = 'ImportButtonToTXT-QIP2005'
+        Anchors = [akTop, akRight]
+        Caption = 'RnQ -> QIP 2005'
+        Enabled = False
+        TabOrder = 11
+        Visible = False
+        OnClick = ButtonToQIP2005Click
+      end
+      object ButtonToPidgin: TButton
+        Left = 635
+        Top = 139
+        Width = 137
+        Height = 25
+        Hint = 'ImportButtonToTXT-Pidgin'
+        Anchors = [akTop, akRight]
+        Caption = 'RnQ -> Pidgin'
+        Enabled = False
+        TabOrder = 12
+        Visible = False
+        OnClick = ButtonToPidginClick
       end
     end
     object CBSelectAll: TCheckBox
@@ -429,7 +455,7 @@ object MainForm: TMainForm
     Left = 43
     Top = 240
     Bitmap = {
-      494C01010C001100040010001000FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
+      494C01010C0011001C0010001000FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000400000004000000001002000000000000040
       0000000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
@@ -968,7 +994,7 @@ object MainForm: TMainForm
     Left = 143
     Top = 240
     Bitmap = {
-      494C010107000900040010001000FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
+      494C0101070009001C0010001000FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000400000002000000001002000000000000020
       0000000000000000000000000000000000000000000000000000000000000000
       0000FF1F2A00000000000000000000000000000000000000000000000000FF1F

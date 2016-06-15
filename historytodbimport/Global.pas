@@ -294,6 +294,7 @@ end;
 // LogType = 1 - ошибки добавл€ютс€ в файл ErrLogName
 // LogType = 2 - сообщени€ добавл€ютс€ в файл DebugLogName
 // LogType = 3 - сообщени€ добавл€ютс€ в файл ImportLogName
+// LogType = 4 - сообщени€ добавл€ютс€ в файл XXXX.txt
 function OpenLogFile(LogPath: String; LogType: Integer): Boolean;
 var
   Path: WideString;
@@ -308,6 +309,8 @@ begin
   end
   else if LogType = 2 then
     Path := LogPath + DebugLogName
+  else if LogType = 4 then
+    Path := LogPath
   else
     Path := LogPath + ImportLogName;
   {$I-}
@@ -359,6 +362,7 @@ end;
 // LogType = 1 - ошибки добавл€ютс€ в файл ErrLogName
 // LogType = 2 - сообщени€ добавл€ютс€ в файл DebugLogName
 // LogType = 3 - сообщени€ добавл€ютс€ в файл ImportLogName
+// LogType = 4 - сообщени€ добавл€ютс€ в файл XXXX.txt
 procedure WriteInLog(LogPath: String; TextString: String; LogType: Integer);
 var
   Path: WideString;
@@ -378,6 +382,8 @@ begin
   end
   else if LogType = 2 then
     Path := LogPath + DebugLogName
+  else if LogType = 4 then
+    Path := LogPath
   else
     Path := LogPath + ImportLogName;
   {$I-}

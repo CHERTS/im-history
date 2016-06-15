@@ -21,7 +21,7 @@ uses
   JvFormPlacement, JvRichEdit, XPMan, XMLIntf, XMLDoc, Global, ImgList, ZSqlMonitor,
   ZAbstractConnection, ZConnection, DB, ZAbstractRODataset, ZAbstractDataset, ZDataset, 
   Grids, DBGrids, FileCtrl, ShlObj, ActiveX, ExtCtrls, WideStrUtils, JclStringConversions,
-  UnicodeFile, RegExpr, JvExStdCtrls, JvExComCtrls, JvComCtrls;
+  UnicodeFile, RegExpr, JvExStdCtrls, JvExComCtrls, JvComCtrls, System.ImageList;
 
 type
   THCHUNK=record              // RnQ
@@ -118,6 +118,8 @@ type
     CBSelectAll: TCheckBox;
     CBPreview: TCheckBox;
     CBPreviewNum: TComboBox;
+    ButtonToQIP2005: TButton;
+    ButtonToPidgin: TButton;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -148,6 +150,7 @@ type
     procedure ReadTXTData(FileName: String);
     procedure CBSelectAllClick(Sender: TObject);
     procedure AddToSQLLog;
+    procedure AddToTXTLog(TXTLogType: Integer);
     procedure StartReadDirectory;
     procedure QHFViewNodeCheck;
     procedure SQL_Zeos_NickName(Sql: WideString);
@@ -163,10 +166,13 @@ type
     function r16(x3: Array of Byte ): Word;
     function TakeCHUNK(Fil: TFileStream; Pos: Int64; var Res: THCHUNK): Integer;
     function FindCHUNK (Fil: TFileStream; Start: Int64): Int64;
+    function RnQHistoryReadAndWriteTXT(HistFile: PFStream; RnQFileName: WideString; WriteToSQLFile: Boolean; TXTLogType: Integer): Longint;
     function RnQHistoryRead(HistFile: PFStream; RnQFileName: WideString; WriteToSQLFile: Boolean): Longint;
     function ICQ7HistoryRead(HistoryFileName: WideString): Integer;
     function CheckServiceMode: Boolean;
     function CheckZeroRecordCount(SQL: String): Boolean;
+    procedure ButtonToQIP2005Click(Sender: TObject);
+    procedure ButtonToPidginClick(Sender: TObject);
   private
     { Private declarations }
     FLanguage             : WideString;
@@ -420,6 +426,8 @@ begin
     FileListView.Images := ImageList_TreeView;
     // Кнопки
     ButtonToSQL.Enabled := False;
+    ButtonToQIP2005.Enabled := False;
+    ButtonToPidgin.Enabled := False;
     ButtonSelectSource.Enabled := False;
     StartLoadDB := False;
     StartPreview := False;
@@ -458,6 +466,8 @@ begin
       CBPreviewNum.Enabled := False;
       CBPreviewNum.ItemIndex := 0;
       ESelectSource.Text := '';
+      ButtonToPidgin.Visible := True;
+      ButtonToQIP2005.Visible := True;
       // Заполняем структуру UIN <> Nickname
       GetUINToNick;
     end                                 // QIP
@@ -677,6 +687,60 @@ begin
   end;
 end;
 
+procedure TMainForm.ButtonToPidginClick(Sender: TObject);
+begin
+  if not StartLoadDB then
+  begin
+    CBPreview.Checked := False;
+    CBPreview.Enabled := False;
+    CBPreviewNum.Enabled := False;
+    CBPreviewNum.ItemIndex := 0;
+    StartPreview := False;
+    RButtonSelectDir.Enabled := False;
+    RButtonSelectFile.Enabled := False;
+    ButtonSelectSource.Enabled := False;
+    ESelectSource.Enabled := False;
+    // Запускаем импорт истории
+    AddToTXTLog(2); // Pidgin
+  end
+  else
+  begin
+    StartLoadDB := False;
+    ButtonToSQL.Caption := GetLangStr('ImportProceed');
+    ButtonToSQL.Hint := 'ImportProceed';
+    ButtonToSQL.Enabled := False;
+    ButtonToQIP2005.Enabled := False;
+    ButtonToPidgin.Enabled := False;
+  end;
+end;
+
+procedure TMainForm.ButtonToQIP2005Click(Sender: TObject);
+begin
+  if not StartLoadDB then
+  begin
+    CBPreview.Checked := False;
+    CBPreview.Enabled := False;
+    CBPreviewNum.Enabled := False;
+    CBPreviewNum.ItemIndex := 0;
+    StartPreview := False;
+    RButtonSelectDir.Enabled := False;
+    RButtonSelectFile.Enabled := False;
+    ButtonSelectSource.Enabled := False;
+    ESelectSource.Enabled := False;
+    // Запускаем импорт истории
+    AddToTXTLog(1);
+  end
+  else
+  begin
+    StartLoadDB := False;
+    ButtonToSQL.Caption := GetLangStr('ImportProceed');
+    ButtonToSQL.Hint := 'ImportProceed';
+    ButtonToSQL.Enabled := False;
+    ButtonToQIP2005.Enabled := False;
+    ButtonToPidgin.Enabled := False;
+  end;
+end;
+
 procedure TMainForm.ButtonSelectSourceClick(Sender: TObject);
 var
   DirName: String;
@@ -873,9 +937,17 @@ begin
   end;
   LS.SaveToFile(ProfilePath + ImportListFile);
   if LS.Count > 0 then
-    ButtonToSQL.Enabled := True
+  begin
+    ButtonToSQL.Enabled := True;
+    ButtonToQIP2005.Enabled := True;
+    ButtonToPidgin.Enabled := True;
+  end
   else
+  begin
     ButtonToSQL.Enabled := False;
+    ButtonToQIP2005.Enabled := False;
+    ButtonToPidgin.Enabled := False;
+  end;
   LS.Free;
 end;
 
@@ -1057,7 +1129,7 @@ begin
       OnSendMessageToAllComponent('0060');
       AddImportHistoryInList(Format(GetLangStr('SendStopSync'), [FormatDateTime('dd.mm.yy hh:mm:ss', Now), ImportLogName]), 4);
       // Открываем файл для импорта
-      ImportLogOpened := OpenLogFile(ProfilePath, 4);
+      ImportLogOpened := OpenLogFile(ProfilePath, 5);
       if ImportLogOpened then
       begin
         // Подготавливаемся к импорту
@@ -1160,12 +1232,15 @@ begin
             LStatus.Caption := Format(GetLangStr('ImportStoped'), ['AddToSQLLog']);
             LStatus.Hint := 'ImportStoped';
             ButtonToSQL.Enabled := True;
+            ButtonToQIP2005.Enabled := True;
+            ButtonToPidgin.Enabled := True;
             Exit;
           end;
         end;
         LStatus.Caption := GetLangStr('ImportDone');
         LStatus.Hint := 'ImportDone';
-        CloseLogFile(4);
+        CloseLogFile(5);
+        ImportLogOpened := False;
       end;
       StartLoadDB := False;
       if HistoryImportType = 2 then // RnQ
@@ -1185,6 +1260,151 @@ begin
       // Отправляем HistoryToDBSync команду, что импорт истории закончен
       OnSendMessageToAllComponent('0061');
       AddImportHistoryInList(Format(GetLangStr('SendStartSync'), [FormatDateTime('dd.mm.yy hh:mm:ss', Now), ImportLogName]), 4);
+      // Выводим сообщение об окончании импорта
+      AddImportHistoryInList(GetLangStr('ImportDoneSyncWait'), 4);
+      MsgInf(MainForm.Caption, GetLangStr('ImportDoneSyncWait'));
+    end
+    else
+      MsgInf(MainForm.Caption, GetLangStr('ImportSelectFile'));
+  end
+  else
+      MsgInf(MainForm.Caption, GetLangStr('ImportSelectFile'));
+end;
+
+{ Основная процедура импорта истории в формат TXT }
+procedure TMainForm.AddToTXTLog(TXTLogType: Integer);
+var
+  I: Integer;
+  Noddy: TTreeNode;
+  Searching: Boolean;
+  SrcFile: TFileStream;
+  RnQAllMsgCount, RnQMsgCount: Integer;
+  MsgStr: WideString;
+begin
+  if FileExists(ProfilePath + ImportListFile) then
+  begin
+    ImportHistoryView.Clear;
+    ImportHistoryView.Refresh;
+    if HistoryImportType = 2 then        // RnQ
+      MsgStr := GetLangStr('ImportRnQStart')
+    else
+    begin
+      ShowMessage('Экспорт в текстовый файл для данного формата истории не поддерживается.');
+      Exit;
+    end;
+    AddImportHistoryInList(MsgStr, 4);
+    MainQHFList.Clear;
+    MainQHFList.LoadFromFile(ProfilePath + ImportListFile);
+    if MainQHFList.Count > 0 then
+    begin
+      // Отправляем HistoryToDBSync команду, что запущен импорт истории
+      //OnSendMessageToAllComponent('0060');
+      //AddImportHistoryInList(Format(GetLangStr('SendStopSync'), [FormatDateTime('dd.mm.yy hh:mm:ss', Now), ImportLogName]), 4);
+      // Открываем файл для импорта
+      // Подготавливаемся к импорту
+      StartLoadDB := True;
+      ButtonToSQL.Caption := GetLangStr('ImportStop');
+      ButtonToSQL.Hint := 'ImportStop';
+      AddImportHistoryInList(Format(GetLangStr('ImportSelectCnt'), [IntToStr(MainQHFList.Count)]), 4);
+      PBWriteToDB.Position := 0;
+      PBWriteToDB.Max := MainQHFList.Count-1;
+      RnQAllMsgCount := 0;
+      RnQMsgCount := 0;
+      // Проход по всему списку файлов истории
+      for I:=0 to MainQHFList.Count-1 do
+      begin
+        if StartLoadDB then
+        begin
+          AddImportHistoryInList(Format(GetLangStr('ImportProcessing'), [MainQHFList.Strings[I]]), 4);
+          PBRead.Position := 0;
+          if HistoryImportType <> 2 then // QIP
+            LMessageCount.Caption := '0';
+          // Отмечаем какой файл сейчас обрабатывается
+          Noddy := FileListView.Items[0];
+          Searching := true;
+          while (Searching) and (Noddy <> nil) do
+          begin
+            if Noddy.Text = ExtractFileNameEx(MainQHFList.Strings[I], True) then
+            begin
+              Searching := False;
+              FileListView.Selected := Noddy;
+              FileListView.SetFocus;
+            end
+            else
+            begin
+              Noddy := Noddy.GetNext
+            end;
+          end;
+          // End
+          if HistoryImportType = 2 then // RnQ
+          begin
+            SrcFile := TFileStream.Create(MainQHFList.Strings[I], fmOpenRead);
+            try
+              if StartPreview then
+                StartPreview := False
+              else
+                StartPreview := True;
+              RnQMsgCount := RnQHistoryReadAndWriteTXT(@SrcFile, MainQHFList.Strings[I], True, TXTLogType);
+              StartPreview := False;
+              AddImportHistoryInList(Format(GetLangStr('ImportDoneCnt'), [IntToStr(RnQMsgCount)]), 4);
+              RnQAllMsgCount := RnQAllMsgCount + RnQMsgCount;
+              LMessageCount.Caption := IntToStr(RnQAllMsgCount);
+            finally
+              SrcFile.Free;
+            end;
+            AddImportHistoryInList(Format(GetLangStr('ImportProcessingDone'), [MainQHFList.Strings[I]]), 4)
+          end;
+          // Снимаем чек-бокс с обработанного файла.
+          // По сути мы делаем поиск по дереву.
+          // Эта реализация поиска намного быстрее,
+          // чем если перебирать дерево в цикле for.
+          Noddy := FileListView.Items[0];
+          Searching := true;
+          while (Searching) and (Noddy <> nil) do
+          begin
+            if Noddy.Text = ExtractFileNameEx(MainQHFList.Strings[I], True) then
+            begin
+              Searching := False;
+              Noddy.StateIndex := 1;
+            end
+            else
+            begin
+              Noddy := Noddy.GetNext
+            end;
+          end;
+          // Перезаписываем HistoryToDBImport.list с учетом снятых чек-боксов
+          QHFViewNodeCheck;
+          // Отмечаем позицию
+          PBWriteToDB.Position := PBWriteToDB.Position + 1;
+        end
+        else
+        begin
+          LStatus.Caption := Format(GetLangStr('ImportStoped'), ['AddToSQLLog']);
+          LStatus.Hint := 'ImportStoped';
+          ButtonToSQL.Enabled := True;
+          ButtonToQIP2005.Enabled := True;
+          ButtonToPidgin.Enabled := True;
+          Exit;
+        end;
+        LStatus.Caption := GetLangStr('ImportDone');
+        LStatus.Hint := 'ImportDone';
+      end;
+      StartLoadDB := False;
+      if HistoryImportType = 2 then // RnQ
+        LAddedInSQLFileCount.Caption := IntToStr(RnQAllMsgCount);
+      ButtonToSQL.Caption := GetLangStr('ImportButtonToSQL');
+      ButtonToSQL.Hint := 'ImportButtonToSQL';
+      RButtonSelectDir.Enabled := True;
+      RButtonSelectFile.Enabled := True;
+      ButtonSelectSource.Enabled := True;
+      ESelectSource.Enabled := True;
+      // Удаляем HistoryToDBImport.list
+      DeleteFile(ProfilePath + ImportListFile);
+      // Снимаем чек-боксы
+      DeSelectAllClick(Self);
+      // Отправляем HistoryToDBSync команду, что импорт истории закончен
+      //OnSendMessageToAllComponent('0061');
+      //AddImportHistoryInList(Format(GetLangStr('SendStartSync'), [FormatDateTime('dd.mm.yy hh:mm:ss', Now), ImportLogName]), 4);
       // Выводим сообщение об окончании импорта
       AddImportHistoryInList(GetLangStr('ImportDoneSyncWait'), 4);
       MsgInf(MainForm.Caption, GetLangStr('ImportDoneSyncWait'));
@@ -1218,6 +1438,8 @@ begin
     ButtonToSQL.Caption := GetLangStr('ImportProceed');
     ButtonToSQL.Hint := 'ImportProceed';
     ButtonToSQL.Enabled := False;
+    ButtonToQIP2005.Enabled := False;
+    ButtonToPidgin.Enabled := False;
   end;
 end;
 
@@ -1270,9 +1492,17 @@ begin
   end;
   LS.SaveToFile(ProfilePath + ImportListFile);
   if LS.Count > 0 then
-    ButtonToSQL.Enabled := True
+  begin
+    ButtonToSQL.Enabled := True;
+    ButtonToQIP2005.Enabled := True;
+    ButtonToPidgin.Enabled := True;
+  end
   else
+  begin
     ButtonToSQL.Enabled := False;
+    ButtonToQIP2005.Enabled := False;
+    ButtonToPidgin.Enabled := False;
+  end;
   LS.Free;
 end;
 
@@ -1300,6 +1530,8 @@ begin
   // Удаляем HistoryToDBImport.list
   DeleteFile(ProfilePath + ImportListFile);
   ButtonToSQL.Enabled := False;
+  ButtonToQIP2005.Enabled := False;
+  ButtonToPidgin.Enabled := False;
 end;
 
 procedure TMainForm.SelectAllFile;
@@ -1326,9 +1558,17 @@ begin
   end;
   LS.SaveToFile(ProfilePath + ImportListFile);
   if LS.Count > 0 then
-    ButtonToSQL.Enabled := True
+  begin
+    ButtonToSQL.Enabled := True;
+    ButtonToQIP2005.Enabled := True;
+    ButtonToPidgin.Enabled := True;
+  end
   else
+  begin
     ButtonToSQL.Enabled := False;
+    ButtonToQIP2005.Enabled := False;
+    ButtonToPidgin.Enabled := False;
+  end;
   LS.Free;
 end;
 
@@ -1351,6 +1591,8 @@ begin
   PBRead.Position := 0;
   PBWriteToDB.Position := 0;
   ButtonToSQL.Enabled := False;
+  ButtonToQIP2005.Enabled := False;
+  ButtonToPidgin.Enabled := False;
   LSelect.Caption := GetLangStr('ImportLSelectSelectDir');
   LSelect.Hint := 'ImportLSelectSelectDir';
   ButtonSelectSource.Caption := GetLangStr('ImportButtonSelectSourceDir');
@@ -1420,6 +1662,8 @@ begin
   PBRead.Position := 0;
   PBWriteToDB.Position := 0;
   ButtonToSQL.Enabled := False;
+  ButtonToQIP2005.Enabled := False;
+  ButtonToPidgin.Enabled := False;
   LSelect.Caption := GetLangStr('ImportLSelectSelectFile');
   LSelect.Hint := 'ImportLSelectSelectFile';
   ButtonSelectSource.Caption := GetLangStr('ImportButtonSelectSourceFile');
@@ -2591,6 +2835,256 @@ begin
     if ImportHistoryZConnection.Connected then
       ImportHistoryZConnection.Disconnect;
   end;
+end;
+
+// Читаем историю RnQ и пишем её в текстовый формат QIP 2005
+function TMainForm.RnQHistoryReadAndWriteTXT(HistFile: PFStream; RnQFileName: WideString; WriteToSQLFile: Boolean; TXTLogType: Integer): Longint;
+var
+  CHUNK: THCHUNK;
+  Pos: Int64;
+  NNew: Boolean;
+  Count: Longint;
+  Msg_RcvrNick, Msg_RcvrAcc, Msg_Direction, Msg_Text: WideString;
+  Msg_Time, MD5String: String;
+  CurrentAccountName, CurrentAccountUIN: WideString;
+  Nick, Uin: WideString;
+  FoundUINandNickName: Boolean;
+  MyUINandNickNameCnt: Integer;
+  {$IFDEF DELPHI16_UP}
+  FS: TFormatSettings;
+  {$ENDIF}
+  PidginFirstMessage: Boolean;
+  PidginFileName: WideString;
+begin
+  if WriteToSQLFile then // Только если пишем историю в SQL файл
+  begin
+    if RButtonSelectFile.Checked then
+    begin
+      Nick := EReciverNickName.Text;
+      Uin := EReciverUIN.Text;
+    end
+    else
+    begin
+      // Читаем структуру сопоставления UIN <> NickName
+      // и ищем там данные нашего собеседника
+      if UINToNickPointer.UINToNickCount > 0 then
+      begin
+        FoundUINandNickName := False;
+        MyUINandNickNameCnt := 0;
+        while (not FoundUINandNickName) and (MyUINandNickNameCnt < UINToNickPointer.UINToNickCount) do
+        begin
+          if ExtractFileNameEx(RnQFileName, True) = UINToNickPointer.UINToNickPointerID[MyUINandNickNameCnt].UIN then
+            FoundUINandNickName := True;
+          Inc(MyUINandNickNameCnt);
+        end;
+        if FoundUINandNickName then
+        begin
+          Uin := UINToNickPointer.UINToNickPointerID[MyUINandNickNameCnt-1].UIN;
+          Nick := UINToNickPointer.UINToNickPointerID[MyUINandNickNameCnt-1].NickName;
+          EReciverUIN.Text := Uin;
+          EReciverNickName.Text := Nick;
+        end
+        else
+        begin
+          Nick := ExtractFileNameEx(RnQFileName, True);
+          Uin := Nick;
+        end;
+      end
+      else
+      begin
+        Nick := ExtractFileNameEx(RnQFileName, True);
+        Uin := Nick;
+      end;
+    end;
+    // Выводим статус
+    PBRead.Position := 0;
+    //LMessageCount.Caption := GetLangStr('ImportLStatusUnknown');
+    LStatus.Caption := GetLangStr('ImportRecordStart');
+    LStatus.Hint := 'ImportRecordStart';
+  end;
+  // Цикл поблочного чтения файла истории RnQ
+  Count := 0;
+  CHUNK.Correct := False;
+  Pos := 0;
+  NNew := True;
+  LoadingDone := False;
+  if TXTLogType = 2 then // Pidgin
+  begin
+    if not DirectoryExists(ProfilePath+WideStringToUTF8(PrepareString(PWideChar(Uin)))) then
+    begin
+      if not CreateDir(ProfilePath+WideStringToUTF8(PrepareString(PWideChar(Uin)))) then
+      begin
+        AddImportHistoryInList('RnQToPidgin: Ошибка создания директории ' + ProfilePath+WideStringToUTF8(PrepareString(PWideChar(Uin))), 3);
+        Exit;
+      end;
+    end;
+    PidginFirstMessage := False;
+  end;
+  if TXTLogType = 1 then // QIP 2005
+    ImportLogOpened := OpenLogFile(ProfilePath+WideStringToUTF8(PrepareString(PWideChar(Uin)))+'.txt', 4);
+  repeat
+    if ((@HistFile<>nil) and NNew) then
+    begin
+      Pos := FindCHUNK(HistFile^, Pos);
+      NNew := False;
+      if Pos >= 0 then
+        TakeCHUNK(HistFile^, Pos, CHUNK)
+      else
+        CHUNK.Correct := False;
+    end;
+    if CHUNK.Correct = True  then
+    begin
+      if CHUNK.What = -1 then
+      begin
+        // Определяем наши Никнейм и UIN
+        if Global_CurrentAccountName  <> EMyNickName.Text then
+          CurrentAccountName := PrepareString(PWideChar(EMyNickName.Text))
+        else
+          CurrentAccountName := Global_CurrentAccountName;
+        if Global_CurrentAccountUIN  <> EMyUIN.Text then
+          CurrentAccountUIN := PrepareString(PWideChar(EMyUIN.Text))
+        else
+          CurrentAccountUIN := Global_CurrentAccountUIN;
+        // End
+        if WriteToSQLFile then // Только если пишем историю в SQL файл
+        begin
+          // Поля получателя
+          Msg_RcvrNick := WideStringToUTF8(PrepareString(PWideChar(Nick)));
+          Msg_RcvrAcc := WideStringToUTF8(PrepareString(PWideChar(Uin)));
+          if TXTLogType = 1 then // QIP 2005
+          begin
+            // Формируем поле даты-времени сообщения
+            {$IFDEF DELPHI16_UP}
+            GetLocaleFormatSettings(GetThreadLocale, FS);
+            FS.DateSeparator := '/';
+            FS.TimeSeparator := ':';
+            FS.ShortDateFormat := 'dd/mm/yyyy';
+            {$ELSE}
+            DateSeparator := '/';
+            TimeSeparator := ':';
+            ShortDateFormat := 'dd/mm/yyyy';
+            {$ENDIF}
+            Msg_Time := FormatDateTime('hh:mm:ss dd/mm/yyyy', CHUNK.Time, FS);
+            // Проверяем поле сообщения
+            Msg_Text :=  WideStringToUTF8(CHUNK.Msg);
+            // Определяем направление сообщения
+            if IntToStr(CHUNK.UIN) = CurrentAccountUIN then
+            begin
+              Msg_Direction := '-------------------------------------->-';
+              Msg_RcvrNick := Global_CurrentAccountName;
+            end
+            else
+              Msg_Direction := '--------------------------------------<-';
+            if ImportLogOpened then
+              WriteInLog(ProfilePath+Msg_RcvrAcc+'.txt', Format('%s'+#$0D#$0A+'%s (%s)'+#$0D#$0A+'%s'+#$0D#$0A, [Msg_Direction, Msg_RcvrNick, Msg_Time, Msg_Text]), 4);
+          end
+          else if TXTLogType = 2 then // Pidgin
+          begin
+            // Формируем поле даты-времени сообщения
+            {$IFDEF DELPHI16_UP}
+            GetLocaleFormatSettings(GetThreadLocale, FS);
+            FS.DateSeparator := '-';
+            FS.TimeSeparator := ':';
+            FS.ShortDateFormat := 'yyyy-mm-dd';
+            {$ELSE}
+            DateSeparator := '-';
+            TimeSeparator := ':';
+            ShortDateFormat := 'yyyy-mm-dd';
+            {$ENDIF}
+            if not PidginFirstMessage then
+            begin
+              Msg_Time := FormatDateTime('yyyy-mm-dd.hhmmss', CHUNK.Time, FS) + '+0300MSK';
+              //PidginFileName := ProfilePath + WideStringToUTF8(PrepareString(PWideChar(Uin))) + '\' + Msg_Time +'.html';
+              PidginFileName := ProfilePath + WideStringToUTF8(PrepareString(PWideChar(Uin))) + '\' + Msg_Time +'.txt';
+              if not ImportLogOpened then
+              begin
+                ImportLogOpened := OpenLogFile(PidginFileName, 4);
+              end;
+              if ImportLogOpened then
+              begin
+                {$IFDEF DELPHI16_UP}
+                GetLocaleFormatSettings(GetThreadLocale, FS);
+                FS.DateSeparator := '.';
+                FS.TimeSeparator := ':';
+                FS.ShortDateFormat := 'dd.mm.yyyy';
+                {$ELSE}
+                DateSeparator := '.';
+                TimeSeparator := ':';
+                ShortDateFormat := 'dd.mm.yyyy';
+                {$ENDIF}
+                Msg_Time := FormatDateTime('dd.mm.yyyy hh:mm:ss', CHUNK.Time, FS);
+                //WriteInLog(PidginFileName, Format('<html><head><meta http-equiv="content-type" content="text/html; charset=UTF-8"><title>Conversation with %s at %s on %s (icq)</title></head><body><h3>Conversation with %s at %s on %s (icq)</h3>', [Msg_RcvrNick, Msg_Time, CurrentAccountUIN, Msg_RcvrNick, Msg_Time, CurrentAccountUIN]), 4);
+                WriteInLog(PidginFileName, Format('Conversation with %s at %s on %s (icq)', [Msg_RcvrNick, Msg_Time, CurrentAccountUIN]), 4);
+              end;
+              PidginFirstMessage := True;
+            end
+            else
+            begin
+              {$IFDEF DELPHI16_UP}
+              GetLocaleFormatSettings(GetThreadLocale, FS);
+              FS.DateSeparator := '.';
+              FS.TimeSeparator := ':';
+              FS.ShortDateFormat := 'dd.mm.yyyy';
+              {$ELSE}
+              DateSeparator := '.';
+              TimeSeparator := ':';
+              ShortDateFormat := 'dd.mm.yyyy';
+              {$ENDIF}
+              Msg_Time := FormatDateTime('dd.mm.yyyy hh:mm:ss', CHUNK.Time, FS);
+            end;
+            Msg_Text := WideStringToUTF8(CHUNK.Msg);
+            if ImportLogOpened then
+            begin
+              //AddImportHistoryInList(Format('RnQToPidgin: Запись сообщения №%d в файла %s', [Count, PidginFileName]), 3);
+              // Определяем направление сообщения
+              if IntToStr(CHUNK.UIN) = CurrentAccountUIN then
+              begin
+                //WriteInLog(PidginFileName, Format('<font color="#16569E"><font size="2">(%s)</font> <b>%s:</b></font> %s<br/><br/>', [Msg_Time, Global_CurrentAccountName, Msg_Text]), 4);
+                WriteInLog(PidginFileName, Format('(%s) %s: %s', [Msg_Time, Global_CurrentAccountName, Msg_Text]), 4);
+              end
+              else
+              begin
+                //WriteInLog(PidginFileName, Format('<font color="#A82F2F"><font size="2">(%s)</font> <b>%s:</b></font> <body>%s</body><br/>', [Msg_Time, Msg_RcvrNick, Msg_Text]), 4);
+                WriteInLog(PidginFileName, Format('(%s) %s: %s', [Msg_Time, Msg_RcvrNick, Msg_Text]), 4);
+              end;
+            end;
+          end;
+        end
+        else
+        begin
+          if IntToStr(CHUNK.UIN) = CurrentAccountUIN then
+          begin
+            AddImportHistoryInList(Format(MSG_TITLE, [Global_CurrentAccountName, Global_CurrentAccountUIN, FormatDateTime('dd.mm.yy hh:mm:ss', CHUNK.Time)]), 0);
+            AddImportHistoryInList(CHUNK.Msg, 5);
+          end
+          else
+          begin
+            AddImportHistoryInList(Format(MSG_TITLE, [EReciverNickName.Text, EReciverUIN.Text, FormatDateTime('dd.mm.yy hh:mm:ss', CHUNK.Time)]), 1);
+            AddImportHistoryInList(CHUNK.Msg, 6);
+          end;
+        end;
+        LAddedInSQLFileCount.Caption := IntToStr(Count);
+      end
+      else if CHUNK.What = -2 then
+      begin
+        AddImportHistoryInList('RnQ Import: Найдено шифрованное сообщение.', 3);
+        AddImportHistoryInList('RnQ Import: Тип блока: ' + IntToStr(CHUNK.What), 3);
+        AddImportHistoryInList('RnQ Import: Хешированное сообщение: ' + CHUNK.Msg, 3);
+        AddImportHistoryInList('RnQ Import: Это сообщение не было импортировано в БД.', 3);
+      end;
+      Pos := Pos + CHUNK.Size;
+      NNew := True;
+      Application.ProcessMessages;
+      Inc(Count);
+    end;
+  until (CHUNK.Correct = False) or (StartPreview = False);
+  if ImportLogOpened then
+  begin
+    CloseLogFile(4);
+    ImportLogOpened := False;
+  end;
+  LoadingDone := True;
+  Result := Count;
 end;
 
 { Читаем историю RnQ }

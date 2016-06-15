@@ -27,7 +27,8 @@ IM-клиент:	Любой
    http://www.sourceforge.net/projects/zeoslib
 
 3. JEDI Core + JEDI VCL
-   http://www.delphi-jedi.org
+   https://github.com/project-jedi/jcl/releases
+   https://github.com/project-jedi/jvcl/releases
 
 4. DCPcrypt Cryptographic Component Library v2
    http://www.cityinthesky.co.uk/
