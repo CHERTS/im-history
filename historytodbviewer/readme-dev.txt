@@ -30,7 +30,8 @@ IM-клиент:	Любой
    http://www.devart.com/vtable/
 
 4. JEDI Core + JEDI VCL
-   http://www.delphi-jedi.org
+   https://github.com/project-jedi/jcl/releases
+   https://github.com/project-jedi/jvcl/releases
 
 5. DCPcrypt Cryptographic Component Library v2
    http://www.cityinthesky.co.uk/
